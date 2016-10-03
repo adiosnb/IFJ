@@ -23,7 +23,7 @@ instruction_list_t *init() {
 
     return new_list;
 }
-
+ 
 
 int create_and_add_instruction(instruction_list_t *list, int type, int addr1, int addr2, int addr3) {
     instruction_item_t *new_instruction;

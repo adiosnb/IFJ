@@ -1,0 +1,9 @@
+Adam: parser,
+
+Roman: scanner, parser, unittest, stavovy automat,
+
+Kiko: algoritmy, testy, 
+
+Jozi: doc, stack, testy,
+
+Adio: interpret, stack, makefile, 

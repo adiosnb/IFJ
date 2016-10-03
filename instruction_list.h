@@ -3,9 +3,9 @@
 
 typedef struct instruction {
     int type;
-    int addr1;
-    int addr2;
-    int addr3;
+    int *addr1;
+    int *addr2;
+    int *addr3;
 } instruction_t;
 
 typedef struct instruction_item  {
