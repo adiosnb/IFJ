@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 #include "scanner.h"
 
 FILE*	fHandle;
@@ -22,10 +23,21 @@ t_token	g_lastToken;
 
 char*	createString(const char* str)
 {
-	char* nstr = malloc(strlen(str));
+	char* nstr = malloc(strlen(str)+1);
 	if(nstr)
 	{
 		strcpy(nstr,str);
+		return nstr;
+	}
+	return NULL;
+}
+
+char*	createString2(const char* str, const char* second)
+{
+	char* nstr = malloc(strlen(str)+strlen(second)+2);
+	if(nstr)
+	{
+		sprintf(nstr,"%s.%s",str,second);
 		return nstr;
 	}
 	return NULL;
@@ -94,6 +106,7 @@ int	process_literal()
 }
 
 // Utility function
+// TODO: implement a faster way of searching for strings (tree)
 char*	isKeyword(const char* str)
 {
 	static char* keywords[] = {"boolean","break","class","continue","do","double",
@@ -109,11 +122,17 @@ char*	isKeyword(const char* str)
 
 int	process_identifier()
 {
-	char buff[256] = {0,};
+	//TODO: unlimited length of ID
+	char first[256] = {0,};
+	char second[256] = {0,};
+
 	int i = 0,c;
 	// nonAlpha is toggled to 1 if at least one character is non-alphanumerical
 	// -> useful for skipping keyword comparing 
 	int isNonAlpha = 0;
+
+	enum states {FIRST,SECOND};
+	int state = FIRST;
 	while((c = fgetc(fHandle)) != EOF)
 	{
 		int res = isalnum(c);
@@ -122,25 +141,66 @@ int	process_identifier()
 		if(res || c == '$' || c == '_')
 		{
 			isNonAlpha |= (res == 0);
-			buff[i++] = c;
+		
+			// store the incoming char into either first or second part of ID
+			if(state == FIRST)
+				first[i++] = c;
+			else
+				second[i++] = c;
 		} else {
+			// if it is a ID splitter (FIRST.SECOND)
+			if(c == '.')
+			{
+				// then change the state to second
+				if(state == FIRST)
+					state = SECOND;
+				else {
+					// already processing the second part of ID
+					// > lex. error
+					fprintf(stderr,"Error: Multiple '.' in identifier.\n");
+					return ERROR;
+				}
+				i = 0;
+				continue;
+			}
+			
 			// the last character is probably a part of another token->return back
 			ungetc(c,fHandle);
-			// verify if string isn't a keyword
-			if(!isNonAlpha)
+
+			// if we captured only a single word, it migh be a keyword
+			if(state != SECOND)
 			{
-				char* key = isKeyword(buff);
-				if(key)
+				// verify if string isn't a keyword
+				if(!isNonAlpha)
 				{
-					g_lastToken.type = TOK_KEYWORD;
-					g_lastToken.data.string = createString(buff);
-					return OK;
+					char* key = isKeyword(first);
+					if(key)
+					{
+						g_lastToken.type = TOK_KEYWORD;
+						g_lastToken.data.string = createString(first);
+						return OK;
+					}
+					
 				}
-				
 			}
 			// otherwise, it's an ID
 			g_lastToken.type = TOK_ID;
-			g_lastToken.data.string = createString(buff);
+			
+			// if it's a special ID (ID.ID)
+			if(state == SECOND)
+			{
+				// if the second part of ID fullfills requirements
+				if(i > 0 && isdigit(second[0]) == 0)
+				{
+					g_lastToken.data.string = createString2(first,second);
+					g_lastToken.type = TOK_SPECIAL_ID;
+				}
+				else {
+					// error in the second part of ID
+					return ERROR;
+				}
+			} else 
+				g_lastToken.data.string = createString(first);
 			return OK;
 		}
 	}
@@ -383,9 +443,6 @@ int	getToken()
 			case '=':
 			case '!':
 				return process_relation(c);
-			case '.':
-				//TODO: compound IDs
-				break;
 			default:
 				if(isalpha(c) || c == '_' || c == '$')
 				{
@@ -396,6 +453,7 @@ int	getToken()
 					ungetc(c,fHandle);
 					return process_number();
 				} else {
+					fprintf(stderr,"Error in scanner\n");
 					return ERROR;
 				}
 				break;

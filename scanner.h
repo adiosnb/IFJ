@@ -4,6 +4,7 @@
 // Types of lexemes (token lexical classes)
 enum	tokenTypes {
 	TOK_ID,			// identifier
+	TOK_SPECIAL_ID,		// full identifier
 	TOK_KEYWORD,		// reserved keyword
 	TOK_OPERATOR,		// operator (.+- etc)
 	TOK_LITERAL,		// text constant
