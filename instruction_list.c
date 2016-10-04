@@ -67,7 +67,7 @@ int create_and_add_instruction(instruction_list_t *list, int type, int *addr1, i
     if ((new_instruction = malloc(sizeof(instruction_item_t))) == NULL) {
         return MALLOC_ERROR;
     }
-
+//TODO opravit
     new_instruction->instruction.addr1 = addr1;
     new_instruction->instruction.addr2 = addr2;
     new_instruction->instruction.addr3 = addr3;
