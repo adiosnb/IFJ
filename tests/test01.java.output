@@ -1,0 +1,28 @@
+KEYWORD class
+ID Main
+{
+KEYWORD static
+KEYWORD void
+ID run
+(
+)
+{
+KEYWORD int
+ID a
+;
+SPECIALID ifj16.print
+(
+LITERAL 'zadej' 
+)
+;
+KEYWORD if
+(
+ID a
+<
+NUM 0
+)
+{
+}
+}
+}
+EOF
