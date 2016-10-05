@@ -13,14 +13,41 @@
 #ifndef INSTRUCTION_LIST
 #define INSTRUCTION_LIST
 
+//return values from functions
 #define OK              0
 #define MALLOC_ERROR    1
 
+//variable types
+#define INTEGER         0
+#define DOUBLE          1
+#define STRING          2
+
+//variables for type of data
+#define ON_STACK        0
+#define IN_UNION        1
+
+typedef union {
+    int i;
+    double d;
+    char *s;
+} var_u;
+
+typedef struct variable {
+    int data_type;
+    var_u data;
+} variable_t;
+
+typedef struct argument_var {
+    int arg_type;
+    int position_on_stack;
+    variable_t data;
+} argument_var_t;
+
 typedef struct instruction {
     int type;
-    int *addr1;
-    int *addr2;
-    int *addr3;
+    argument_var_t *addr1;
+    argument_var_t *addr2;
+    argument_var_t *addr3;
 } instruction_t;
 
 typedef struct instruction_item  {
