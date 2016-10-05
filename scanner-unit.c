@@ -1,6 +1,5 @@
 #include "scanner.h"
 
-
 int main(int argc, char* argv[])
 {
 	char name[256] = "source.java";
@@ -12,6 +11,9 @@ int main(int argc, char* argv[])
 	{
 		while(getToken() != ERROR)
 		{
+			static int count = 0;
+			count++;
+			printf("%3d. ",count);
 			switch(g_lastToken.type)
 			{
 				case TOK_OPERATOR:
@@ -59,6 +61,9 @@ int main(int argc, char* argv[])
 				case TOK_DELIM:		// ;
 					printf(";\n");
 					break;
+				case TOK_LIST_DELIM:	// ,
+					printf(",\n");
+					break;
 				case TOK_ASSIGN:	// =
 					printf("=\n");
 					break;
@@ -79,9 +84,11 @@ int main(int argc, char* argv[])
 					break;
 			}
 		} 
-		if(g_lastToken.type != EOF)
+		if(g_lastToken.type != TOK_EOF)
+		{
+			printf("Lexical error has occured.\n");
 			return 1;
-		
+		}
 	} else {
 		printf("Error has occured while opening the file %s.\n",name);	
 	}

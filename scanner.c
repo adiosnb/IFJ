@@ -50,13 +50,15 @@ int	process_literal()
 	fgetc(fHandle);
 	// a normal state is used when awaiting regular ASCII input
 	// SPECIAL state is reached after receiving '\' 
-	enum States {NORMAL, SPECIAL};
+	enum States {NORMAL, SPECIAL,OCTAL};
 	int c, state = NORMAL;
 
 	// TODO: provide a better string datatype which would allow 'unlimited' strings
 	char tempString[1001] = "\0";
 	int i = 0;
 
+	int octBase= 64;
+	char sum = 0;
 	while((c = fgetc(fHandle)) != EOF)
 	{
 		switch(state)
@@ -82,23 +84,56 @@ int	process_literal()
 			case SPECIAL:
 				switch(c)
 				{
+					case 'd':
+						state = OCTAL;
+						break;
 					case '\\':
 					case '\"':
 						tempString[i++] = c;
+						state = NORMAL;
 						break;
 					case 'n':
 						tempString[i++] = '\n';
+						state = NORMAL;
 						break;
 					case 't':
 						tempString[i++] = '\t';
+						state = NORMAL;
 						break;
 					default:
 
 						// TODO: report an error - invalid escape sequence
+						fprintf(stderr, "Error while reading literal\n");
 						return ERROR;
 						break;
 				}
-				state = NORMAL;
+				break;
+			// special case for processing \ddd
+			case OCTAL:
+				if(isdigit(c))
+				{
+					// convert ASCII char to a number of <0,9>
+					int digit = c-'0';
+					if(digit > 7)
+						return ERROR;
+					// and multiply it with N power of 8
+					// => conversing octal-to-decal with one buffer sum 
+					sum += octBase*digit;
+					octBase /= 8;
+					// if we have read 3 numbers
+					if(octBase == 0)
+					{
+						//concatenate a new char
+						tempString[i++] = sum;
+						// reload default values 
+						octBase= 64;
+						sum = 0;
+						// and continue reading the rest of literal
+						state = NORMAL;
+					}
+				} else {
+					return ERROR;
+				}	
 				break;
 		}
 	}
@@ -301,6 +336,8 @@ int	process_relation(char c)
 				g_lastToken.type = TOK_NOTEQ;
 			else
 				return ERROR;
+			return OK;
+			break;
 		case '<':
 			if(nextc == '=')
 				g_lastToken.type = TOK_LE;
@@ -309,6 +346,8 @@ int	process_relation(char c)
 				g_lastToken.type = TOK_LESS;
 				return OK;
 			}
+			return OK;
+			break;
 		case '>':
 			if(nextc == '=')
 				g_lastToken.type = TOK_GE;
@@ -316,6 +355,8 @@ int	process_relation(char c)
 				ungetc(nextc,fHandle);
 				g_lastToken.type = TOK_GREATER;
 			}
+			return OK;
+			break;
 		default:
 			break;	
 	}
@@ -342,6 +383,9 @@ int	process_symbol(char op)
 		case ';':
 			type = TOK_DELIM;
 			break; 
+		case ',':
+			type = TOK_LIST_DELIM;
+			break;
 		default:
 			return ERROR;
 	}		
@@ -437,6 +481,7 @@ int	getToken()
 			case '(':
 			case ')':
 			case ';':
+			case ',':
 				return process_symbol(c);
 			case '<':
 			case '>':

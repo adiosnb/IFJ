@@ -11,6 +11,7 @@ enum	tokenTypes {
 	TOK_CONST,		// integer constant
 	TOK_DOUBLECONST, 	// real constant
 	TOK_DELIM,		// ;
+	TOK_LIST_DELIM,		// ,
 	TOK_LEFT_PAR,		// (
 	TOK_RIGHT_PAR,		// )
 	TOK_LEFT_BRACE,		// {
