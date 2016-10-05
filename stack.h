@@ -15,25 +15,25 @@
 #include "instruction_list.h"
 
 //minimalna velkost pre alokaciu
-#define MINIMALL_MALLOC_SIZE 1024
+#define MINIMAL_MALLOC_SIZE 1024
 
-typedef struct stack {
+typedef struct {
     int size;
     int used;
     variable_t *data;
 } stack_t;
 
-stack_t *init_stack();
+stack_t *stack_init();
 
-void destroy_stack(stack_t *stack);
+void stack_destroy(stack_t *stack);
 
-int push();
+int stack_push(stack_t *stack,variable_t var);
 
-int pop();
+variable_t stack_pop(stack_t *stack);
 
-void get_value();
+void stack_get_value();
 
-int resize();
+int resize(stack_t *stack);
 
 
 #endif //STACK
