@@ -13,6 +13,8 @@
 #ifndef INSTRUCTION_LIST
 #define INSTRUCTION_LIST
 
+#include "instructions.h"
+
 //return values from functions
 #define OK              0
 #define MALLOC_ERROR    1
@@ -43,8 +45,8 @@ typedef struct argument_var {
     variable_t data;
 } argument_var_t;
 
-typedef struct instruction {
-    int type;
+typedef struct {
+    enum instructions type;
     argument_var_t *addr1;
     argument_var_t *addr2;
     argument_var_t *addr3;
@@ -67,6 +69,6 @@ instruction_list_t *init_inst_list();
 int dest_inst_list(instruction_list_t *list);
 int add_intstruction(instruction_list_t *i_list,instruction_item_t *instruction);
 
-int create_and_add_instruction(instruction_list_t *list, int type, int *addr1, int *addr2, int *addr3);
+int create_and_add_instruction(instruction_list_t *list, enum instructions type, argument_var_t *addr1, argument_var_t *addr2, argument_var_t *addr3) ;
 
 #endif //INSTRUCTION_LIST

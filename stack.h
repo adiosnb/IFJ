@@ -20,6 +20,7 @@
 typedef struct {
     int size;
     int used;
+    int base;
     variable_t *data;
 } stack_t;
 

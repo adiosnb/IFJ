@@ -12,6 +12,14 @@
 #ifndef INSTRUCTIONS
 #define INSTRUCTIONS
 
-#define INST_NOP 0
+//TODO :  v klude dopisujte instrukcie ake potrebujete
+enum instructions {
+    INST_NOP,
+    INST_SUB,
+    INST_PUSH,
+    INST_POP,
+    INST_CALL,
+    INST_RET,
+};
 
 #endif //INSTRUCTIONS

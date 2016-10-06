@@ -28,6 +28,7 @@ stack_t *stack_init() {
 
     stack->size = MINIMAL_MALLOC_SIZE;
     stack->used = 0;
+    stack->base = 0;
 
     return stack;
 }
