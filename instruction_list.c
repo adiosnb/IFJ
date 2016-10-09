@@ -30,9 +30,9 @@ instruction_list_t *init_inst_list() {
         return NULL;
     }
 
-    new_instruction->instruction.addr1 = NULL;
-    new_instruction->instruction.addr2 = NULL;
-    new_instruction->instruction.addr3 = NULL;
+    new_instruction->instruction.addr1 = 0;
+    new_instruction->instruction.addr2 = 0;
+    new_instruction->instruction.addr3 = 0;
     new_instruction->instruction.type = INST_NOP;
     new_instruction->next = NULL;
 
@@ -60,7 +60,7 @@ int dest_inst_list(instruction_list_t *list) {
 }
 
 
-int create_and_add_instruction(instruction_list_t *list, enum instructions type, argument_var_t *addr1, argument_var_t *addr2, argument_var_t *addr3) {
+int create_and_add_instruction(instruction_list_t *list, enum instructions type, int addr1, int addr2, int addr3) {
 
     instruction_item_t *new_instruction;
 
