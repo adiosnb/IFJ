@@ -7,3 +7,9 @@ Kiko: algoritmy, testy,
 Jozi: doc, stack, testy,
 
 Adio: interpret, stack, makefile, 
+
+-------------------------------------------
+  THINGS TO DO WITHOUT ASSIGNMENT
+-------------------------------------------
+- dynamic-string(type) = a dynamically-changing linked list for holding really long strings
+                  - needed for scanner (identifiers)
