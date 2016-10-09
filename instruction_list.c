@@ -50,22 +50,22 @@ int dest_inst_list(instruction_list_t *list) {
     current_item = list->first;
     while (current_item != NULL) {          //cycle through all items in list
         next_item = current_item->next;
-        free(&current_item);                //deleting of each item of list
+        free(current_item);                //deleting of each item of list
         current_item = next_item;
     }
 
-    free(&list);                            //deleting of whole lsit
+    free(list);                            //deleting of whole lsit
 
     return OK;
 }
 
 
-int create_and_add_instruction(instruction_list_t *list, enum instructions type, int addr1, int addr2, int addr3) {
+instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum instructions type, int addr1, int addr2, int addr3) {
 
     instruction_item_t *new_instruction;
 
     if ((new_instruction = malloc(sizeof(instruction_item_t))) == NULL) {
-        return MALLOC_ERROR;
+        return NULL;
     }
 //TODO opravit
     new_instruction->instruction.addr1 = addr1;
@@ -77,5 +77,5 @@ int create_and_add_instruction(instruction_list_t *list, enum instructions type,
     list->last->next = new_instruction;
     list->last = new_instruction;
 
-    return 0;
+    return new_instruction;
 }

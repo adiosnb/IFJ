@@ -21,6 +21,7 @@ enum instructions {
     INST_DIV,
     INST_PUSH,
     INST_POP,
+    INST_GOTO,
     INST_CALL,
     INST_RET,
     INST_WRITE,

@@ -34,13 +34,13 @@ stack_t *stack_init() {
 }
 
 void stack_destroy(stack_t *stack){
-    free(&stack->data);
-    free(&stack);
+    free(stack->data);
+    free(stack);
 }
 
 int stack_push(stack_t *stack,variable_t var){
     if (stack->size <= stack->used){
-        resize(stack);
+        //resize(stack);
     }
 
     //stack->data[stack->used].data_type = var.data_type;
