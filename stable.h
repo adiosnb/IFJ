@@ -3,23 +3,33 @@
 
 #include "instruction_list.h"
 
+#define STAB_SIZE 200;
+
 typedef struct STAB_ELEMENT{
-    int key;
-    argument_var_t cont;
-    struct STAB_ELEMENT *next;
-}htab_element_t;
+    unsigned stab_key;
+    argument_var_t stab_content;
+    struct STAB_ELEMENT *stab_next;
+}stab_element_t;
 
 typedef struct {
-    unsigned size;
-    unsigned (*hash_fun_ptr)(int, unsigned);
-    unsigned count;
-    htab_element_t *arr[];
-}stable_t;
+    unsigned stab_size;
+    unsigned (*hash_fun_ptr)(unsigned, unsigned);
+    unsigned stab_count;
+    stab_element_t *arr[];
+}stab_t;
 
 
+//alokuje a inicaializuje priestor pre tabulu na 0
+stab_t *stable_init(unsigned size);
+//uvolni celu tabulku (tabulka + vsetky prvky)
+void stable_destroy(stab_t *p_table);
+//odstrani jeden prvok z tabulky
+void stable_remove_var(unsigned id, stab_t *p_stable);
+//prida prvok do tabulky
+int stable_add_var(unsigned id, argument_var_t *p_var, stab_t *p_stable);
+//vrati ukazatel na dotazovany prvok
+argument_var_t *stable_get_var(unsigned id, stab_t *p_stable);
 
-argument_var_t *get_var(int id, stable_t *stable);
-int add_var(int id, argument_var_t *var,stable_t *stable);
 
 
 
