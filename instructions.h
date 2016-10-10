@@ -26,6 +26,8 @@ enum instructions {
     INST_RET,
     INST_WRITE,
     INST_READ,
+    INST_HALT,
+    INST_LABEL,
 };
 
 #endif //INSTRUCTIONS

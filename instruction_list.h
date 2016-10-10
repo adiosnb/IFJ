@@ -59,7 +59,7 @@ typedef struct argument_var {
     instruction_item_t *instruction;
 } argument_var_t;
 
-typedef struct instruction_list {
+typedef struct {
     instruction_item_t *first;
     instruction_item_t *active;
     instruction_item_t *last;

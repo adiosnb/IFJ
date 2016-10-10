@@ -22,7 +22,7 @@ stack_t *stack_init() {
     }
 
     if ((stack->data = malloc(sizeof(variable_t) * MINIMAL_MALLOC_SIZE)) == NULL) {
-        free(&stack);
+        free(stack);
         return NULL;
     }
 
@@ -35,10 +35,9 @@ stack_t *stack_init() {
 
 void stack_destroy(stack_t *stack){
     free(stack->data);
-    free(stack);
 }
 
-int stack_push(stack_t *stack,variable_t var){
+int stack_push(stack_t *stack, argument_var_t var) {
     if (stack->size <= stack->used){
         //resize(stack);
     }
@@ -50,12 +49,12 @@ int stack_push(stack_t *stack,variable_t var){
     return 0;
 }
 
-variable_t stack_pop(stack_t *stack){
-    variable_t pop_var;
+argument_var_t stack_pop(stack_t *stack) {
+    argument_var_t pop_var;
     if(stack->used > 0) {
         pop_var = stack->data[stack->used]; //TODO treba overit ci to je spravne, ak nie rozpisat to do ifov alebo switch
         stack->used--;
-    } else pop_var.data_type = -1;
+    } else pop_var.data.data_type = -1;
 
     return pop_var;
 }

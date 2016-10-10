@@ -21,16 +21,16 @@ typedef struct {
     int size;
     int used;
     int base;
-    variable_t *data;
+    argument_var_t *data;
 } stack_t;
 
 stack_t *stack_init();
 
 void stack_destroy(stack_t *stack);
 
-int stack_push(stack_t *stack,variable_t var);
+int stack_push(stack_t *stack, argument_var_t var);
 
-variable_t stack_pop(stack_t *stack);
+argument_var_t stack_pop(stack_t *stack);
 
 void stack_get_value();
 

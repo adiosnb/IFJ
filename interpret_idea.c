@@ -29,17 +29,25 @@ int main(){
     add_var(25, &tmp_var, sym_tab);
 
 
-    create_and_add_instruction(i_list,INST_GOTO,50,0,0);
-    create_and_add_instruction(i_list,INST_PUSH,6,0,0);
+    //sorry viem ze to vyzera ako keby to kokot pisal, ale ide iba o na rychlo zbuchany prototyp
+
+    create_and_add_instruction(i_list, INST_GOTO, 50, 0, 0);                //preskocenie definicie funkcie
+    ptr_inst = create_and_add_instruction(i_list, INST_LABEL, 0, 0, 0);     //navestie instrukcie
+    tmp_var.arg_type = INSTRUCTION;
+    tmp_var.instruction = ptr_inst;
+    add_var(100, &tmp_var, sym_tab);
+
+    create_and_add_instruction(i_list, INST_PUSH, 6, 0, 0);                 //lokalna premenna
     create_and_add_instruction(i_list,INST_ADD,25,30,31);
     create_and_add_instruction(i_list,INST_WRITE,25,0,0);
-    create_and_add_instruction(i_list,INST_RET,0,0,0);
+    create_and_add_instruction(i_list, INST_RET, 0, 0, 0);                  //koniec funkcie
 
-    ptr_inst = create_and_add_instruction(i_list,INST_PUSH,5,0,0);
+    ptr_inst = create_and_add_instruction(i_list, INST_PUSH, 5, 0, 0);      //predavanie premennych hodnotov
     tmp_var.arg_type = INSTRUCTION; tmp_var.instruction = ptr_inst;
     add_var(50,&tmp_var,sym_tab);
-    create_and_add_instruction(i_list,INST_PUSH,6,0,0);
-    create_and_add_instruction(i_list,INST_CALL,5,0,0);
+    create_and_add_instruction(i_list, INST_PUSH, 6, 0, 0);                 //predavanie premennych hodnotov
+    create_and_add_instruction(i_list, INST_CALL, 100, 0, 0);                 //volanie funkcie
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
 
 
     interpret(i_list,sym_tab);
