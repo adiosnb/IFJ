@@ -62,3 +62,4 @@ int call() {
     tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);
     glob_ins_list->active = tmp_ptr->instruction;
 }
+

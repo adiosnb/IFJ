@@ -37,7 +37,7 @@ int main(){
     tmp_var.instruction = ptr_inst;
     stable_add_var(100, &tmp_var, sym_tab);
 
-    create_and_add_instruction(i_list, INST_PUSH, 6, 0, 0);                 //lokalna premenna
+    create_and_add_instruction(i_list, INST_PUSH, 25, 0, 0);                 //lokalna premenna
     create_and_add_instruction(i_list,INST_ADD,25,30,31);
     create_and_add_instruction(i_list,INST_WRITE,25,0,0);
     create_and_add_instruction(i_list, INST_RET, 0, 0, 0);                  //koniec funkcie
