@@ -6,12 +6,12 @@
 #include <stdlib.h>
 
 stack_t *glob_stack;
-stable_t *glob_stable;
+stab_t *glob_stable;
 instruction_list_t *glob_ins_list;
 argument_var_t tmp_var;
 argument_var_t *tmp_ptr;
 
-int interpret(instruction_list_t *instruction_list, stable_t *stable) {
+int interpret(instruction_list_t *instruction_list, stab_t *stable) {
     glob_stack = stack_init();
     glob_ins_list = instruction_list;
     glob_stable = stable;
@@ -23,19 +23,19 @@ int interpret(instruction_list_t *instruction_list, stable_t *stable) {
             case INST_NOP:
                 break;
             case INST_ADD:
-                add();
+                //add();
                 break;
             case INST_PUSH:
-                push();
+                //push();
                 break;
             case INST_HALT:
-                instruction_list->active = NULL;
+                //instruction_list->active = NULL;
                 break;
             case INST_CALL:
-                call();
+                //call();
                 break;
             case INST_RET:
-                ret();
+                //ret();
                 break;
 
 
@@ -59,6 +59,6 @@ int call() {
     stack_push(glob_stack, tmp_var);
     glob_stack->used += 2;                      //added counter for stack
     glob_stack->base = glob_stack->used;
-    tmp_ptr = get_var(glob_ins_list->active->instruction.addr1, glob_stable);
+    tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);
     glob_ins_list->active = tmp_ptr->instruction;
 }

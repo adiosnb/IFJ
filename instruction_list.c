@@ -60,7 +60,8 @@ int dest_inst_list(instruction_list_t *list) {
 }
 
 
-instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum instructions type, int addr1, int addr2, int addr3) {
+instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum instructions type, unsigned addr1,
+                                               unsigned addr2, unsigned addr3) {
 
     instruction_item_t *new_instruction;
 
