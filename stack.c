@@ -13,6 +13,7 @@
 #include "instruction_list.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 
 stack_t *stack_init() {
@@ -63,10 +64,19 @@ argument_var_t stack_top(stack_t *stack){
 
 
 argument_var_t stack_ebp_relative(stack_t *stack, int position){
-    return stack->data[stack->base + position];
+    return stack->data[stack->base + position - 1];
 }
 
 int stack_actualize_from_ebp(stack_t *stack, argument_var_t arg, int position){
-    stack->data[stack->base + position] = arg;
+    stack->data[stack->base + position - 1] = arg;
     return 0;
+}
+
+
+void print_stack(stack_t *stack) {
+    printf("\n---------------------------------\n");
+    for (int i = 0; i < stack->used; i ++){
+        printf("%d : %d\n",i,stack->data[i].data.i);
+    }
+    printf("\n---------------------------------\n");
 }

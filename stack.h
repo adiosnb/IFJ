@@ -40,5 +40,7 @@ int stack_actualize_from_ebp(stack_t *stack, argument_var_t arg, int position);
 
 int resize(stack_t *stack);
 
+void print_stack(stack_t *stack);
+
 
 #endif //STACK

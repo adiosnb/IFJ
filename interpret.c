@@ -38,10 +38,10 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
                 instruction_list->active = glob_ins_list->last;
                 break;
             case INST_CALL:
-                //call();
+                call();
                 break;
             case INST_RET:
-                //ret();
+                ret();
             case INST_GOTO:
                 inst_goto();
                 break;
@@ -52,7 +52,7 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
 
 
         }
-
+        print_stack(glob_stack);
         glob_ins_list->active = glob_ins_list->active->next;
     }
 
@@ -60,17 +60,24 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
     return 0;
 }
 
-int call() {
+void call() {
     tmp_var.data.instruction = glob_ins_list->active;
     tmp_var.arg_type = INSTRUCTION;
     stack_push(glob_stack, tmp_var);             //pushing current instruction
     tmp_var.arg_type = INTEGER;
     tmp_var.data.i = glob_stack->base;     //pushig base, similar to push ebp in assemlby
     stack_push(glob_stack, tmp_var);
-    glob_stack->used += 2;                      //added counter for stack
+    //glob_stack->used += 2;                      //added counter for stack
     glob_stack->base = glob_stack->used;
     tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);
     glob_ins_list->active = tmp_ptr->data.instruction;
+}
+
+void ret(){
+    tmp_var = stack_pop(glob_stack);
+    glob_stack->base = tmp_var.data.i;
+    tmp_var = stack_pop(glob_stack);
+    glob_ins_list->active = tmp_var.data.instruction;
 }
 
 int write() {
@@ -84,11 +91,15 @@ int write() {
         case STRING:
             printf("%s",tmp_ptr->data.s);
             break;
-        case STACK_EBP:
+        case ON_STACK:
             tmp_var = stack_top(glob_stack);
             tmp_ptr = &tmp_var;
             write();
             break;
+        case STACK_EBP:
+            tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
+            tmp_ptr = &tmp_var;
+            write();
     }
 
     return 0;
@@ -179,7 +190,8 @@ int add(){
 
 
 void pop(){
-    glob_stack->used--;
+    //glob_stack->used--;
+    stack_pop(glob_stack);
 }
 
 void inst_goto() {
@@ -191,3 +203,4 @@ void inst_goto() {
         //TODO : load instruction from stack
     }
 }
+
