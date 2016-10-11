@@ -250,7 +250,7 @@ int	process_number()
 	char buff[256] = {0, };
 	int c,i = 0;
 
-	enum numberType {INT, RADIX,EXP};
+	enum numberType {INT, DOT,DOUBLE,EXP,EXP_SIGN,EXP_RADIX};
 	int state = INT;
 	while((c = fgetc(fHandle)) != EOF)
 	{
@@ -261,19 +261,27 @@ int	process_number()
 				{
 					buff[i++] = c;
 					if(c == '.')
-						state = RADIX;
+						state = DOT;
 					else if(tolower(c) == 'e')
 						state = EXP;
 				} else {
-					// a new integer token
-					// TODO:
 					ungetc(c,fHandle);
 					g_lastToken.type = TOK_CONST;
 					g_lastToken.data.integer = atoi(buff);
 					return OK;
 				}
 				break;
-			case RADIX:
+			case DOT:
+				if(isdigit(c))
+				{
+					buff[i++] = c;
+					state = DOUBLE;
+				} else {
+					// emit error, number ends with '.' without any following digit
+					return ERROR;
+				}
+				break;
+			case DOUBLE:
 				if(!isdigit(c) && tolower(c) != 'e')
 				{
 					// new float
@@ -285,11 +293,31 @@ int	process_number()
 					buff[i++] = c;	
 					if(tolower(c) == 'e')
 						state = EXP;
-					
 				}
 				break;
 			case EXP:
-				//TODO: only one +/-
+				if(c == '+' || c == '-')
+				{
+					buff[i++] = c;
+					state = EXP_SIGN;
+				} else if(isdigit(c))
+				{
+					buff[i++] = c;
+					state = EXP_RADIX;
+				} else {
+					return ERROR;
+				}
+				break;
+			case EXP_SIGN:
+				if(isdigit(c))
+				{
+					buff[i++] = c;
+					state = EXP_RADIX;
+				} else {
+					return ERROR;
+				}
+				break;
+			case EXP_RADIX:
 				if(isdigit(c) || c == '+' || c == '-')
 					buff[i++] = c;
 				else 
@@ -300,6 +328,8 @@ int	process_number()
 					g_lastToken.data.real= atof(buff);
 					return OK;
 				}
+				break;
+				
 		}
 	}
 	return ERROR;

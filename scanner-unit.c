@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 					printf("NUM %d\n",g_lastToken.data.integer);
 					break;
 				case TOK_DOUBLECONST:
-					printf("NUM %f\n",g_lastToken.data.real);
+					printf("DOUBLE %f\n",g_lastToken.data.real);
 					break;
 				case TOK_LITERAL:
 					printf("LITERAL '%s' \n",g_lastToken.data.string);
