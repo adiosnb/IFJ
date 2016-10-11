@@ -50,16 +50,15 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
 }
 
 int call() {
-    tmp_var.instruction = glob_ins_list->active;
+    tmp_var.data.instruction = glob_ins_list->active;
     tmp_var.arg_type = INSTRUCTION;
     stack_push(glob_stack, tmp_var);             //pushing current instruction
-    tmp_var.arg_type = IN_UNION;
-    tmp_var.data.data_type = INTEGER;
-    tmp_var.data.data.i = glob_stack->base;     //pushig base, similar to push ebp in assemlby
+    tmp_var.arg_type = INTEGER;
+    tmp_var.data.i = glob_stack->base;     //pushig base, similar to push ebp in assemlby
     stack_push(glob_stack, tmp_var);
     glob_stack->used += 2;                      //added counter for stack
     glob_stack->base = glob_stack->used;
     tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);
-    glob_ins_list->active = tmp_ptr->instruction;
+    glob_ins_list->active = tmp_ptr->data.instruction;
 }
 

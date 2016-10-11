@@ -15,17 +15,16 @@ int main(){
     sym_tab = stable_init(1024);
 
     for(int i = 0 ; i < 20; i++) {
-        tmp_var.arg_type = IN_UNION;
-        tmp_var.data.data_type = INTEGER;
-        tmp_var.data.data.i = i;
+        tmp_var.arg_type = INTEGER;
+        tmp_var.data.i = i;
         stable_add_var(i, &tmp_var, sym_tab);
     }
 
-    tmp_var.arg_type = ON_STACK; tmp_var.position_on_stack = -1;
+    tmp_var.arg_type = ON_STACK; tmp_var.data.i = -1;
     stable_add_var(30, &tmp_var, sym_tab);
-    tmp_var.arg_type = ON_STACK; tmp_var.position_on_stack = -2;
+    tmp_var.arg_type = ON_STACK; tmp_var.data.i = -2;
     stable_add_var(31, &tmp_var, sym_tab);
-    tmp_var.arg_type = ON_STACK; tmp_var.position_on_stack = 1;
+    tmp_var.arg_type = ON_STACK; tmp_var.data.i = 1;
     stable_add_var(25, &tmp_var, sym_tab);
 
 
@@ -34,7 +33,7 @@ int main(){
     create_and_add_instruction(i_list, INST_GOTO, 50, 0, 0);                //preskocenie definicie funkcie
     ptr_inst = create_and_add_instruction(i_list, INST_LABEL, 0, 0, 0);     //navestie instrukcie
     tmp_var.arg_type = INSTRUCTION;
-    tmp_var.instruction = ptr_inst;
+    tmp_var.data.instruction = ptr_inst;
     stable_add_var(100, &tmp_var, sym_tab);
 
     create_and_add_instruction(i_list, INST_PUSH, 25, 0, 0);                 //lokalna premenna
@@ -43,7 +42,7 @@ int main(){
     create_and_add_instruction(i_list, INST_RET, 0, 0, 0);                  //koniec funkcie
 
     ptr_inst = create_and_add_instruction(i_list, INST_PUSH, 5, 0, 0);      //predavanie premennych hodnotov
-    tmp_var.arg_type = INSTRUCTION; tmp_var.instruction = ptr_inst;
+    tmp_var.arg_type = INSTRUCTION; tmp_var.data.instruction = ptr_inst;
     stable_add_var(50, &tmp_var, sym_tab);
     create_and_add_instruction(i_list, INST_PUSH, 6, 0, 0);                 //predavanie premennych hodnotov
     create_and_add_instruction(i_list, INST_CALL, 100, 0, 0);                 //volanie funkcie

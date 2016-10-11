@@ -11,7 +11,7 @@ unsigned hash_fun_ptr(unsigned id, unsigned stab_size){
 //alokuje priestor pre tabulku a zaroven ho nuluje
 stab_t *stable_init(unsigned size){
     stab_t *pom;
-    if ((pom = calloc(1, sizeof(stab_t) + sizeof(stab_element_t) * size)) == NULL)
+    if ((pom = calloc(1, sizeof(stab_t) + sizeof(stab_element_t) * size)) == NULL) //TODO : kiko pozri ci tu nema byt *stab_element_t
         return NULL;
     pom->stab_size = size;
     pom->hash_fun_ptr = hash_fun_ptr;
@@ -48,17 +48,25 @@ int stable_add_var(unsigned id, argument_var_t *p_var, stab_t *p_stable){
         //nastavy pom na posledny prvok
         while (pom->stab_next != NULL)
             pom = pom->stab_next;
-    }
         //za posledny prvok sa naalokuje miesto na dalsi
-        if ((pom->stab_next = malloc(sizeof(stab_element_t))) == NULL)
+        if ((pom->stab_next = malloc(sizeof(stab_element_t))) == NULL){
             return 1; //todo dohodnut sa na error hlaske
-
+        }
         pom = pom->stab_next;
-        pom->stab_key = id;
-        pom->stab_content = *p_var;
-        pom->stab_next = NULL;
+    } else {
+        if ((p_stable->arr[index] = malloc(sizeof(stab_element_t))) == NULL) {
+            return 1;
+        }
 
-        return 0;
+        pom = p_stable->arr[index];
+    }
+
+    pom->stab_content = *p_var;
+    pom->stab_key = id;
+    pom->stab_next = NULL;
+
+
+    return 0;
 }
 
 //vrati polozku zo zoznamu

@@ -10,6 +10,7 @@
  *   Notes :                Stack
  ***************************************/
 #include "stack.h"
+#include "instruction_list.h"
 
 #include <stdlib.h>
 
@@ -21,7 +22,7 @@ stack_t *stack_init() {
         return NULL;
     }
 
-    if ((stack->data = malloc(sizeof(variable_t) * MINIMAL_MALLOC_SIZE)) == NULL) {
+    if ((stack->data = malloc(sizeof(argument_var_t) * MINIMAL_MALLOC_SIZE)) == NULL) {
         free(stack);
         return NULL;
     }
@@ -54,7 +55,7 @@ argument_var_t stack_pop(stack_t *stack) {
     if(stack->used > 0) {
         pop_var = stack->data[stack->used]; //TODO treba overit ci to je spravne, ak nie rozpisat to do ifov alebo switch
         stack->used--;
-    } else pop_var.data.data_type = -1;
+    } else pop_var.arg_type = -1;
 
     return pop_var;
 }

@@ -19,26 +19,14 @@
 #define OK              0
 #define MALLOC_ERROR    1
 
-//variable types
+//variable type
+#define ERROR           -1
 #define INTEGER         0
 #define DOUBLE          1
 #define STRING          2
+#define ON_STACK        3
+#define INSTRUCTION     4
 
-//variables for type of data
-#define ON_STACK        0
-#define IN_UNION        1
-#define INSTRUCTION     2
-
-typedef union {
-    int i;
-    double d;
-    char *s;
-} var_u;
-
-typedef struct variable {
-    int data_type;
-    var_u data;
-} variable_t;
 
 typedef struct {
     enum instructions type;
@@ -52,18 +40,23 @@ typedef struct instruction_item  {
     struct instruction_item *next;
 } instruction_item_t;
 
-typedef struct argument_var {
-    int arg_type;
-    int position_on_stack;
-    variable_t data;
-    instruction_item_t *instruction;
-} argument_var_t;
-
 typedef struct {
     instruction_item_t *first;
     instruction_item_t *active;
     instruction_item_t *last;
 } instruction_list_t;
+
+typedef union {
+    int i;
+    double d;
+    char *s;
+    instruction_item_t *instruction;
+} var_u;
+
+typedef struct {
+    int arg_type;
+    var_u data;
+} argument_var_t;
 
 
 instruction_list_t *init_inst_list();
