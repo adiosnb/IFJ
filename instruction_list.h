@@ -25,7 +25,7 @@
 #define DOUBLE          1
 #define STRING          2
 #define ON_STACK        3
-#define EBP             4
+#define STACK_EBP       4
 #define INSTRUCTION     5
 
 

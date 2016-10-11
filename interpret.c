@@ -105,8 +105,70 @@ int push(){
 }
 
 int add(){
+    argument_var_t  *arg1,*arg2,*arg3;
 
+    argument_var_t num1,num2,num3;
+    
+    arg1 = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    arg2 = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+    arg3 = stable_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+    
+    double a,b;
+    
+    if (arg1->arg_type == ON_STACK || arg1->arg_type == STACK_EBP){
+        if (arg1->arg_type == ON_STACK){
+            //TODO
+        } else {
+            num1 = stack_ebp_relative(glob_stack,arg1->data.i);
+        }
+    } else {
+        num1 = *arg1;
+    }
 
+    if (arg2->arg_type == ON_STACK || arg2->arg_type == STACK_EBP){
+        if (arg2->arg_type == ON_STACK){
+            //TODO
+        } else {
+            num2 = stack_ebp_relative(glob_stack,arg2->data.i);
+        }
+    } else {
+        num1 = *arg2;
+    }
+
+    if (arg3->arg_type == ON_STACK || arg3->arg_type == STACK_EBP){
+        if (arg3->arg_type == ON_STACK){
+            //TODO
+        } else {
+            num3 = stack_ebp_relative(glob_stack,arg3->data.i);
+        }
+    } else {
+        num1 = *arg3;
+    }
+
+    if (num2.arg_type == DOUBLE){
+        a = num2.data.d;
+    } else {
+        a = num2.data.i;
+    }
+    
+    if (num3.arg_type == DOUBLE){
+        b = num3.data.d;
+    } else {
+        b = num3.data.i;
+    }
+    
+    if (num1.arg_type == DOUBLE){
+        num1.data.d = a + b;
+    } else {
+        num1.data.i = (int) (a + b);
+    }
+    
+    if (arg1->arg_type == STACK_EBP) {
+        stack_actualize(glob_stack,num1,arg1->data.i);
+    } else {
+        *arg1 = num1;
+    }
+    
     return 0;
 }
 
