@@ -23,7 +23,7 @@ typedef struct {
 stab_t *stable_init(unsigned size);
 
 //uvolni celu tabulku (tabulka + vsetky prvky)
-void stable_destroy(stab_t *p_table);
+void stable_destroy(stab_t **p_table);
 
 //odstrani jeden prvok z tabulky
 void stable_remove_var(unsigned id, stab_t *p_stable);

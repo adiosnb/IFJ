@@ -30,12 +30,18 @@ void stable_destroy_element(stab_element_t *p_element){
 }
 
 //zavola funkciu na destrukciu prvkov v tabulke a potm uvolni tabulku
-void stable_destroy(stab_t *p_table){
-    for (unsigned i=0; i<p_table->stab_count; i++) {
-        if (p_table->arr[i] != NULL)
-            stable_destroy_element(p_table->arr[i]);
+void stable_destroy(stab_t **p_table) {
+    stab_element_t *current, *next;
+
+    for (unsigned i = 0; i < p_table[0]->stab_size; i++) {
+        current = p_table[0]->arr[i];
+        while (current != NULL) {
+            next = current->stab_next;
+            free(current);
+            current = next;
+        }
     }
-    free(p_table);
+    free(*p_table);
     return;
 }
 

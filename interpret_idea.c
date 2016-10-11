@@ -81,6 +81,7 @@ int main(){
 
 
     dest_inst_list(i_list);
+    stable_destroy(&sym_tab);
 
     return 0;
 }
