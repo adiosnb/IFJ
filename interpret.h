@@ -7,7 +7,7 @@
 int interpret(instruction_list_t *instruction_list, stab_t *stable);
 int add();
 int sub();
-
+int write();
 int call();
 int ret();
 int push();

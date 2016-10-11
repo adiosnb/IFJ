@@ -18,14 +18,10 @@
 stack_t *stack_init() {
     stack_t *stack;
 
-    if ((stack = malloc(sizeof(stack_t))) == NULL){
+    if ((stack = malloc(sizeof(stack_t) + sizeof(argument_var_t)*MINIMAL_MALLOC_SIZE)) == NULL){
         return NULL;
     }
 
-    if ((stack->data = malloc(sizeof(argument_var_t) * MINIMAL_MALLOC_SIZE)) == NULL) {
-        free(stack);
-        return NULL;
-    }
 
     stack->size = MINIMAL_MALLOC_SIZE;
     stack->used = 0;
@@ -34,8 +30,8 @@ stack_t *stack_init() {
     return stack;
 }
 
-void stack_destroy(stack_t *stack){
-    free(stack->data);
+void stack_destroy(stack_t **stack){
+    free(*stack);
 }
 
 int stack_push(stack_t *stack, argument_var_t var) {
@@ -61,3 +57,11 @@ argument_var_t stack_pop(stack_t *stack) {
 }
 
 
+argument_var_t stack_top(stack_t *stack){
+    return stack->data[stack->used - 1];    //-1 je tam preto ze nepouzivam premennu stack.top ale stack.used
+}
+
+
+argument_var_t stack_ebp_relative(stack_t *stack, int position){
+    return stack->data[stack->base + position];
+}

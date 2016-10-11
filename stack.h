@@ -21,18 +21,20 @@ typedef struct {
     int size;
     int used;
     int base;
-    argument_var_t *data;
+    argument_var_t data[];
 } stack_t;
 
 stack_t *stack_init();
 
-void stack_destroy(stack_t *stack);
+void stack_destroy(stack_t **stack);
 
 int stack_push(stack_t *stack, argument_var_t var);
 
 argument_var_t stack_pop(stack_t *stack);
 
-void stack_get_value();
+argument_var_t stack_top(stack_t *stack);
+
+argument_var_t stack_ebp_relative(stack_t *stack,int position);
 
 int resize(stack_t *stack);
 
