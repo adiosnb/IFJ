@@ -50,7 +50,8 @@ int stack_push(stack_t *stack, argument_var_t var) {
 argument_var_t stack_pop(stack_t *stack) {
     argument_var_t pop_var;
     if(stack->used > 0) {
-        pop_var = stack->data[stack->used]; //TODO treba overit ci to je spravne, ak nie rozpisat to do ifov alebo switch
+        pop_var = stack->data[stack->used -
+                              1]; //TODO treba overit ci to je spravne, ak nie rozpisat to do ifov alebo switch
         stack->used--;
     } else pop_var.arg_type = -1;
 

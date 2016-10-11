@@ -42,6 +42,7 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
                 break;
             case INST_RET:
                 ret();
+                break;
             case INST_GOTO:
                 inst_goto();
                 break;
@@ -52,7 +53,7 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
 
 
         }
-        print_stack(glob_stack);
+        //print_stack(glob_stack);
         glob_ins_list->active = glob_ins_list->active->next;
     }
 
@@ -74,10 +75,14 @@ void call() {
 }
 
 void ret(){
-    tmp_var = stack_pop(glob_stack);
-    glob_stack->base = tmp_var.data.i;
-    tmp_var = stack_pop(glob_stack);
+    int prev_base;
+
+    tmp_var = stack_ebp_relative(glob_stack, 0);
+    prev_base = tmp_var.data.i;
+    tmp_var = stack_ebp_relative(glob_stack, -1);
     glob_ins_list->active = tmp_var.data.instruction;
+    glob_stack->used = glob_stack->base;
+    glob_stack->base = prev_base;
 }
 
 int write() {

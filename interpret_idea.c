@@ -33,6 +33,8 @@ int main(){
     //sorry viem ze to vyzera ako keby to kokot pisal, ale ide iba o na rychlo zbuchany prototyp
 
     create_and_add_instruction(i_list, INST_GOTO, 50, 0, 0);                //preskocenie definicie funkcie
+
+
     ptr_inst = create_and_add_instruction(i_list, INST_LABEL, 0, 0, 0);     //navestie instrukcie
     tmp_var.arg_type = INSTRUCTION;
     tmp_var.data.instruction = ptr_inst;
@@ -55,6 +57,12 @@ int main(){
     create_and_add_instruction(i_list, INST_CALL, 100, 0, 0);                 //volanie funkcie
     create_and_add_instruction(i_list,INST_POP,0,0,0);
     create_and_add_instruction(i_list,INST_POP,0,0,0);
+
+    create_and_add_instruction(i_list, INST_PUSH, 9, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH, 9, 0, 0);                 //predavanie premennych hodnotov
+    create_and_add_instruction(i_list, INST_CALL, 100, 0, 0);                 //volanie funkcie
+    create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
 
 
 
