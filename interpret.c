@@ -38,17 +38,23 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
                 instruction_list->active = glob_ins_list->last;
                 break;
             case INST_CALL:
+                printf("CALL\n");
                 call();
                 break;
             case INST_RET:
                 ret();
+                printf("RET\n");
                 break;
-            case INST_GOTO:
-                inst_goto();
+            case INST_JMP:
+                inst_jump();
                 break;
             case INST_WRITE:
                 tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
                 write();
+                printf("\n");
+                break;
+            case INST_JNP:
+                jump_not();
                 break;
 
 
@@ -113,7 +119,7 @@ int write() {
 int push(){
     tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
 
-    if (tmp_ptr->arg_type == ON_STACK){
+    if (tmp_ptr->arg_type == STACK_EBP) {
         tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
         stack_push(glob_stack,tmp_var);
     } else {
@@ -195,17 +201,29 @@ int add(){
 
 
 void pop(){
-    //glob_stack->used--;
     stack_pop(glob_stack);
 }
 
-void inst_goto() {
-    tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+void inst_jump() {
+    tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,
+                             glob_stable);     //nacita z tabulky symbolov ukazatel na instrukciu
+    glob_ins_list->active = tmp_ptr->data.instruction;                                  //priradi ukazatel do listu, takze zmeni tok programu
+}
 
-    if (tmp_ptr->arg_type == INSTRUCTION){
-        glob_ins_list->active = tmp_ptr->data.instruction;
+void jump_not() {
+    tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr2, glob_stable);     //nacita operand pre porovnanie
+    if (tmp_ptr->arg_type == STACK_EBP) {
+        tmp_var = stack_ebp_relative(glob_stack,
+                                     tmp_ptr->data.i);                       //ak je na zasobniku zoberie hodnotu operandu z tade
     } else {
-        //TODO : load instruction from stack
+        tmp_var = *tmp_ptr;
+    }
+
+    if (tmp_var.data.i ==
+        0) {                                                            //ak je operand nulovy takze false, urobi sa skok
+        tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,
+                                 glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+        glob_ins_list->active = tmp_ptr->data.instruction;                               //priradi ukazatel do listu, takze zmeni tok programu
     }
 }
 
