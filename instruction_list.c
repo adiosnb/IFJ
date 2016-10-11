@@ -26,7 +26,7 @@ instruction_list_t *init_inst_list() {
 
     //vytvorenie prazdnej instrukcie pre odstranenie podmienky v create and add instruction
     if((new_instruction = malloc(sizeof(instruction_item_t))) == NULL) {
-        free(&new_list);        //deleting list if second malloc fails
+        free(new_list);        //deleting list if second malloc fails
         return NULL;
     }
 

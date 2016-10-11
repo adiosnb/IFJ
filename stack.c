@@ -65,3 +65,8 @@ argument_var_t stack_top(stack_t *stack){
 argument_var_t stack_ebp_relative(stack_t *stack, int position){
     return stack->data[stack->base + position];
 }
+
+int stack_actualize_from_ebp(stack_t *stack, argument_var_t arg, int position){
+    stack->data[stack->base + position] = arg;
+    return 0;
+}

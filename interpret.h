@@ -11,5 +11,7 @@ int write();
 int call();
 int ret();
 int push();
+void pop();
+void inst_goto();
 
 #endif //INTERPRET

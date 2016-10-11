@@ -31,6 +31,9 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_PUSH:
                 push();
                 break;
+            case INST_POP:
+                pop();
+                break;
             case INST_HALT:
                 instruction_list->active = glob_ins_list->last;
                 break;
@@ -39,6 +42,8 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
                 break;
             case INST_RET:
                 //ret();
+            case INST_GOTO:
+                inst_goto();
                 break;
             case INST_WRITE:
                 tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
@@ -79,7 +84,7 @@ int write() {
         case STRING:
             printf("%s",tmp_ptr->data.s);
             break;
-        case ON_STACK:
+        case STACK_EBP:
             tmp_var = stack_top(glob_stack);
             tmp_ptr = &tmp_var;
             write();
@@ -108,13 +113,13 @@ int add(){
     argument_var_t  *arg1,*arg2,*arg3;
 
     argument_var_t num1,num2,num3;
-    
+
     arg1 = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
     arg2 = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
     arg3 = stable_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
-    
+
     double a,b;
-    
+
     if (arg1->arg_type == ON_STACK || arg1->arg_type == STACK_EBP){
         if (arg1->arg_type == ON_STACK){
             //TODO
@@ -150,25 +155,39 @@ int add(){
     } else {
         a = num2.data.i;
     }
-    
+
     if (num3.arg_type == DOUBLE){
         b = num3.data.d;
     } else {
         b = num3.data.i;
     }
-    
+
     if (num1.arg_type == DOUBLE){
         num1.data.d = a + b;
     } else {
         num1.data.i = (int) (a + b);
     }
-    
+
     if (arg1->arg_type == STACK_EBP) {
-        stack_actualize(glob_stack,num1,arg1->data.i);
+        stack_actualize_from_ebp(glob_stack, num1, arg1->data.i);
     } else {
         *arg1 = num1;
     }
-    
+
     return 0;
 }
 
+
+void pop(){
+    glob_stack->used--;
+}
+
+void inst_goto() {
+    tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+
+    if (tmp_ptr->arg_type == INSTRUCTION){
+        glob_ins_list->active = tmp_ptr->data.instruction;
+    } else {
+        //TODO : load instruction from stack
+    }
+}
