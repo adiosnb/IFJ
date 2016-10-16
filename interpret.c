@@ -67,7 +67,7 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
     return 0;
 }
 
-void call() {
+void call() {       //TODO: return value
     tmp_var.data.instruction = glob_ins_list->active;
     tmp_var.arg_type = INSTRUCTION;
     stack_push(glob_stack, tmp_var);             //pushing current instruction
