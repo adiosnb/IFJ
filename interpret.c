@@ -38,20 +38,25 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
                 instruction_list->active = glob_ins_list->last;
                 break;
             case INST_CALL:
-                printf("CALL\n");
                 call();
                 break;
             case INST_RET:
                 ret();
-                printf("RET\n");
                 break;
             case INST_JMP:
                 inst_jump();
                 break;
             case INST_WRITE:
+                //nastavujeme ukazateln uz tu, pretoze sa funkcia vola rekurzivne a robilo by to bordel
                 tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
                 write();
                 printf("\n");
+                break;
+            case INST_READ_INT:
+                read_int();
+                break;
+            case INST_READ_DOUBLE:
+                read_double();
                 break;
             case INST_JNP:
                 jump_not();
@@ -91,13 +96,13 @@ void ret(){
     glob_stack->base = prev_base;
 }
 
-int write() {
+void write() {
     switch (tmp_ptr->arg_type) {
         case INTEGER:
             printf("%d",tmp_ptr->data.i);
             break;
         case DOUBLE:
-            printf("%g",tmp_ptr->data.d);
+            printf("%lf",tmp_ptr->data.d);
             break;
         case STRING:
             printf("%s",tmp_ptr->data.s);
@@ -113,7 +118,38 @@ int write() {
             write();
     }
 
-    return 0;
+}
+
+void read_int(){
+    int readed_int;
+    //nacita premennu do docasnej premennej
+    scanf("%d",&readed_int);
+
+    tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+
+    if (tmp_ptr->arg_type == STACK_EBP){
+        tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
+        tmp_var.data.i = readed_int;
+        stack_actualize_from_ebp(glob_stack,tmp_var,tmp_ptr->data.i);
+    } else {
+        tmp_ptr->data.i = readed_int;
+    }
+}
+
+void read_double(){
+    double readed_double;
+    //nacita premennu do docasnej premennej
+    scanf("%lf",&readed_double);
+
+    tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+
+    if (tmp_ptr->arg_type == STACK_EBP){
+        tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
+        tmp_var.data.d = readed_double;
+        stack_actualize_from_ebp(glob_stack,tmp_var,tmp_ptr->data.i);
+    } else {
+        tmp_ptr->data.d = readed_double;
+    }
 }
 
 int push(){
@@ -136,12 +172,14 @@ int add(){
 
     argument_var_t num1,num2,num3;
 
+    //nacita hodnoty z tabulky symbolov
     arg1 = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
     arg2 = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
     arg3 = stable_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
 
     double a,b;
 
+    //nacita hodnoty zo stacku ak su tam, ak nie su to globalne premenne a berie ich priamo z tabulky symbolov
     if (arg1->arg_type == STACK_EBP){
         num1 = stack_ebp_relative(glob_stack,arg1->data.i);
     } else {
@@ -160,6 +198,7 @@ int add(){
         num1 = *arg3;
     }
 
+    //nacitanie do lokalnych premennych
     if (num2.arg_type == DOUBLE){
         a = num2.data.d;
     } else {
@@ -172,6 +211,7 @@ int add(){
         b = num3.data.i;
     }
 
+    //zapisanie vysledku
     if (num1.arg_type == DOUBLE){
         num1.data.d = a + b;
     } else {

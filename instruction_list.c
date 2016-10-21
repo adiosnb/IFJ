@@ -68,7 +68,7 @@ instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum in
     if ((new_instruction = malloc(sizeof(instruction_item_t))) == NULL) {
         return NULL;
     }
-//TODO opravit
+
     new_instruction->instruction.addr1 = addr1;
     new_instruction->instruction.addr2 = addr2;
     new_instruction->instruction.addr3 = addr3;

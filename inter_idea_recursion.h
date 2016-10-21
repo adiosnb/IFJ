@@ -13,7 +13,7 @@
 
 //lokalne premenne
 #define LOCAL_C         301
-
+#define LOCAL_D         302
 
 //LABELS
 #define OVER_RECURSION  401
