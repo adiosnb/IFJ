@@ -35,23 +35,21 @@ void stack_destroy(stack_t **stack){
     free(*stack);
 }
 
-int stack_push(stack_t *stack, argument_var_t var) {
-    if (stack->size <= stack->used){
-        //resize(stack);
+int stack_push(stack_t **stack, argument_var_t var) {
+    if (stack[0]->size <= stack[0]->used){
+        resize(stack);
     }
 
-    //stack->data[stack->used].data_type = var.data_type;
-    stack->data[stack->used] = var; //TODO treba overit ci to je spravne, ak nie rozpisat to do ifov alebo switch
+    stack[0]->data[stack[0]->used] = var;
 
-    stack->used++;
+    stack[0]->used++;
     return 0;
 }
 
 argument_var_t stack_pop(stack_t *stack) {
     argument_var_t pop_var;
     if(stack->used > 0) {
-        pop_var = stack->data[stack->used -
-                              1]; //TODO treba overit ci to je spravne, ak nie rozpisat to do ifov alebo switch
+        pop_var = stack->data[stack->used - 1];
         stack->used--;
     } else pop_var.arg_type = -1;
 
@@ -80,4 +78,9 @@ void print_stack(stack_t *stack) {
         printf("%d : %d\n",i,stack->data[i].data.i);
     }
     printf("\n---------------------------------\n");
+}
+
+int resize(stack_t **stack) {
+    *stack = realloc(*stack,sizeof(stack[0]->used + MINIMAL_MALLOC_SIZE)); // TODO check
+    stack[0]->size += 2;
 }

@@ -121,10 +121,10 @@ int push(){
 
     if (tmp_ptr->arg_type == STACK_EBP) {
         tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
-        stack_push(glob_stack,tmp_var);
+        stack_push(&glob_stack,tmp_var);
     } else {
         tmp_var = *tmp_ptr;
-        stack_push(glob_stack,tmp_var);
+        stack_push(&glob_stack,tmp_var);
     }
 
 
@@ -207,8 +207,7 @@ void jump_not() {
         tmp_var = *tmp_ptr;
     }
 
-    if (tmp_var.data.i ==
-        0) {                                                            //ak je operand nulovy takze false, urobi sa skok
+    if (tmp_var.data.i == 0) {                                                            //ak je operand nulovy takze false, urobi sa skok
         tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,
                                  glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
         glob_ins_list->active = tmp_ptr->data.instruction;                               //priradi ukazatel do listu, takze zmeni tok programu
