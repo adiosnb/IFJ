@@ -81,6 +81,6 @@ void print_stack(stack_t *stack) {
 }
 
 int resize(stack_t **stack) {
-    *stack = realloc(*stack,sizeof(stack[0]->used + MINIMAL_MALLOC_SIZE)); // TODO check
-    stack[0]->size += 2;
+    *stack = realloc(*stack,sizeof(stack_t) + sizeof(argument_var_t)*(stack[0]->used + MINIMAL_MALLOC_SIZE));
+    stack[0]->size += MINIMAL_MALLOC_SIZE;
 }

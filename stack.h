@@ -15,7 +15,7 @@
 #include "instruction_list.h"
 
 //minimalna velkost pre alokaciu
-#define MINIMAL_MALLOC_SIZE 1024
+#define MINIMAL_MALLOC_SIZE 2048
 
 typedef struct {
     int size;

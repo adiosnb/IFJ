@@ -28,6 +28,12 @@ int main() {
         stable_add_var(i, &tmp_var, sym_tab);
     }
 
+
+    for (int i = 0; i< 5000000; i++){
+        create_and_add_instruction(i_list, INST_PUSH, 0, 0, 0);//push cisla 5
+    }
+
+
     //definicia argumentov
     tmp_var.arg_type = STACK_EBP;
     tmp_var.data.i = -3;
