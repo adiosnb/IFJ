@@ -3,26 +3,33 @@
 
 // Types of lexemes (token lexical classes)
 enum	tokenTypes {
+	// ==   !=    <    >   <=   >=    +    -    *    /   ID    (    )
+	// start of expr tokens
+	TOK_EQ,			// ==
+	TOK_NOTEQ,		// !=
+	TOK_LESS,		// <
+	TOK_GREATER,		// >
+	TOK_LE,			// <=
+	TOK_GE,			// >=
+	TOK_PLUS,		// +
+	TOK_MINUS,		// -
+	TOK_MUL,		// *
+	TOK_DIV,		// /
 	TOK_ID,			// identifier
+	TOK_LEFT_PAR,		// (
+	TOK_RIGHT_PAR,		// )
+	// end of expr tokens
 	TOK_SPECIAL_ID,		// full identifier
 	TOK_KEYWORD,		// reserved keyword
-	TOK_OPERATOR,		// operator (.+- etc)
+	//TOK_OPERATOR,		// operator (.+- etc)
 	TOK_LITERAL,		// text constant
 	TOK_CONST,		// integer constant
 	TOK_DOUBLECONST, 	// real constant
 	TOK_DELIM,		// ;
 	TOK_LIST_DELIM,		// ,
-	TOK_LEFT_PAR,		// (
-	TOK_RIGHT_PAR,		// )
 	TOK_LEFT_BRACE,		// {
 	TOK_RIGHT_BRACE,	// } 
 	TOK_ASSIGN,		// =
-	TOK_EQ,			// ==
-	TOK_GE,			// >=
-	TOK_LE,			// <=
-	TOK_NOTEQ,		// !=
-	TOK_LESS,		// <
-	TOK_GREATER,		// >
 	TOK_EOF};		// end-of-file
 
 enum returnCodes { ERROR, OK};

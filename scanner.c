@@ -338,7 +338,24 @@ int	process_number()
 
 int	process_operator(char op)
 {
-	g_lastToken.type = TOK_OPERATOR;
+	switch(op)
+	{
+		case '*':
+			g_lastToken.type = TOK_MUL;		
+			break;
+		case '/':
+			g_lastToken.type = TOK_DIV;		
+			break;
+		case '+':
+			g_lastToken.type = TOK_PLUS;		
+			break;
+		case '-':
+			g_lastToken.type = TOK_MINUS;		
+			break;
+		default:
+			fprintf(stderr,"Unknown operator '%c'\n",op);
+			return ERROR;
+	}
 	g_lastToken.data.op= op;
 	return OK;
 }
@@ -499,7 +516,8 @@ int	getToken()
 						break;
 					default:
 						// it was an operator /
-						return process_operator('*');
+						ungetc(c,fHandle);
+						return process_operator('/');
 				}
 				break;
 			// math operators

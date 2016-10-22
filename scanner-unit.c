@@ -16,9 +16,10 @@ int main(int argc, char* argv[])
 			printf("%3d. ",count);
 			switch(g_lastToken.type)
 			{
-				case TOK_OPERATOR:
+				/*case TOK_OPERATOR:
 					printf("Operator %c\n",g_lastToken.data.op);
 					break;
+				*/
 				case TOK_ID:
 					printf("ID %s\n",g_lastToken.data.string);
 					break;
@@ -78,6 +79,18 @@ int main(int argc, char* argv[])
 					break;
 				case TOK_GREATER:	// >
 					printf(">\n");
+					break;
+				case TOK_MUL:		// *
+					printf("*\n");
+					break;
+				case TOK_DIV:		// 
+					printf("/\n");
+					break;
+				case TOK_PLUS:		// +
+					printf("+\n");
+					break;
+				case TOK_MINUS:		// >
+					printf("-\n");
 					break;
 				default:
 					printf("Unk token with type %d\n",g_lastToken.type);
