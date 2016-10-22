@@ -1,5 +1,12 @@
 #include "scanner.h"
 
+char* debug_keyword(int type)
+{
+	static char* keywords[] = {"boolean","break","class","continue","do","double",
+	"else","false","for","if","int","return","String","static","true","void","while",NULL};
+	return keywords[type];
+}
+
 int main(int argc, char* argv[])
 {
 	char name[256] = "source.java";
@@ -27,7 +34,7 @@ int main(int argc, char* argv[])
 					printf("SPECIALID %s\n",g_lastToken.data.string);
 					break;
 				case TOK_KEYWORD:
-					printf("KEYWORD %s\n",g_lastToken.data.string);
+					printf("KEYWORD %s\n", debug_keyword(g_lastToken.data.integer));
 					break;
 				case TOK_CONST:
 					printf("NUM %d\n",g_lastToken.data.integer);

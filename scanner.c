@@ -3,7 +3,7 @@
 #include <string.h>
 #include "scanner.h"
 
-FILE*	fHandle;
+FILE*	fHandle = NULL;
 
 int	scanner_openFile(char* fileName)
 {
@@ -143,7 +143,11 @@ int	process_literal()
 
 // Utility function
 // TODO: implement a faster way of searching for strings (tree)
-char*	isKeyword(const char* str)
+//
+
+// Returns 1 if ID is an keyword (type of keyword is returned in 2nd param)
+// Returns 0 otherwise
+int	isKeyword(const char* str,int* typeOfKeyword)
 {
 	static char* keywords[] = {"boolean","break","class","continue","do","double",
 	"else","false","for","if","int","return","String","static","true","void","while",NULL};
@@ -151,9 +155,12 @@ char*	isKeyword(const char* str)
 	for(int i = 0; keywords[i] != NULL; i++)
 	{
 		if(strcmp(keywords[i],str) == 0)
-			return keywords[i];
+		{
+			(*typeOfKeyword) = i;
+			return 1;
+		}
 	}
-	return NULL;
+	return 0;
 }
 
 int	process_identifier()
@@ -209,11 +216,12 @@ int	process_identifier()
 				// verify if string isn't a keyword
 				if(!isNonAlpha)
 				{
-					char* key = isKeyword(first);
-					if(key)
+					int typeOfKeyword;
+					// if ID is in set of keywords
+					if(isKeyword(first,&typeOfKeyword))
 					{
 						g_lastToken.type = TOK_KEYWORD;
-						g_lastToken.data.string = createString(first);
+						g_lastToken.data.integer = typeOfKeyword; 
 						return OK;
 					}
 					
