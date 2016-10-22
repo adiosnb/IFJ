@@ -142,32 +142,20 @@ int add(){
 
     double a,b;
 
-    if (arg1->arg_type == ON_STACK || arg1->arg_type == STACK_EBP){
-        if (arg1->arg_type == ON_STACK){
-            //TODO
-        } else {
-            num1 = stack_ebp_relative(glob_stack,arg1->data.i);
-        }
+    if (arg1->arg_type == STACK_EBP){
+        num1 = stack_ebp_relative(glob_stack,arg1->data.i);
     } else {
         num1 = *arg1;
     }
 
-    if (arg2->arg_type == ON_STACK || arg2->arg_type == STACK_EBP){
-        if (arg2->arg_type == ON_STACK){
-            //TODO
-        } else {
-            num2 = stack_ebp_relative(glob_stack,arg2->data.i);
-        }
+    if (arg2->arg_type == STACK_EBP){
+        num2 = stack_ebp_relative(glob_stack,arg2->data.i);
     } else {
         num1 = *arg2;
     }
 
-    if (arg3->arg_type == ON_STACK || arg3->arg_type == STACK_EBP){
-        if (arg3->arg_type == ON_STACK){
-            //TODO
-        } else {
-            num3 = stack_ebp_relative(glob_stack,arg3->data.i);
-        }
+    if (arg3->arg_type == STACK_EBP){
+        num3 = stack_ebp_relative(glob_stack,arg3->data.i);
     } else {
         num1 = *arg3;
     }
