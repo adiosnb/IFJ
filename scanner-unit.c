@@ -1,5 +1,12 @@
 #include "scanner.h"
 
+char* debug_keyword(int type)
+{
+	static char* keywords[] = {"boolean","break","class","continue","do","double",
+	"else","false","for","if","int","return","String","static","true","void","while",NULL};
+	return keywords[type];
+}
+
 int main(int argc, char* argv[])
 {
 	char name[256] = "source.java";
@@ -16,9 +23,10 @@ int main(int argc, char* argv[])
 			printf("%3d. ",count);
 			switch(g_lastToken.type)
 			{
-				case TOK_OPERATOR:
+				/*case TOK_OPERATOR:
 					printf("Operator %c\n",g_lastToken.data.op);
 					break;
+				*/
 				case TOK_ID:
 					printf("ID %s\n",g_lastToken.data.string);
 					break;
@@ -26,7 +34,7 @@ int main(int argc, char* argv[])
 					printf("SPECIALID %s\n",g_lastToken.data.string);
 					break;
 				case TOK_KEYWORD:
-					printf("KEYWORD %s\n",g_lastToken.data.string);
+					printf("KEYWORD %s\n", debug_keyword(g_lastToken.data.integer));
 					break;
 				case TOK_CONST:
 					printf("NUM %d\n",g_lastToken.data.integer);
@@ -78,6 +86,18 @@ int main(int argc, char* argv[])
 					break;
 				case TOK_GREATER:	// >
 					printf(">\n");
+					break;
+				case TOK_MUL:		// *
+					printf("*\n");
+					break;
+				case TOK_DIV:		// 
+					printf("/\n");
+					break;
+				case TOK_PLUS:		// +
+					printf("+\n");
+					break;
+				case TOK_MINUS:		// >
+					printf("-\n");
 					break;
 				default:
 					printf("Unk token with type %d\n",g_lastToken.type);

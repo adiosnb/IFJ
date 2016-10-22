@@ -3,7 +3,7 @@
 #include <string.h>
 #include "scanner.h"
 
-FILE*	fHandle;
+FILE*	fHandle = NULL;
 
 int	scanner_openFile(char* fileName)
 {
@@ -84,8 +84,7 @@ int	process_literal()
 			case SPECIAL:
 				switch(c)
 				{
-					case '0': case '1': case '2': case '3': case '4': case '5': case '6':
-					case '7':
+					case '0': case '1': case '2': case '3': 
 						ungetc(c,fHandle);
 						state = OCTAL;
 						break;
@@ -144,7 +143,11 @@ int	process_literal()
 
 // Utility function
 // TODO: implement a faster way of searching for strings (tree)
-char*	isKeyword(const char* str)
+//
+
+// Returns 1 if ID is an keyword (type of keyword is returned in 2nd param)
+// Returns 0 otherwise
+int	isKeyword(const char* str,int* typeOfKeyword)
 {
 	static char* keywords[] = {"boolean","break","class","continue","do","double",
 	"else","false","for","if","int","return","String","static","true","void","while",NULL};
@@ -152,9 +155,12 @@ char*	isKeyword(const char* str)
 	for(int i = 0; keywords[i] != NULL; i++)
 	{
 		if(strcmp(keywords[i],str) == 0)
-			return keywords[i];
+		{
+			(*typeOfKeyword) = i;
+			return 1;
+		}
 	}
-	return NULL;
+	return 0;
 }
 
 int	process_identifier()
@@ -210,11 +216,12 @@ int	process_identifier()
 				// verify if string isn't a keyword
 				if(!isNonAlpha)
 				{
-					char* key = isKeyword(first);
-					if(key)
+					int typeOfKeyword;
+					// if ID is in set of keywords
+					if(isKeyword(first,&typeOfKeyword))
 					{
 						g_lastToken.type = TOK_KEYWORD;
-						g_lastToken.data.string = createString(first);
+						g_lastToken.data.integer = typeOfKeyword; 
 						return OK;
 					}
 					
@@ -339,7 +346,24 @@ int	process_number()
 
 int	process_operator(char op)
 {
-	g_lastToken.type = TOK_OPERATOR;
+	switch(op)
+	{
+		case '*':
+			g_lastToken.type = TOK_MUL;		
+			break;
+		case '/':
+			g_lastToken.type = TOK_DIV;		
+			break;
+		case '+':
+			g_lastToken.type = TOK_PLUS;		
+			break;
+		case '-':
+			g_lastToken.type = TOK_MINUS;		
+			break;
+		default:
+			fprintf(stderr,"Unknown operator '%c'\n",op);
+			return ERROR;
+	}
 	g_lastToken.data.op= op;
 	return OK;
 }
@@ -500,7 +524,8 @@ int	getToken()
 						break;
 					default:
 						// it was an operator /
-						return process_operator('*');
+						ungetc(c,fHandle);
+						return process_operator('/');
 				}
 				break;
 			// math operators
