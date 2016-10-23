@@ -21,6 +21,7 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_DIV,           //TODO
     INST_PUSH,          //var to push       ---             ---
     INST_POP,           //no inputs
+    INST_STORE,         //TODO
     INST_JMP,           //addr to jump      ---             ---
     INST_JNP,           //addr to jump      value for equation  ---
     INST_CALL,          //addr of func      where to save return value or nothing     ---
