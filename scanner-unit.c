@@ -16,12 +16,13 @@ int main(int argc, char* argv[])
 	int result = scanner_openFile(name);
 	if(result)
 	{
-		while(getToken() != ERROR)
+		int typeOfToken;
+		while((typeOfToken= getToken()) != TOK_ERROR)
 		{
 			static int count = 0;
 			count++;
 			printf("%3d. ",count);
-			switch(g_lastToken.type)
+			switch(typeOfToken)
 			{
 				/*case TOK_OPERATOR:
 					printf("Operator %c\n",g_lastToken.data.op);

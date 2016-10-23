@@ -75,7 +75,9 @@ enum	tokenTypes {
 	TOK_LEFT_BRACE,		// {
 	TOK_RIGHT_BRACE,	// } 
 	TOK_ASSIGN,		// =
-	TOK_EOF};		// end-of-file
+	TOK_EOF,
+	TOK_ERROR
+	};		// end-of-file
 
 
 /*---------------------------------------------------------------------------*/

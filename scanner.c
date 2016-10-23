@@ -70,7 +70,7 @@ int	process_literal()
 					g_lastToken.type = TOK_LITERAL;
 					g_lastToken.data.string = createString(tempString);
 					// TODO: add pointer to symbol
-					return OK;
+					return TOK_LITERAL;
 
 				} else if(c == '\\')
 				{
@@ -105,7 +105,7 @@ int	process_literal()
 
 						// TODO: report an error - invalid escape sequence
 						fprintf(stderr, "Error while reading literal\n");
-						return ERROR;
+						return TOK_ERROR;
 						break;
 				}
 				break;
@@ -116,7 +116,7 @@ int	process_literal()
 					// convert ASCII char to a number of <0,9>
 					int digit = c-'0';
 					if(digit > 7)
-						return ERROR;
+						return TOK_ERROR;
 					// and multiply it with N power of 8
 					// => conversing octal-to-decal with one buffer sum 
 					sum += octBase*digit;
@@ -133,12 +133,12 @@ int	process_literal()
 						state = NORMAL;
 					}
 				} else {
-					return ERROR;
+					return TOK_ERROR;
 				}	
 				break;
 		}
 	}
-	return OK;
+	return TOK_ERROR;
 }
 
 // Utility function
@@ -201,7 +201,7 @@ int	process_identifier()
 					// already processing the second part of ID
 					// > lex. error
 					fprintf(stderr,"Error: Multiple '.' in identifier.\n");
-					return ERROR;
+					return TOK_ERROR;
 				}
 				i = 0;
 				continue;
@@ -222,7 +222,7 @@ int	process_identifier()
 					{
 						g_lastToken.type = TOK_KEYWORD;
 						g_lastToken.data.integer = typeOfKeyword; 
-						return OK;
+						return TOK_KEYWORD;
 					}
 					
 				}
@@ -241,14 +241,14 @@ int	process_identifier()
 				}
 				else {
 					// error in the second part of ID
-					return ERROR;
+					return TOK_ERROR;
 				}
 			} else 
 				g_lastToken.data.string = createString(first);
-			return OK;
+				return g_lastToken.type;
 		}
 	}
-	return ERROR;
+	return TOK_ERROR;
 	
 }
 
@@ -277,7 +277,7 @@ int	process_number()
 					ungetc(c,fHandle);
 					g_lastToken.type = TOK_CONST;
 					g_lastToken.data.integer = atoi(buff);
-					return OK;
+					return TOK_CONST;
 				}
 				break;
 			case DOT:
@@ -287,7 +287,7 @@ int	process_number()
 					state = DOUBLE;
 				} else {
 					// emit error, number ends with '.' without any following digit
-					return ERROR;
+					return TOK_ERROR;
 				}
 				break;
 			case DOUBLE:
@@ -297,7 +297,7 @@ int	process_number()
 					ungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
 					g_lastToken.data.real= atof(buff);
-					return OK;
+					return TOK_DOUBLECONST;
 				} else {
 					buff[i++] = c;	
 					if(tolower(c) == 'e')
@@ -314,7 +314,7 @@ int	process_number()
 					buff[i++] = c;
 					state = EXP_RADIX;
 				} else {
-					return ERROR;
+					return TOK_ERROR;
 				}
 				break;
 			case EXP_SIGN:
@@ -323,7 +323,7 @@ int	process_number()
 					buff[i++] = c;
 					state = EXP_RADIX;
 				} else {
-					return ERROR;
+					return TOK_ERROR;
 				}
 				break;
 			case EXP_RADIX:
@@ -335,13 +335,13 @@ int	process_number()
 					ungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
 					g_lastToken.data.real= atof(buff);
-					return OK;
+					return TOK_DOUBLECONST;
 				}
 				break;
 				
 		}
 	}
-	return ERROR;
+	return TOK_ERROR;
 }
 
 int	process_operator(char op)
@@ -362,10 +362,10 @@ int	process_operator(char op)
 			break;
 		default:
 			fprintf(stderr,"Unknown operator '%c'\n",op);
-			return ERROR;
+			return TOK_ERROR;
 	}
 	g_lastToken.data.op= op;
-	return OK;
+	return g_lastToken.type;
 }
 
 int	process_relation(char c)
@@ -373,7 +373,7 @@ int	process_relation(char c)
 	int nextc = fgetc(fHandle);
 	// TODO: what exactly should we do upon receiving an EOF ?
 	if(nextc == EOF)
-		return ERROR;
+		return TOK_ERROR;
 	switch(c)
 	{
 		case '=':
@@ -385,14 +385,14 @@ int	process_relation(char c)
 				ungetc(nextc,fHandle);
 				g_lastToken.type = TOK_ASSIGN;
 			}
-			return OK;
+			return g_lastToken.type;
 			break;
 		case '!':
 			if(nextc == '=')
 				g_lastToken.type = TOK_NOTEQ;
 			else
-				return ERROR;
-			return OK;
+				return TOK_ERROR;
+			return g_lastToken.type;
 			break;
 		case '<':
 			if(nextc == '=')
@@ -400,9 +400,8 @@ int	process_relation(char c)
 			else {
 				ungetc(nextc,fHandle);
 				g_lastToken.type = TOK_LESS;
-				return OK;
 			}
-			return OK;
+			return g_lastToken.type;
 			break;
 		case '>':
 			if(nextc == '=')
@@ -411,12 +410,12 @@ int	process_relation(char c)
 				ungetc(nextc,fHandle);
 				g_lastToken.type = TOK_GREATER;
 			}
-			return OK;
+			return g_lastToken.type;
 			break;
 		default:
 			break;	
 	}
-	return ERROR;
+	return TOK_ERROR;
 }
 // maps ASCII symbols to token types
 int	process_symbol(char op)
@@ -443,10 +442,10 @@ int	process_symbol(char op)
 			type = TOK_LIST_DELIM;
 			break;
 		default:
-			return ERROR;
+			return TOK_ERROR;
 	}		
 	g_lastToken.type = type;
-	return OK;
+	return g_lastToken.type;
 }
 
 // isBlock 	if func should process block comment
@@ -464,7 +463,7 @@ int	process_comments(int isBlock)
 			case LINE:
 				// loop through text untill the end of line 
 				if(c == '\n')
-					return OK;
+					return g_lastToken.type;
 				break;
 			case BLOCK:
 				// either await a part of commentary or
@@ -477,7 +476,7 @@ int	process_comments(int isBlock)
 						break;
 					case FOR_END:
 						if(c == '/')
-							return OK;
+							return g_lastToken.type;
 						else if(c == '*')
 							break;
 						else
@@ -486,7 +485,7 @@ int	process_comments(int isBlock)
 				}
 		}
 	}
-	return ERROR;	
+	return TOK_ERROR;	
 }
 
 int	getToken()
@@ -555,18 +554,18 @@ int	getToken()
 					ungetc(c,fHandle);
 					return process_number();
 				} else {
-					fprintf(stderr,"Error in scanner\n");
-					return ERROR;
+					fprintf(stderr,"Error: No token defined for 0x%X character\n",c);
+					return TOK_ERROR;
 				}
 				break;
 				
 		}
 	}
+	// if there has already been an EOF token, report ERROR
 	if(g_lastToken.type == TOK_EOF)
-		return ERROR;
-	else {
-		g_lastToken.type = TOK_EOF;
-		return OK;
-	}
-	return OK;
+		return TOK_ERROR;
+
+	// report the first occurence of EOF
+	g_lastToken.type = TOK_EOF;
+	return TOK_EOF;
 }
