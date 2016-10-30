@@ -98,7 +98,7 @@ int statement()
 					return throw("Expected ;");
 				return SYN_OK;
 			break;
-			// statement->while ( EXPR ) ST
+			// statement->while ( EXPR ) COMPOUND 
 			case KW_WHILE:
 				if(!getType(TOK_LEFT_PAR))
 					return throw("Expecting ( after while");
@@ -109,7 +109,7 @@ int statement()
 				if(!isType(TOK_RIGHT_PAR))
 					return throw("Expecting ) after while");
 				getToken();
-				return statement();
+				return comp();
 				break;	
 			// statement->if(EXPR) COMPOUND else COMPOUND;
 			case KW_IF:
@@ -137,6 +137,7 @@ int statement()
 		}
 		return throw("Unexpected keyword ");
 	}
+	// TODO: statement->id = id();
 	// statement->id = EXPR;
 	// statement->id ( ) ; 
 	else if(isType(TOK_ID) || isType(TOK_SPECIAL_ID))
