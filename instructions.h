@@ -17,8 +17,8 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_NOP,           //no inputs
     INST_ADD,           // destination      operand1        operand2
     INST_SUB,           // destination      operand1        operand2
-    INST_MUL,           //TODO
-    INST_DIV,           //TODO
+    INST_MUL,           // destination      operand1        operand2
+    INST_DIV,           // destination      operand1        operand2
     INST_PUSH,          //var to push       ---             ---
     INST_POP,           //no inputs
     INST_STORE,         //TODO
