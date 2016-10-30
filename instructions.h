@@ -23,7 +23,8 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_POP,           //no inputs
     INST_STORE,         //TODO
     INST_JMP,           //addr to jump      ---             ---
-    INST_JEQ,           //TODO
+    INST_JEQ,           //ddr to jump       value           value
+    INST_JNEQ,          //ddr to jump       value           value
     INST_JZ,            //addr to jump      value for equation  ---
     INST_CALL,          //addr of func      where to save return value or nothing     ---
     INST_RET,           //value for return  ---             ---
