@@ -28,6 +28,9 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_ADD:
                 add();
                 break;
+            case INST_SUB:
+                sub();
+                break;
             case INST_PUSH:
                 push();
                 break;
@@ -167,7 +170,7 @@ int push(){
     return 0;
 }
 
-int add(){
+void add(){
     argument_var_t  *arg1,*arg2,*arg3;
 
     argument_var_t num1,num2,num3;
@@ -189,13 +192,13 @@ int add(){
     if (arg2->arg_type == STACK_EBP){
         num2 = stack_ebp_relative(glob_stack,arg2->data.i);
     } else {
-        num1 = *arg2;
+        num2 = *arg2;
     }
 
     if (arg3->arg_type == STACK_EBP){
         num3 = stack_ebp_relative(glob_stack,arg3->data.i);
     } else {
-        num1 = *arg3;
+        num2 = *arg3;
     }
 
     //nacitanie do lokalnych premennych
@@ -223,8 +226,64 @@ int add(){
     } else {
         *arg1 = num1;
     }
+}
 
-    return 0;
+void sub(){
+    argument_var_t  *arg1,*arg2,*arg3;
+
+    argument_var_t num1,num2,num3;
+
+    //nacita hodnoty z tabulky symbolov
+    arg1 = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    arg2 = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+    arg3 = stable_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+
+    double a,b;
+
+    //nacita hodnoty zo stacku ak su tam, ak nie su to globalne premenne a berie ich priamo z tabulky symbolov
+    if (arg1->arg_type == STACK_EBP){
+        num1 = stack_ebp_relative(glob_stack,arg1->data.i);
+    } else {
+        num1 = *arg1;
+    }
+
+    if (arg2->arg_type == STACK_EBP){
+        num2 = stack_ebp_relative(glob_stack,arg2->data.i);
+    } else {
+        num2 = *arg2;
+    }
+
+    if (arg3->arg_type == STACK_EBP){
+        num3 = stack_ebp_relative(glob_stack,arg3->data.i);
+    } else {
+        num3 = *arg3;
+    }
+
+    //nacitanie do lokalnych premennych
+    if (num2.arg_type == DOUBLE){
+        a = num2.data.d;
+    } else {
+        a = num2.data.i;
+    }
+
+    if (num3.arg_type == DOUBLE){
+        b = num3.data.d;
+    } else {
+        b = num3.data.i;
+    }
+
+    //zapisanie vysledku
+    if (num1.arg_type == DOUBLE){
+        num1.data.d = a - b;
+    } else {
+        num1.data.i = (int) (a - b);
+    }
+
+    if (arg1->arg_type == STACK_EBP) {
+        stack_actualize_from_ebp(glob_stack, num1, arg1->data.i);
+    } else {
+        *arg1 = num1;
+    }
 }
 
 

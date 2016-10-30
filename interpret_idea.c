@@ -73,6 +73,8 @@ int main(){
     create_and_add_instruction(i_list,INST_PUSH,9,0,0);
     create_and_add_instruction(i_list,INST_WRITE,24,0,0);
 
+    create_and_add_instruction(i_list,INST_SUB,10,6,3);
+    create_and_add_instruction(i_list,INST_WRITE,10,0,0);
 
     create_and_add_instruction(i_list, INST_HALT, 0, 0, 0); //koniec porgramu
 

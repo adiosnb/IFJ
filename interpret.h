@@ -6,8 +6,8 @@
 
 int interpret(instruction_list_t *instruction_list, stab_t *stable);
 
-int add();      //DEST OP1 OP2
-int sub();      //dest op1 op2
+void add();      //DEST OP1 OP2
+void sub();      //dest op1 op2
 void write();    //src
 void read_int();//dst
 void read_double();//dst
