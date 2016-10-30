@@ -27,7 +27,7 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_JEQ,           //TODO
     INST_JZ,            //TODO
     INST_CALL,          //addr of func      where to save return value or nothing     ---
-    INST_RET,           //no inputs
+    INST_RET,           //value for return  ---             ---
     INST_WRITE,         //source            ---             ---
     INST_READ_INT,      //destination       ---             ---
     INST_READ_DOUBLE,   //destination       ---             ---
