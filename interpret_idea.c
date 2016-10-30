@@ -46,7 +46,7 @@ int main(){
     create_and_add_instruction(i_list, INST_PUSH, 0, 0, 0);                 //lokalna premenna
     create_and_add_instruction(i_list,INST_ADD,25,30,31);
     create_and_add_instruction(i_list,INST_WRITE,25,0,0);
-    create_and_add_instruction(i_list, INST_RET, 0, 0, 0);                  //koniec funkcie
+    create_and_add_instruction(i_list, INST_RET, 2, 0, 0);                  //koniec funkcie
 
 
     ptr_inst = create_and_add_instruction(i_list, INST_LABEL, 0, 0, 0);      //predavanie premennych hodnotov
@@ -60,10 +60,10 @@ int main(){
 
     create_and_add_instruction(i_list, INST_PUSH, 9, 0, 0);
     create_and_add_instruction(i_list, INST_PUSH, 9, 0, 0);                 //predavanie premennych hodnotov
-    create_and_add_instruction(i_list, INST_CALL, 100, 0, 0);                 //volanie funkcie
+    create_and_add_instruction(i_list, INST_CALL, 100, 19, 0);                 //volanie funkcie
     create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
     create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
-
+    create_and_add_instruction(i_list,INST_WRITE,19,0,0);
 
 
     create_and_add_instruction(i_list,INST_WRITE,2,0,0);                    //vypisanie premennej v tabulke symbolov
@@ -73,6 +73,14 @@ int main(){
     create_and_add_instruction(i_list,INST_PUSH,9,0,0);
     create_and_add_instruction(i_list,INST_WRITE,24,0,0);
 
+    create_and_add_instruction(i_list,INST_SUB,10,6,3);
+    create_and_add_instruction(i_list,INST_WRITE,10,0,0);
+
+    create_and_add_instruction(i_list,INST_MUL,10,6,3);
+    create_and_add_instruction(i_list,INST_WRITE,10,0,0);
+
+    create_and_add_instruction(i_list,INST_DIV,10,6,4);
+    create_and_add_instruction(i_list,INST_WRITE,10,0,0);
 
     create_and_add_instruction(i_list, INST_HALT, 0, 0, 0); //koniec porgramu
 

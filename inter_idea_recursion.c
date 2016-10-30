@@ -58,7 +58,7 @@ int main() {
     create_and_add_instruction(i_list, INST_PUSH, 0, 0, 0);//lokalna premenna
     create_and_add_instruction(i_list, INST_ADD, LOCAL_C, ARG_A, ARG_B);
     create_and_add_instruction(i_list, INST_WRITE, LOCAL_C, 0, 0);
-    create_and_add_instruction(i_list, INST_JNP, OVER_RECURSION, LOCAL_C, 0);
+    create_and_add_instruction(i_list, INST_JZ, OVER_RECURSION, LOCAL_C, 0);
 
     //rekurzivne volanie funkcie
     create_and_add_instruction(i_list, INST_PUSH, LOCAL_C, 0, 0);//push cisla 5

@@ -28,6 +28,15 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_ADD:
                 add();
                 break;
+            case INST_SUB:
+                sub();
+                break;
+            case INST_MUL:
+                mul();
+                break;
+            case INST_DIV:
+                divisoin();
+                break;
             case INST_PUSH:
                 push();
                 break;
@@ -58,8 +67,8 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_READ_DOUBLE:
                 read_double();
                 break;
-            case INST_JNP:
-                jump_not();
+            case INST_JZ:
+                jump_zero();
                 break;
 
 
@@ -72,7 +81,7 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
     return 0;
 }
 
-void call() {       //TODO: return value
+void call() {
     tmp_var.data.instruction = glob_ins_list->active;
     tmp_var.arg_type = INSTRUCTION;
     stack_push(&glob_stack, tmp_var);             //pushing current instruction
@@ -87,13 +96,34 @@ void call() {       //TODO: return value
 
 void ret(){
     int prev_base;
+    argument_var_t *return_value, *destination;
 
+    //pristup k hodnotam pred volanim funckie
     tmp_var = stack_ebp_relative(glob_stack, 0);
     prev_base = tmp_var.data.i;
+
+    //ziskanie hodnoty ktora sa predava z funkcie
+    return_value = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    if (return_value->arg_type == STACK_EBP){
+        return_value = stack_ebp_relative_ptr(glob_stack,return_value->data.i);
+    }
+
+    //prepisanie aktualnych hodnot riadeni interpretu
     tmp_var = stack_ebp_relative(glob_stack, -1);
     glob_ins_list->active = tmp_var.data.instruction;
+
+    //upratanie zasobnik apo volani funckie
     glob_stack->used = glob_stack->base;
     glob_stack->base = prev_base;
+
+    //ziskanie polohykam zapisat navratovu hodnotu a jej zapis
+    destination = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+    if (destination->arg_type == STACK_EBP) {
+        stack_actualize_from_ebp(glob_stack,*return_value,destination->data.i);
+    } else {
+        *destination = *return_value;   //TODO check
+    }
+
 }
 
 void write() {
@@ -152,7 +182,7 @@ void read_double(){
     }
 }
 
-int push(){
+void push(){
     tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
 
     if (tmp_ptr->arg_type == STACK_EBP) {
@@ -162,12 +192,9 @@ int push(){
         tmp_var = *tmp_ptr;
         stack_push(&glob_stack,tmp_var);
     }
-
-
-    return 0;
 }
 
-int add(){
+void add(){
     argument_var_t  *arg1,*arg2,*arg3;
 
     argument_var_t num1,num2,num3;
@@ -189,13 +216,13 @@ int add(){
     if (arg2->arg_type == STACK_EBP){
         num2 = stack_ebp_relative(glob_stack,arg2->data.i);
     } else {
-        num1 = *arg2;
+        num2 = *arg2;
     }
 
     if (arg3->arg_type == STACK_EBP){
         num3 = stack_ebp_relative(glob_stack,arg3->data.i);
     } else {
-        num1 = *arg3;
+        num2 = *arg3;
     }
 
     //nacitanie do lokalnych premennych
@@ -223,10 +250,181 @@ int add(){
     } else {
         *arg1 = num1;
     }
-
-    return 0;
 }
 
+void sub(){
+    argument_var_t  *arg1,*arg2,*arg3;
+
+    argument_var_t num1,num2,num3;
+
+    //nacita hodnoty z tabulky symbolov
+    arg1 = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    arg2 = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+    arg3 = stable_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+
+    double a,b;
+
+    //nacita hodnoty zo stacku ak su tam, ak nie su to globalne premenne a berie ich priamo z tabulky symbolov
+    if (arg1->arg_type == STACK_EBP){
+        num1 = stack_ebp_relative(glob_stack,arg1->data.i);
+    } else {
+        num1 = *arg1;
+    }
+
+    if (arg2->arg_type == STACK_EBP){
+        num2 = stack_ebp_relative(glob_stack,arg2->data.i);
+    } else {
+        num2 = *arg2;
+    }
+
+    if (arg3->arg_type == STACK_EBP){
+        num3 = stack_ebp_relative(glob_stack,arg3->data.i);
+    } else {
+        num3 = *arg3;
+    }
+
+    //nacitanie do lokalnych premennych
+    if (num2.arg_type == DOUBLE){
+        a = num2.data.d;
+    } else {
+        a = num2.data.i;
+    }
+
+    if (num3.arg_type == DOUBLE){
+        b = num3.data.d;
+    } else {
+        b = num3.data.i;
+    }
+
+    //zapisanie vysledku
+    if (num1.arg_type == DOUBLE){
+        num1.data.d = a - b;
+    } else {
+        num1.data.i = (int) (a - b);
+    }
+
+    if (arg1->arg_type == STACK_EBP) {
+        stack_actualize_from_ebp(glob_stack, num1, arg1->data.i);
+    } else {
+        *arg1 = num1;
+    }
+}
+
+void mul(){
+    argument_var_t  *arg1,*arg2,*arg3;
+
+    argument_var_t num1,num2,num3;
+
+    //nacita hodnoty z tabulky symbolov
+    arg1 = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    arg2 = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+    arg3 = stable_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+
+    double a,b;
+
+    //nacita hodnoty zo stacku ak su tam, ak nie su to globalne premenne a berie ich priamo z tabulky symbolov
+    if (arg1->arg_type == STACK_EBP){
+        num1 = stack_ebp_relative(glob_stack,arg1->data.i);
+    } else {
+        num1 = *arg1;
+    }
+
+    if (arg2->arg_type == STACK_EBP){
+        num2 = stack_ebp_relative(glob_stack,arg2->data.i);
+    } else {
+        num2 = *arg2;
+    }
+
+    if (arg3->arg_type == STACK_EBP){
+        num3 = stack_ebp_relative(glob_stack,arg3->data.i);
+    } else {
+        num3 = *arg3;
+    }
+
+    //nacitanie do lokalnych premennych
+    if (num2.arg_type == DOUBLE){
+        a = num2.data.d;
+    } else {
+        a = num2.data.i;
+    }
+
+    if (num3.arg_type == DOUBLE){
+        b = num3.data.d;
+    } else {
+        b = num3.data.i;
+    }
+
+    //zapisanie vysledku
+    if (num1.arg_type == DOUBLE){
+        num1.data.d = a * b;
+    } else {
+        num1.data.i = (int) (a * b);
+    }
+
+    if (arg1->arg_type == STACK_EBP) {
+        stack_actualize_from_ebp(glob_stack, num1, arg1->data.i);
+    } else {
+        *arg1 = num1;
+    }
+}
+
+void divisoin(){
+    argument_var_t  *arg1,*arg2,*arg3;
+
+    argument_var_t num1,num2,num3;
+
+    //nacita hodnoty z tabulky symbolov
+    arg1 = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    arg2 = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+    arg3 = stable_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+
+    double a,b;
+
+    //nacita hodnoty zo stacku ak su tam, ak nie su to globalne premenne a berie ich priamo z tabulky symbolov
+    if (arg1->arg_type == STACK_EBP){
+        num1 = stack_ebp_relative(glob_stack,arg1->data.i);
+    } else {
+        num1 = *arg1;
+    }
+
+    if (arg2->arg_type == STACK_EBP){
+        num2 = stack_ebp_relative(glob_stack,arg2->data.i);
+    } else {
+        num2 = *arg2;
+    }
+
+    if (arg3->arg_type == STACK_EBP){
+        num3 = stack_ebp_relative(glob_stack,arg3->data.i);
+    } else {
+        num3 = *arg3;
+    }
+
+    //nacitanie do lokalnych premennych
+    if (num2.arg_type == DOUBLE){
+        a = num2.data.d;
+    } else {
+        a = num2.data.i;
+    }
+
+    if (num3.arg_type == DOUBLE){
+        b = num3.data.d;
+    } else {
+        b = num3.data.i;
+    }
+
+    //zapisanie vysledku
+    if (num1.arg_type == DOUBLE){
+        num1.data.d = a / b;
+    } else {
+        num1.data.i = (int) (a / b);
+    }
+
+    if (arg1->arg_type == STACK_EBP) {
+        stack_actualize_from_ebp(glob_stack, num1, arg1->data.i);
+    } else {
+        *arg1 = num1;
+    }
+}
 
 void pop(){
     stack_pop(glob_stack);
@@ -238,7 +436,7 @@ void inst_jump() {
     glob_ins_list->active = tmp_ptr->data.instruction;                                  //priradi ukazatel do listu, takze zmeni tok programu
 }
 
-void jump_not() {
+void jump_zero() {
     tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr2, glob_stable);     //nacita operand pre porovnanie
     if (tmp_ptr->arg_type == STACK_EBP) {
         tmp_var = stack_ebp_relative(glob_stack,
@@ -254,3 +452,96 @@ void jump_not() {
     }
 }
 
+void jump_equal(){      //TODO test it
+    argument_var_t *op1, *op2;
+
+    //nacitanie oprandov z tabulky symbolov
+    op1 = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+    op2 = stable_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+
+    //nacitanie operandov ak su na zasobniku
+    if (op1->arg_type == STACK_EBP){
+        op1 = stack_ebp_relative_ptr(glob_stack,op1->data.i);
+    }
+    if (op2->arg_type == STACK_EBP){
+        op2 = stack_ebp_relative_ptr(glob_stack,op1->data.i);
+    }
+
+    //porovnavanie  a ak su rovnke skoci na danu adresu
+    if (op1->arg_type == INTEGER){
+        if (op2->arg_type == INTEGER){
+            if (op1->data.i == op2->data.i){
+                tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                glob_ins_list->active = tmp_ptr->data.instruction;
+                return;
+            }
+        } else {
+            if (op1->data.i == op2->data.d){
+                tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                glob_ins_list->active = tmp_ptr->data.instruction;
+                return;
+            }
+        }
+    } else {
+        if (op2->arg_type == INTEGER){
+            if (op1->data.d == op2->data.i){
+                tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                glob_ins_list->active = tmp_ptr->data.instruction;
+                return;
+            }
+        } else {
+            if (op1->data.d == op2->data.d){
+                tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                glob_ins_list->active = tmp_ptr->data.instruction;
+                return;
+            }
+        }
+    }
+}
+
+void jump_not_equal(){      //TODO test it
+    argument_var_t *op1, *op2;
+
+    //nacitanie oprandov z tabulky symbolov
+    op1 = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+    op2 = stable_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+
+    //nacitanie operandov ak su na zasobniku
+    if (op1->arg_type == STACK_EBP){
+        op1 = stack_ebp_relative_ptr(glob_stack,op1->data.i);
+    }
+    if (op2->arg_type == STACK_EBP){
+        op2 = stack_ebp_relative_ptr(glob_stack,op1->data.i);
+    }
+
+    //porovnavanie  a ak su rovnke skoci na danu adresu
+    if (op1->arg_type == INTEGER){
+        if (op2->arg_type == INTEGER){
+            if (op1->data.i != op2->data.i){
+                tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                glob_ins_list->active = tmp_ptr->data.instruction;
+                return;
+            }
+        } else {
+            if (op1->data.i != op2->data.d){
+                tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                glob_ins_list->active = tmp_ptr->data.instruction;
+                return;
+            }
+        }
+    } else {
+        if (op2->arg_type == INTEGER){
+            if (op1->data.d != op2->data.i){
+                tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                glob_ins_list->active = tmp_ptr->data.instruction;
+                return;
+            }
+        } else {
+            if (op1->data.d != op2->data.d){
+                tmp_ptr = stable_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                glob_ins_list->active = tmp_ptr->data.instruction;
+                return;
+            }
+        }
+    }
+}
