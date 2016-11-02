@@ -19,6 +19,13 @@ int	scanner_closeFile()
 	return 0;
 }
 
+
+//TODO: implement a single linked list to store tokens
+int	scanner_rewind()
+{
+	rewind(fHandle);	
+}
+
 t_token	g_lastToken;
 
 char*	createString(const char* str)
