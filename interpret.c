@@ -43,6 +43,9 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_POP:
                 pop();
                 break;
+            case INST_STORE:
+                store();
+                break;
             case INST_HALT:
                 instruction_list->active = glob_ins_list->last;
                 break;
@@ -69,6 +72,12 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
                 break;
             case INST_JZ:
                 jump_zero();
+                break;
+            case INST_JEQ:
+                jump_equal();
+                break;
+            case INST_JNEQ:
+                jump_not_equal();
                 break;
 
 
