@@ -194,6 +194,23 @@ void push(){
     }
 }
 
+void store() {
+    argument_var_t *arg1,*arg2;
+
+    arg1 = stable_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    arg2 = stable_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+
+    if (arg1->arg_type == STACK_EBP) {
+        arg1 = stack_ebp_relative_ptr(glob_stack,arg1->data.i);
+    }
+    if (arg2->arg_type == STACK_EBP) {
+        arg2 = stack_ebp_relative_ptr(glob_stack,arg1->data.i);
+    }
+
+    //ulozenie hodnoty do ciela
+    *arg1 = *arg2;
+}
+
 void add(){
     argument_var_t  *arg1,*arg2,*arg3;
 

@@ -21,7 +21,7 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_DIV,           // destination      operand1        operand2
     INST_PUSH,          //var to push       ---             ---
     INST_POP,           //no inputs
-    INST_STORE,         //TODO
+    INST_STORE,         //destination       source          ---
     INST_JMP,           //addr to jump      ---             ---
     INST_JEQ,           //ddr to jump       value           value
     INST_JNEQ,          //ddr to jump       value           value
