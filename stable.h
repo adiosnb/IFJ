@@ -35,9 +35,12 @@ void stable_destroy(stab_t **p_table);
 void stable_remove_var(stab_t *p_stable, unsigned id);
 
 //prida prvok do tabulky
-int stable_add_var(stab_t *p_stable, unsigned id, argument_var_t *p_var);
+int stable_add_var(stab_t *p_stable, unsigned id, stab_element_t *p_var);
 
 //vrati ukazatel na dotazovany prvok
 argument_var_t *stable_get_var(stab_t *p_stable, unsigned id);
+
+//prida prvok zadany oddelene ako 3x string (class, function, local)
+void stable_add_concatenate(char* clss, char *fnct, char *local, stab_element_t data);
 
 #endif //IFJ_STABLE_H

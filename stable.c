@@ -46,7 +46,7 @@ void stable_destroy(stab_t **p_table) {
 }
 
 //pridava polozku do zoznamu
-int stable_add_var(stab_t *p_stable, unsigned id, argument_var_t *p_var){
+int stable_add_var(stab_t *p_stable, unsigned id, stab_element_t *p_var){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
 
