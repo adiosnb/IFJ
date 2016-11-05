@@ -5,6 +5,26 @@
 
 FILE*	fHandle = NULL;
 
+/* Single-linked list of tokens, used only by scanner module*/
+typedef struct listTokenElement 
+{
+	t_token	token;
+	struct listTokenElement* next;
+	struct listTokenElement* prev;
+} t_tokenElem;
+
+
+// single linked list of tokens
+t_tokenElem* tokenList = NULL;
+
+// pointer to current token
+t_tokenElem*	currentToken = NULL;
+
+// global structure to get the data returned by last getToken 
+t_token	g_lastToken;
+
+/* Public functions */
+
 int	scanner_openFile(char* fileName)
 {
 	fHandle = fopen(fileName,"r");	
@@ -20,13 +40,20 @@ int	scanner_closeFile()
 }
 
 
-//TODO: implement a single linked list to store tokens
 int	scanner_rewind()
 {
-	rewind(fHandle);	
+	// set pointer to the start of linked list
+	currentToken = NULL;
+	return 0;
 }
 
-t_token	g_lastToken;
+int	ungetToken()
+{
+	if(currentToken)
+		currentToken = currentToken->prev;
+	return 0;
+}
+
 
 char*	createString(const char* str)
 {
@@ -495,7 +522,7 @@ int	process_comments(int isBlock)
 	return TOK_ERROR;	
 }
 
-int	getToken()
+int	intern_getToken()
 {
 	// let's get a character from source code's stream
 	int c;
@@ -575,4 +602,45 @@ int	getToken()
 	// report the first occurence of EOF
 	g_lastToken.type = TOK_EOF;
 	return TOK_EOF;
+}
+
+
+int getToken()
+{
+	// special case -> avoid TOK_EOF multiplication
+	if(currentToken != NULL && currentToken->token.type == TOK_EOF)
+		return TOK_ERROR;
+	// special case for n+1th pass
+	if(currentToken == NULL && tokenList != NULL)
+	{
+		currentToken = tokenList;
+		g_lastToken = currentToken->token;
+		return g_lastToken.type;
+	}
+	// if we don't have any token remaining in our linked list
+	if(currentToken == NULL || currentToken->next == NULL)
+	{
+		// then process new from file
+		t_tokenElem* newel = malloc(sizeof(t_tokenElem));
+		if(newel)
+		{
+			int ret = intern_getToken();	
+			newel->prev = currentToken;
+			newel->next = NULL;
+			newel->token = g_lastToken;
+			if(currentToken)
+				currentToken->next = newel;
+			currentToken = newel;
+			if(!tokenList)
+				tokenList = newel;
+			return ret;
+		}
+		// malloc error
+		// TODO: global error module
+		
+	} 
+	// otherwise move to the next in linked list
+	currentToken = currentToken->next;	
+	g_lastToken = currentToken->token;
+	return g_lastToken.type;
 }

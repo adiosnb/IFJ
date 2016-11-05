@@ -95,3 +95,5 @@ int	scanner_rewind();
 
 // Process another token, update g_lastToken structure and return OK on succ 
 int	getToken();
+// Return token
+int	ungetToken();
