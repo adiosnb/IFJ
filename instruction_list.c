@@ -82,7 +82,9 @@ instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum in
     return new_instruction;
 }
 
-void debug(instruction_list_t* list){
+void debug_print(instruction_list_t* list){
+
+    instruction_item_t *current = list->first;
 
     char *msg[] = {
             "INST_NOP",
@@ -113,14 +115,17 @@ void debug(instruction_list_t* list){
             NULL,
     };
 
-    printf(        "****************************\n"
-                   "* %i                       *\n"
-                   "* %i                       *\n"
-                   "* %i                       *\n"
-                   "* %s                       *\n",
-                   list->active->instruction.addr1,
-                   list->active->instruction.addr2,
-                   list->active->instruction.addr3,
-                   msg[list->active->instruction.type]);
+    while (current != NULL){
+        printf(        "*****************************************\n"
+                       "* Inst addr1 : %i                       *\n"
+                       "* Inst addr2 : %i                       *\n"
+                       "* Inst addr3 : %i                       *\n"
+                       "* Instruction: %s                       *\n",
+                       current->instruction.addr1,
+                       current->instruction.addr2,
+                       current->instruction.addr3,
+                       msg[current->instruction.type]);
+        current = current->next;
+    }
 
 }
