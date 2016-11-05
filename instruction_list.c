@@ -14,6 +14,7 @@
 #include "instructions.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 
 instruction_list_t *init_inst_list() {
@@ -79,4 +80,15 @@ instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum in
     list->last = new_instruction;
 
     return new_instruction;
+}
+
+void debug(instruction_list_t* list){
+
+    printf(        "****************************\n"
+                   "*   %i, %i ,%i, %c              *",
+                   list->active->instruction.addr1,
+                   list->active->instruction.addr2,
+                   list->active->instruction.addr3,
+                   list->active->instruction.type);
+
 }
