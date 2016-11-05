@@ -13,3 +13,23 @@ Adio: interpret, stack, makefile,
 -------------------------------------------
 - dynamic-string(type) = a dynamically-changing linked list for holding really long strings
                   - needed for scanner (identifiers)
+
+// Tabulka symbolov - dvojica symbol:data
+
+symbol =>   "trieda.premenna"
+symbol =>   "trieda.funkcia"
+
+symbol =>   "trieda.funkcia.argumentA"
+symbol =>   "trieda.funkcia.argumentB"
+
+struct {
+    char *str;          // symbol
+    data_t data;        // data
+}
+
+// Data symbolu
+typedef struct stable_data {
+    int type;                   // premenna:    int, double, String alebo funkcia: f-int, f-double,f-String, f-void
+    stable_data *ptr;           // funkcia:
+    int inter_table;
+}
