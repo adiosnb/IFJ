@@ -46,7 +46,7 @@ void inter_table_destroy(inter_table_t **p_table) {
 }
 
 //pridava polozku do zoznamu
-int inter_table_add_var(unsigned id, argument_var_t *p_var, inter_table_t *p_stable){
+int inter_table_add_var(inter_table_t *p_stable, unsigned id, argument_var_t *p_var){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     inter_table_elem_t *pom = p_stable->arr[index];
 
@@ -76,7 +76,7 @@ int inter_table_add_var(unsigned id, argument_var_t *p_var, inter_table_t *p_sta
 }
 
 //vrati polozku zo zoznamu
-argument_var_t *inter_table_get_var(unsigned id, inter_table_t *p_stable){
+argument_var_t *inter_table_get_var(inter_table_t *p_stable, unsigned id){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     inter_table_elem_t *pom = p_stable->arr[index];
 
@@ -92,7 +92,7 @@ argument_var_t *inter_table_get_var(unsigned id, inter_table_t *p_stable){
 }
 
 //odstrni polozkiu zo zoznamu
-void inter_table_remove_var(unsigned id, inter_table_t *p_stable){
+void inter_table_remove_var(inter_table_t *p_stable, unsigned id){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     inter_table_elem_t *pom = p_stable->arr[index];
 

@@ -26,13 +26,13 @@ inter_table_t *inter_table_init(unsigned size);
 void inter_table_destroy(inter_table_t **p_table);
 
 //odstrani jeden prvok z tabulky
-void inter_table_remove_var(unsigned id, inter_table_t *p_stable);
+void inter_table_remove_var(inter_table_t *p_stable, unsigned id);
 
 //prida prvok do tabulky
-int inter_table_add_var(unsigned id, argument_var_t *p_var, inter_table_t *p_stable);
+int inter_table_add_var(inter_table_t *p_stable, unsigned id, argument_var_t *p_var);
 
 //vrati ukazatel na dotazovany prvok
-argument_var_t *inter_table_get_var(unsigned id, inter_table_t *p_stable);
+argument_var_t *inter_table_get_var(inter_table_t *p_stable, unsigned id);
 
 
 
