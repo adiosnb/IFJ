@@ -69,5 +69,5 @@ instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum in
                                                unsigned addr2, unsigned addr3);
 
 
-void debug(instruction_list_t *list);
+void debug_print(instruction_list_t *list);
 #endif //INSTRUCTION_LIST

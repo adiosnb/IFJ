@@ -101,7 +101,7 @@ int main() {
 
 
 
-
+    debug_print(i_list);
 
     interpret(i_list, sym_tab);
 
