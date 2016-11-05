@@ -15,6 +15,7 @@
 
 #include "instructions.h"
 
+
 //return values from functions
 #define OK              0
 #define MALLOC_ERROR    1
@@ -69,5 +70,5 @@ instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum in
                                                unsigned addr2, unsigned addr3);
 
 
-void debug_print(instruction_list_t *list);
+
 #endif //INSTRUCTION_LIST
