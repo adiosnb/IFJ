@@ -23,6 +23,17 @@ t_tokenElem*	currentToken = NULL;
 // global structure to get the data returned by last getToken 
 t_token	g_lastToken;
 
+// Utility func
+
+void freeToken(t_token* tok)
+{
+	// delete string
+	if(tok->type == TOK_ID  
+		|| tok->type == TOK_LITERAL
+		|| tok->type == TOK_SPECIAL_ID)
+		free(tok->data.string);
+}
+
 /* Public functions */
 
 int	scanner_openFile(char* fileName)
@@ -35,7 +46,22 @@ int	scanner_openFile(char* fileName)
 
 int	scanner_closeFile()
 {
-	fclose(fHandle);
+	if(fHandle)
+	{
+		fclose(fHandle);
+		fHandle = NULL;
+		
+		// clean single linked list
+		t_tokenElem *ptr = tokenList,*helpptr = tokenList;
+		while(ptr)
+		{
+			helpptr = ptr;
+			ptr = ptr->next;
+			freeToken(&helpptr->token);
+			free(helpptr);
+		}
+		tokenList = NULL;
+	} 
 	return 0;
 }
 
