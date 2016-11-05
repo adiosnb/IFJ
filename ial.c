@@ -6,8 +6,8 @@
 #include <string.h>
 #include "ial.h"
 
-void swap(int *arg1, int *arg2){
-    int pom = *arg1;
+void swap(char *arg1, char *arg2){
+    char pom = *arg1;
 
     *arg1 = *arg2;
     *arg2 = pom;
@@ -15,7 +15,7 @@ void swap(int *arg1, int *arg2){
     return;
 }
 
-void qsort(int *arr, int left, int, right){
+void qsort(char *arr, int left, int, right){
 
     if (left < right) {
         int pom = left;
