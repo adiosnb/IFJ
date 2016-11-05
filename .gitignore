@@ -5,3 +5,6 @@ cmake_install.cmake
 interpret_idea
 main
 .idea/
+*.o
+*.swp
+stack/parser
