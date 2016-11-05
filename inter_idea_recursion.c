@@ -53,14 +53,14 @@ void debug_print_instruction_list(instruction_list_t* list){
 
 }
 
-void debug_print_inter_table(inter_table_t *inter_tab){
+void debug_print_inter_table(inter_table_t *inter_tab){ // TODO naplnit tabulku inter aj stable
 
     int i = 0;
     inter_table_elem_t* current_table_element = inter_tab->arr[0]; // prvy element tabulky
 
-    while (inter_tab->arr[i] == NULL){
-        if (inter_tab->arr[i]->stab_next == NULL)
+    while (inter_tab->arr[i] == NULL || inter_tab->arr[i]->stab_next == NULL){
         i++;
+        current_table_element = inter_tab->arr[i];
     }
 
     while (inter_tab->stab_size > i){
