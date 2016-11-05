@@ -239,6 +239,31 @@ int funccomp()
 	return throw("Expected statement or variable declaration in the body of function");
 	return SYN_ERR;
 }
+
+
+int function_parameters_list()
+{
+		
+	// TODO: this may not be predictive
+	do {
+		if(!isType(TOK_KEYWORD))
+			return throw("Awaited 'type'");
+		if(!isDataType())
+			return throw("Expected 'String', 'int' or 'double'");
+
+		if(getToken() != TOK_ID)
+			return throw("Expected 'id' after 'type'");
+					
+		if(getType(TOK_LIST_DELIM))
+		{
+			getToken();
+			continue;
+		}	
+	} while(!isType(TOK_RIGHT_PAR));
+	return SYN_OK;
+}
+
+
 //cbody->DECL cbody
 //cbody->eps
 //DECL->static type ID;
@@ -258,7 +283,7 @@ int body()
 
 	// if we didn't get a proper type such as 'int', 'double', 'etc'
 	if(!(getToken() == TOK_KEYWORD && (isDataType())))
-		return throw("Awaited 'String','double' or 'int'");
+		return throw("Awaited 'String','double','void' or 'int'");
 	
 	// get identifier
 	if(getToken() != TOK_ID)
@@ -286,22 +311,8 @@ int body()
 		case TOK_LEFT_PAR:
 			if(!getType(TOK_RIGHT_PAR))
 			{
-				// TODO: this may not be predictive
-				do {
-					if(!isType(TOK_KEYWORD))
-						return throw("Awaited 'type'");
-					if(!isDataType())
-						return throw("Expected 'String', 'int' or 'double'");
-
-					if(getToken() != TOK_ID)
-						return throw("Expected 'id' after 'type'");
-								
-					if(getType(TOK_LIST_DELIM))
-					{
-						getToken();
-						continue;
-					}	
-				} while(!isType(TOK_RIGHT_PAR));
+				if(function_parameters_list() != SYN_OK)
+					return SYN_ERR;
 			}
 			if(getToken() != TOK_LEFT_BRACE)
 				return throw("Expected '{'");	
