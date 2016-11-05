@@ -164,7 +164,7 @@ int selection_statement()
 // <assign-statement> -> identifier <next>
 int assign_statement()
 {
-	char* ID = g_lastToken.data.string;
+	//char* ID = g_lastToken.data.string;
 	switch(getToken())
 	{
 		// TODO: statement->id = id();
@@ -187,6 +187,7 @@ int assign_statement()
 				return throw("Expected ;");	
 			return SYN_OK;
 	}	
+	return SYN_ERR;
 }
 // <statement>-> <jump-statement>
 // <statement>-> <iteration_statement>
@@ -207,14 +208,11 @@ int statement()
 				return iteration_statement();
 			case KW_IF:
 				return selection_statement();
-			default:
-				fprintf(stderr,"Type: %d\n",g_lastToken.data);
-				
 		}
-		return throw("Unexpected keyword ");
+		return throw("Unexpected keyword, awaited one of 'return', 'if' or 'while' ");
 	}
-	// statement->id = EXPR;
-	// statement->id ( ) ; 
+	// <statement>->id = EXPR;
+	// <statement>->id ( ) ; 
 	else if(isType(TOK_ID) || isType(TOK_SPECIAL_ID))
 	{
 		return assign_statement();	
@@ -266,7 +264,6 @@ int funccomp()
 	}
 
 	return throw("Expected statement or variable declaration in the body of function");
-	return SYN_ERR;
 }
 
 // <function-parameters-list> -> <definition> , <function-parameters-list>
@@ -290,7 +287,7 @@ int function_parameters_list()
 	} else if(isType(TOK_RIGHT_PAR))
 		return SYN_OK;	
 
-	return SYN_ERR;
+	return throw("Expected ')' or 'int','double','String'");
 }
 
 
@@ -345,8 +342,8 @@ int body()
 				// process arguments in ( ) 
 				if(function_parameters_list() != SYN_OK)
 					return SYN_ERR;
-			} else if (!getType(TOK_LEFT_PAR)) 
-				return SYN_ERR;
+			} else if (!isType(TOK_RIGHT_PAR)) 
+				return throw("Expected )");
 
 			if(getToken() != TOK_LEFT_BRACE)
 				return throw("Expected '{'");	
@@ -397,6 +394,7 @@ int classdef() {
 
 	// class has been parsed correctly	
 	hint("Class '%s' parsed.",className);
+	return SYN_OK;
 }
 
 // <class-definition-list> -> <class-definition> <class-definition-list>
@@ -414,11 +412,12 @@ int classdeflist()
 
 	return classdeflist();
 }
-
+// <source-program> -> <class-definition-list> <end>
 int parse()
 {
 	return classdeflist();
 }
+
 
 int main(int argc, char* argv[])
 {
@@ -433,7 +432,10 @@ int main(int argc, char* argv[])
 	{
 		// parse the code
 		int result = parse();
-		printf("State: %d\n",result);
+		if(result == SYN_ERR)
+			printf("ERROR - source code is syntactically incorrect.\n");
+		else
+			printf("SUCCESS\n");
 		return result;
 	} else {
 		printf("Error has occured while opening the file %s.\n",name);	
