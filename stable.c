@@ -4,8 +4,14 @@
 #include <stdlib.h>
 #include "stable.h"
 
-unsigned hash_fun_ptr(unsigned id, unsigned stab_size){
-    return id % stab_size;
+unsigned hash_fun_ptr(char *id, unsigned stab_size){
+    int i = 0, pom = 0;
+
+    while (id[i] != '\0'){
+        pom += (int) id[i];
+        i++;
+    }
+    return pom % stab_size;
 }
 
 //alokuje priestor pre tabulku a zaroven ho nuluje
@@ -46,7 +52,7 @@ void stable_destroy(stab_t **p_table) {
 }
 
 //pridava polozku do zoznamu
-int stable_add_var(stab_t *p_stable, unsigned id, stab_element_t *p_var){
+int stable_add_var(stab_t *p_stable, char *id, stab_element_t *p_var){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
 
@@ -76,7 +82,7 @@ int stable_add_var(stab_t *p_stable, unsigned id, stab_element_t *p_var){
 }
 
 //vrati polozku zo zoznamu
-argument_var_t *stable_get_var(stab_t *p_stable, unsigned id){
+argument_var_t *stable_get_var(stab_t *p_stable, char *id){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
 
@@ -84,7 +90,7 @@ argument_var_t *stable_get_var(stab_t *p_stable, unsigned id){
         return NULL;
 
     //najde polozku s id
-    while (pom->stab_key != id)
+    while (strcmp(pom->stab_key, id))//todo skontroluj
         if ((pom = pom->stab_next) == NULL)
             return NULL;
 
@@ -92,7 +98,7 @@ argument_var_t *stable_get_var(stab_t *p_stable, unsigned id){
 }
 
 //odstrni polozkiu zo zoznamu
-void stable_remove_var(stab_t *p_stable, unsigned id){
+void stable_remove_var(stab_t *p_stable, char *id){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
 
@@ -100,9 +106,57 @@ void stable_remove_var(stab_t *p_stable, unsigned id){
         return;
 
     //najde polozku pred polozkou s id
-    while (pom->stab_next->stab_key != id)
+    while (strcmp(pom->stab_next->stab_key, id)) //todo skontroluj
         if ((pom = pom->stab_next) == NULL)
             return;
 
     return;
+}
+
+bool stable_search(stab_t *p_stable, char *srch_el){
+    unsigned index = hash_fun_ptr(id, p_stable->stab_size);
+    stab_element_t *pom = p_stable->arr[index];
+
+    if (pom == NULL)
+        return false;
+
+    //najde polozku s id
+    while (strcmp(pom->stab_key, id))
+        if ((pom = pom->stab_next) == NULL)
+            return false;
+
+    return true;
+}
+
+bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, stab_element_t *data){
+    char *pom;
+    int j = 0, i = 0;
+    int size = strlen(clss) + strlen(fnct) + strlen(local);
+
+    if ((pom = malloc(size * sizeof(char) + 2)) == NULL) //+2 lebo sa vkadaju max 2x '.'
+        return false;
+
+    if(clss != NULL)
+        while (clss[i] != '\0')
+            pom[j++] = clss[i++];
+
+    i = 0;
+    if(fnct != NULL) {
+        pom[j++] = '.';
+        while (fnct[i] != '\0')
+            pom[j++] = fnct[i++];
+    }
+
+    i=0;
+    if(local != NULL) {
+        pom[j++] = '.';
+        while (local[i] != '\0')
+            pom[j++] = local[i++];
+    }
+
+    if(stable_add_var(p_stable, pom, &data))
+        return false;
+    return true;
+
+
 }
