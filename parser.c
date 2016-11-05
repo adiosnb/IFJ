@@ -3,6 +3,19 @@
 #define SYN_ERR 2
 
 /******************************************************************************
+ * Disclaimer
+ *****************************************************************************/
+
+// ARGUMENTS VS PARAMETERS:
+// 	argument = certain value passed to func
+// 		e.g. func(a);	where a is an argument
+// 	parameter = expected variable
+// 		e.g. static int func( int a); where a is a formal parameter
+
+
+
+
+/******************************************************************************
  * Utility macro definition
  *****************************************************************************/
 // Compares the type and integral data of token, DOESN'T GET A NEW TOKEN
@@ -78,95 +91,133 @@ int comp()
 	}
 	return SYN_OK;
 }
-// statement->return EXPR ;
-// statement->while(EXPR) COMPOUND 
-// statement->if(EXPR) COMPOUND else COMPOUND;
-// statement->id = EXPR;
-// statement->id ( ) ; 
+
+// <function-arguments-list> -> <definition> , <function-arguments-list>
+// <function-arguments-list> -> <definition> 
+int function_arguments_list()
+{
+	if(!isTerm())
+		return throw("Expected term: 'identifier', real / integer costant or  literal.");
+	hint("\t\t >> Function argument: %s",g_lastToken.data.string);
+	
+
+	if(getType(TOK_LIST_DELIM))
+	{
+		getToken();
+		return function_arguments_list();
+	} else if(isType(TOK_RIGHT_PAR))
+		return SYN_OK;	
+
+	return SYN_ERR;
+}
+
+//<jump-statement> -> return <expr> ;
+int jump_statement()
+{
+	if(expr() == SYN_ERR)
+		return SYN_ERR;
+	if(!isType(TOK_DELIM))
+		return throw("Expected ;");
+	return SYN_OK;
+}
+
+// <iteration-statement> -> while ( EXPR ) <compound-statement>
+int iteration_statement()
+{
+	
+	if(!getType(TOK_LEFT_PAR))
+		return throw("Expecting ( after while");
+	
+	if(expr() == SYN_ERR)
+		return SYN_ERR;
+	
+	if(!isType(TOK_RIGHT_PAR))
+		return throw("Expecting ) after while");
+	getToken();
+	return comp();
+}
+
+// <selection-statement> -> if(EXPR) <compound-statement>  else <compound-statement> 
+int selection_statement()
+{
+
+	if(!getType(TOK_LEFT_PAR))
+		return throw("Expecting ( after if");
+	
+	if(expr() == SYN_ERR)
+		return SYN_ERR;
+	
+	if(!isType(TOK_RIGHT_PAR))
+		return throw("Expecting ) after expression: if (EXPR)");
+
+	getToken();
+	if(comp() == SYN_ERR)
+		return SYN_ERR;
+	
+	getToken();
+	if(!isTypeOf(TOK_KEYWORD,KW_ELSE))
+		return throw("Expecting 'else'");
+	getToken();
+	return comp();
+}
+
+// <assign-statement> -> identifier <next>
+int assign_statement()
+{
+	char* ID = g_lastToken.data.string;
+	switch(getToken())
+	{
+		// TODO: statement->id = id();
+		// id = EXPR;
+		case TOK_ASSIGN:
+			if(expr() == SYN_ERR)
+				return SYN_ERR;
+			if(isType(TOK_DELIM))
+				return SYN_OK;
+			return throw("Missing ;");
+		// id ( ) 
+		case TOK_LEFT_PAR:
+			if(!getType(TOK_RIGHT_PAR))
+				if(function_arguments_list() == SYN_ERR)
+					return SYN_ERR;
+			// expect ) 
+			if(!isType(TOK_RIGHT_PAR))
+				return throw("Expected ) or a list of terms");	
+			if(!getType(TOK_DELIM))
+				return throw("Expected ;");	
+			return SYN_OK;
+	}	
+}
+// <statement>-> <jump-statement>
+// <statement>-> <iteration_statement>
+// <statement>-> <selection_statement>
+// <statement>-> <assign-statement>
+// <statement>-> <compound>
 int statement()
 {
-	// if ruler starts with keyword (while, if, return)
+	// if the rule starts with keyword (while, if, return)
+	//  SELECTION | JUMP | ITERATION 
 	if(isType(TOK_KEYWORD))
 	{
 		switch(g_lastToken.data.integer)
 		{
-			// statement->return EXPR ;
 			case KW_RETURN:
-				if(expr() == SYN_ERR)
-					return SYN_ERR;
-				if(!isType(TOK_DELIM))
-					return throw("Expected ;");
-				return SYN_OK;
-			break;
-			// statement->while ( EXPR ) COMPOUND 
+				return jump_statement();
 			case KW_WHILE:
-				if(!getType(TOK_LEFT_PAR))
-					return throw("Expecting ( after while");
-				
-				if(expr() == SYN_ERR)
-					return SYN_ERR;
-				
-				if(!isType(TOK_RIGHT_PAR))
-					return throw("Expecting ) after while");
-				getToken();
-				return comp();
-				break;	
-			// statement->if(EXPR) COMPOUND else COMPOUND;
+				return iteration_statement();
 			case KW_IF:
-				if(!getType(TOK_LEFT_PAR))
-					return throw("Expecting ( after if");
-				
-				if(expr() == SYN_ERR)
-					return SYN_ERR;
-				
-				if(!isType(TOK_RIGHT_PAR))
-					return throw("Expecting ) after expression: if (EXPR)");
-
-				getToken();
-				if(comp() == SYN_ERR)
-					return SYN_ERR;
-				
-				getToken();
-				if(!isTypeOf(TOK_KEYWORD,KW_ELSE))
-					return throw("Expecting 'else'");
-				getToken();
-				return comp();
+				return selection_statement();
 			default:
 				fprintf(stderr,"Type: %d\n",g_lastToken.data);
 				
 		}
 		return throw("Unexpected keyword ");
 	}
-	// TODO: statement->id = id();
 	// statement->id = EXPR;
 	// statement->id ( ) ; 
 	else if(isType(TOK_ID) || isType(TOK_SPECIAL_ID))
 	{
-		char* ID = g_lastToken.data.string;
-		switch(getToken())
-		{
-			// id = EXPR;
-			case TOK_ASSIGN:
-				if(expr() == SYN_ERR)
-					return SYN_ERR;
-				if(isType(TOK_DELIM))
-					return SYN_OK;
-				return throw("Missing ;");
-			// id ( ) 
-			case TOK_LEFT_PAR:
-				do {
-					getToken();
-					// expects a term
-					if(!isTerm())
-						break;
-				} while(getType(TOK_LIST_DELIM));
-	
-				if(!isType(TOK_RIGHT_PAR))
-					return throw("Expected ) or a list of terms");	
-				if(!getType(TOK_DELIM))
-					return throw("Expected ;");	
-				return SYN_OK;
-		}	
+		return assign_statement();	
 	}
 	// statement->COMPOUND
 	 else if(isType(TOK_LEFT_BRACE))
@@ -204,7 +255,7 @@ int funccomp()
 			if(!getType(TOK_DELIM))
 				return throw("Expected ;");	
 
-			hint("Local variable '%s' declared.",funcDec);
+			hint("\tLocal variable '%s' declared.",funcDec);
 			return funccomp();	
 	} else
 	{
@@ -217,6 +268,32 @@ int funccomp()
 	return throw("Expected statement or variable declaration in the body of function");
 	return SYN_ERR;
 }
+
+// <function-parameters-list> -> <definition> , <function-parameters-list>
+// <function-parameters-list> -> <definition> 
+int function_parameters_list()
+{
+		
+	if(!isType(TOK_KEYWORD))
+		return throw("Awaited 'type'");
+	if(!isDataType())
+		return throw("Expected 'String', 'int' or 'double'");
+	if(getToken() != TOK_ID)
+		return throw("Expected 'id' after 'type'");
+	hint("\t\t >> Function parameter: %s",g_lastToken.data.string);
+	
+
+	if(getType(TOK_LIST_DELIM))
+	{
+		getToken();
+		return function_parameters_list();
+	} else if(isType(TOK_RIGHT_PAR))
+		return SYN_OK;	
+
+	return SYN_ERR;
+}
+
+
 //cbody->DECL cbody
 //cbody->eps
 //DECL->static type ID;
@@ -236,7 +313,7 @@ int body()
 
 	// if we didn't get a proper type such as 'int', 'double', 'etc'
 	if(!(getToken() == TOK_KEYWORD && (isDataType())))
-		return throw("Awaited 'String','double' or 'int'");
+		return throw("Awaited 'String','double','void' or 'int'");
 	
 	// get identifier
 	if(getToken() != TOK_ID)
@@ -248,7 +325,7 @@ int body()
 		// static type id;
 		case TOK_DELIM:
 			// yet another variable
-			hint("Variable '%s' declared.",decId);
+			hint("\tVariable '%s' declared.",decId);
 			break;
 		// static type id = EXPR ;
 		case TOK_ASSIGN:
@@ -257,30 +334,20 @@ int body()
 				return SYN_ERR;
 			if(!isType(TOK_DELIM)) 
 				return throw("Expected ';'");
-			hint("Variable '%s' declared.",decId);
+			hint("\tVariable '%s' declared.",decId);
 			break;
 
 		// static type id (type id, type id, ...) { FUNC-COMP }
 		case TOK_LEFT_PAR:
+			hint("\tParsing function '%s' body.",decId);
 			if(!getType(TOK_RIGHT_PAR))
 			{
-				// TODO: this may not be predictive
-				do {
-					if(!isType(TOK_KEYWORD))
-						return throw("Awaited 'type'");
-					if(!isDataType())
-						return throw("Expected 'String', 'int' or 'double'");
+				// process arguments in ( ) 
+				if(function_parameters_list() != SYN_OK)
+					return SYN_ERR;
+			} else if (!getType(TOK_LEFT_PAR)) 
+				return SYN_ERR;
 
-					if(getToken() != TOK_ID)
-						return throw("Expected 'id' after 'type'");
-								
-					if(getType(TOK_LIST_DELIM))
-					{
-						getToken();
-						continue;
-					}	
-				} while(!isType(TOK_RIGHT_PAR));
-			}
 			if(getToken() != TOK_LEFT_BRACE)
 				return throw("Expected '{'");	
 			// parse the body of function 
@@ -288,7 +355,7 @@ int body()
 				return SYN_ERR;
 			if(!isType(TOK_RIGHT_BRACE))
 				return throw("Expected '}'");	
-			hint("Function '%s' declared.",decId);
+			hint("\tFunction '%s' declared.",decId);
 			break;
 
 		default:
@@ -300,12 +367,9 @@ int body()
 		
 }
 
-// start->eps
-// start->class-decl start
-int start() {
+// <class-definition> -> class <id> <compound>
+int classdef() {
 	// on EOF apply start->eps
-	if(getToken() == TOK_EOF)
-		return SYN_OK;
 
 	/* class-decl start */
 	// class-decl->class id { C-BODY } 
@@ -320,6 +384,7 @@ int start() {
 	if(!getType(TOK_LEFT_BRACE))
 		return throw("Expected '{'");	
 	
+	hint("Parsing class '%s' body ",className);
 	// simulate the body of class
 	// C-BODY
 	if(body() == SYN_ERR)
@@ -332,10 +397,27 @@ int start() {
 
 	// class has been parsed correctly	
 	hint("Class '%s' parsed.",className);
+}
+
+// <class-definition-list> -> <class-definition> <class-definition-list>
+// <class-definition-list> -> eps
+int classdeflist()
+{
+	// choose <class-definition-list> -> eps on token eps
+	if(getToken() == TOK_EOF)
+		return SYN_OK;
 	
-	// continue with other classes
-	return start();	
-	
+	// else continue with: 
+	// <class-definition-list> -> <class-definition> <class-definition-list>
+	if(classdef() == SYN_ERR)
+		return SYN_ERR;
+
+	return classdeflist();
+}
+
+int parse()
+{
+	return classdeflist();
 }
 
 int main(int argc, char* argv[])
@@ -350,7 +432,7 @@ int main(int argc, char* argv[])
 	if(result)
 	{
 		// parse the code
-		int result = start();
+		int result = parse();
 		printf("State: %d\n",result);
 		return result;
 	} else {

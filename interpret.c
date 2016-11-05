@@ -60,7 +60,7 @@ int interpret(instruction_list_t *instruction_list, inter_table_t *stable) {
                 break;
             case INST_WRITE:
                 //nastavujeme ukazateln uz tu, pretoze sa funkcia vola rekurzivne a robilo by to bordel
-                tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+                tmp_ptr = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);
                 write();
                 printf("\n");
                 break;
@@ -99,7 +99,7 @@ void call() {
     stack_push(&glob_stack, tmp_var);
     //glob_stack->used += 2;                      //added counter for stack
     glob_stack->base = glob_stack->used;
-    tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1, glob_stable);
+    tmp_ptr = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr1);
     glob_ins_list->active = tmp_ptr->data.instruction;
 }
 
@@ -112,7 +112,7 @@ void ret(){
     prev_base = tmp_var.data.i;
 
     //ziskanie hodnoty ktora sa predava z funkcie
-    return_value = inter_table_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    return_value = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);
     if (return_value->arg_type == STACK_EBP){
         return_value = stack_ebp_relative_ptr(glob_stack,return_value->data.i);
     }
@@ -126,7 +126,7 @@ void ret(){
     glob_stack->base = prev_base;
 
     //ziskanie polohykam zapisat navratovu hodnotu a jej zapis
-    destination = inter_table_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+    destination = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr2);
     if (destination->arg_type == STACK_EBP) {
         stack_actualize_from_ebp(glob_stack,*return_value,destination->data.i);
     } else {
@@ -164,7 +164,7 @@ void read_int(){
     //nacita premennu do docasnej premennej
     scanf("%d",&readed_int);
 
-    tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    tmp_ptr = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);
 
     if (tmp_ptr->arg_type == STACK_EBP){
         tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
@@ -180,7 +180,7 @@ void read_double(){
     //nacita premennu do docasnej premennej
     scanf("%lf",&readed_double);
 
-    tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    tmp_ptr = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);
 
     if (tmp_ptr->arg_type == STACK_EBP){
         tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
@@ -192,7 +192,7 @@ void read_double(){
 }
 
 void push(){
-    tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
+    tmp_ptr = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);
 
     if (tmp_ptr->arg_type == STACK_EBP) {
         tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
@@ -206,8 +206,8 @@ void push(){
 void store() {
     argument_var_t *arg1,*arg2;
 
-    arg1 = inter_table_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
-    arg2 = inter_table_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
+    arg1 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr1);
+    arg2 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr2);
 
     if (arg1->arg_type == STACK_EBP) {
         arg1 = stack_ebp_relative_ptr(glob_stack,arg1->data.i);
@@ -226,9 +226,9 @@ void add(){
     argument_var_t num1,num2,num3;
 
     //nacita hodnoty z tabulky symbolov
-    arg1 = inter_table_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
-    arg2 = inter_table_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
-    arg3 = inter_table_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+    arg1 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr1);
+    arg2 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr2);
+    arg3 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr3);
 
     double a,b;
 
@@ -284,9 +284,9 @@ void sub(){
     argument_var_t num1,num2,num3;
 
     //nacita hodnoty z tabulky symbolov
-    arg1 = inter_table_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
-    arg2 = inter_table_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
-    arg3 = inter_table_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+    arg1 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr1);
+    arg2 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr2);
+    arg3 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr3);
 
     double a,b;
 
@@ -342,9 +342,9 @@ void mul(){
     argument_var_t num1,num2,num3;
 
     //nacita hodnoty z tabulky symbolov
-    arg1 = inter_table_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
-    arg2 = inter_table_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
-    arg3 = inter_table_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+    arg1 = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);
+    arg2 = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr2);
+    arg3 = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr3);
 
     double a,b;
 
@@ -400,9 +400,9 @@ void divisoin(){
     argument_var_t num1,num2,num3;
 
     //nacita hodnoty z tabulky symbolov
-    arg1 = inter_table_get_var(glob_ins_list->active->instruction.addr1,glob_stable);
-    arg2 = inter_table_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
-    arg3 = inter_table_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+    arg1 = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);
+    arg2 = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr2);
+    arg3 = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr3);
 
     double a,b;
 
@@ -457,13 +457,12 @@ void pop(){
 }
 
 void inst_jump() {
-    tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1,
-                             glob_stable);     //nacita z tabulky symbolov ukazatel na instrukciu
+    tmp_ptr = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr1);     //nacita z tabulky symbolov ukazatel na instrukciu
     glob_ins_list->active = tmp_ptr->data.instruction;                                  //priradi ukazatel do listu, takze zmeni tok programu
 }
 
 void jump_zero() {
-    tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr2, glob_stable);     //nacita operand pre porovnanie
+    tmp_ptr = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr2);     //nacita operand pre porovnanie
     if (tmp_ptr->arg_type == STACK_EBP) {
         tmp_var = stack_ebp_relative(glob_stack,
                                      tmp_ptr->data.i);                       //ak je na zasobniku zoberie hodnotu operandu z tade
@@ -472,8 +471,7 @@ void jump_zero() {
     }
 
     if (tmp_var.data.i == 0) {                                                            //ak je operand nulovy takze false, urobi sa skok
-        tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1,
-                                 glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+        tmp_ptr = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr1);  //nacita z tabulky symbolov ukazatel na instrukciu
         glob_ins_list->active = tmp_ptr->data.instruction;                               //priradi ukazatel do listu, takze zmeni tok programu
     }
 }
@@ -482,8 +480,8 @@ void jump_equal(){      //TODO test it
     argument_var_t *op1, *op2;
 
     //nacitanie oprandov z tabulky symbolov
-    op1 = inter_table_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
-    op2 = inter_table_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+    op1 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr2);
+    op2 = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr3);
 
     //nacitanie operandov ak su na zasobniku
     if (op1->arg_type == STACK_EBP){
@@ -497,13 +495,13 @@ void jump_equal(){      //TODO test it
     if (op1->arg_type == INTEGER){
         if (op2->arg_type == INTEGER){
             if (op1->data.i == op2->data.i){
-                tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                tmp_ptr = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);  //nacita z tabulky symbolov ukazatel na instrukciu
                 glob_ins_list->active = tmp_ptr->data.instruction;
                 return;
             }
         } else {
             if (op1->data.i == op2->data.d){
-                tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                tmp_ptr = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);  //nacita z tabulky symbolov ukazatel na instrukciu
                 glob_ins_list->active = tmp_ptr->data.instruction;
                 return;
             }
@@ -511,13 +509,13 @@ void jump_equal(){      //TODO test it
     } else {
         if (op2->arg_type == INTEGER){
             if (op1->data.d == op2->data.i){
-                tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                tmp_ptr = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr1);  //nacita z tabulky symbolov ukazatel na instrukciu
                 glob_ins_list->active = tmp_ptr->data.instruction;
                 return;
             }
         } else {
             if (op1->data.d == op2->data.d){
-                tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                tmp_ptr = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr1);  //nacita z tabulky symbolov ukazatel na instrukciu
                 glob_ins_list->active = tmp_ptr->data.instruction;
                 return;
             }
@@ -529,8 +527,8 @@ void jump_not_equal(){      //TODO test it
     argument_var_t *op1, *op2;
 
     //nacitanie oprandov z tabulky symbolov
-    op1 = inter_table_get_var(glob_ins_list->active->instruction.addr2,glob_stable);
-    op2 = inter_table_get_var(glob_ins_list->active->instruction.addr3,glob_stable);
+    op1 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr2);
+    op2 = inter_table_get_var(glob_stable, glob_ins_list->active->instruction.addr3);
 
     //nacitanie operandov ak su na zasobniku
     if (op1->arg_type == STACK_EBP){
@@ -544,13 +542,13 @@ void jump_not_equal(){      //TODO test it
     if (op1->arg_type == INTEGER){
         if (op2->arg_type == INTEGER){
             if (op1->data.i != op2->data.i){
-                tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                tmp_ptr = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);  //nacita z tabulky symbolov ukazatel na instrukciu
                 glob_ins_list->active = tmp_ptr->data.instruction;
                 return;
             }
         } else {
             if (op1->data.i != op2->data.d){
-                tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                tmp_ptr = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);  //nacita z tabulky symbolov ukazatel na instrukciu
                 glob_ins_list->active = tmp_ptr->data.instruction;
                 return;
             }
@@ -558,13 +556,13 @@ void jump_not_equal(){      //TODO test it
     } else {
         if (op2->arg_type == INTEGER){
             if (op1->data.d != op2->data.i){
-                tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                tmp_ptr = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);  //nacita z tabulky symbolov ukazatel na instrukciu
                 glob_ins_list->active = tmp_ptr->data.instruction;
                 return;
             }
         } else {
             if (op1->data.d != op2->data.d){
-                tmp_ptr = inter_table_get_var(glob_ins_list->active->instruction.addr1, glob_stable);  //nacita z tabulky symbolov ukazatel na instrukciu
+                tmp_ptr = inter_table_get_var(glob_stable,glob_ins_list->active->instruction.addr1);  //nacita z tabulky symbolov ukazatel na instrukciu
                 glob_ins_list->active = tmp_ptr->data.instruction;
                 return;
             }
