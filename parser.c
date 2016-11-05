@@ -78,6 +78,86 @@ int comp()
 	}
 	return SYN_OK;
 }
+
+//<jump-statement> -> return <expr> ;
+int jump_statement()
+{
+	if(expr() == SYN_ERR)
+		return SYN_ERR;
+	if(!isType(TOK_DELIM))
+		return throw("Expected ;");
+	return SYN_OK;
+}
+
+// <iteration-statement> -> while ( EXPR ) <compound-statement>
+int iteration_statement()
+{
+	
+	if(!getType(TOK_LEFT_PAR))
+		return throw("Expecting ( after while");
+	
+	if(expr() == SYN_ERR)
+		return SYN_ERR;
+	
+	if(!isType(TOK_RIGHT_PAR))
+		return throw("Expecting ) after while");
+	getToken();
+	return comp();
+}
+
+// <selection-statement> -> if(EXPR) <compound-statement>  else <compound-statement> 
+int selection_statement()
+{
+
+	if(!getType(TOK_LEFT_PAR))
+		return throw("Expecting ( after if");
+	
+	if(expr() == SYN_ERR)
+		return SYN_ERR;
+	
+	if(!isType(TOK_RIGHT_PAR))
+		return throw("Expecting ) after expression: if (EXPR)");
+
+	getToken();
+	if(comp() == SYN_ERR)
+		return SYN_ERR;
+	
+	getToken();
+	if(!isTypeOf(TOK_KEYWORD,KW_ELSE))
+		return throw("Expecting 'else'");
+	getToken();
+	return comp();
+}
+
+// <assign-statement> -> identifier <next>
+int assign_statement()
+{
+	char* ID = g_lastToken.data.string;
+	switch(getToken())
+	{
+		// id = EXPR;
+		case TOK_ASSIGN:
+			if(expr() == SYN_ERR)
+				return SYN_ERR;
+			if(isType(TOK_DELIM))
+				return SYN_OK;
+			return throw("Missing ;");
+		// id ( ) 
+		case TOK_LEFT_PAR:
+			do {
+				getToken();
+				// expects a term
+				if(!isTerm())
+					break;
+			} while(getType(TOK_LIST_DELIM));
+
+			if(!isType(TOK_RIGHT_PAR))
+				return throw("Expected ) or a list of terms");	
+			if(!getType(TOK_DELIM))
+				return throw("Expected ;");	
+			return SYN_OK;
+	}	
+}
 // statement->return EXPR ;
 // statement->while(EXPR) COMPOUND 
 // statement->if(EXPR) COMPOUND else COMPOUND;
@@ -85,52 +165,18 @@ int comp()
 // statement->id ( ) ; 
 int statement()
 {
-	// if ruler starts with keyword (while, if, return)
+	// if the rule starts with keyword (while, if, return)
+	//  SELECTION | JUMP | ITERATION 
 	if(isType(TOK_KEYWORD))
 	{
 		switch(g_lastToken.data.integer)
 		{
-			// statement->return EXPR ;
 			case KW_RETURN:
-				if(expr() == SYN_ERR)
-					return SYN_ERR;
-				if(!isType(TOK_DELIM))
-					return throw("Expected ;");
-				return SYN_OK;
-			break;
-			// statement->while ( EXPR ) COMPOUND 
+				return jump_statement();
 			case KW_WHILE:
-				if(!getType(TOK_LEFT_PAR))
-					return throw("Expecting ( after while");
-				
-				if(expr() == SYN_ERR)
-					return SYN_ERR;
-				
-				if(!isType(TOK_RIGHT_PAR))
-					return throw("Expecting ) after while");
-				getToken();
-				return comp();
-				break;	
-			// statement->if(EXPR) COMPOUND else COMPOUND;
+				return iteration_statement();
 			case KW_IF:
-				if(!getType(TOK_LEFT_PAR))
-					return throw("Expecting ( after if");
-				
-				if(expr() == SYN_ERR)
-					return SYN_ERR;
-				
-				if(!isType(TOK_RIGHT_PAR))
-					return throw("Expecting ) after expression: if (EXPR)");
-
-				getToken();
-				if(comp() == SYN_ERR)
-					return SYN_ERR;
-				
-				getToken();
-				if(!isTypeOf(TOK_KEYWORD,KW_ELSE))
-					return throw("Expecting 'else'");
-				getToken();
-				return comp();
+				return selection_statement();
 			default:
 				fprintf(stderr,"Type: %d\n",g_lastToken.data);
 				
@@ -142,31 +188,7 @@ int statement()
 	// statement->id ( ) ; 
 	else if(isType(TOK_ID) || isType(TOK_SPECIAL_ID))
 	{
-		char* ID = g_lastToken.data.string;
-		switch(getToken())
-		{
-			// id = EXPR;
-			case TOK_ASSIGN:
-				if(expr() == SYN_ERR)
-					return SYN_ERR;
-				if(isType(TOK_DELIM))
-					return SYN_OK;
-				return throw("Missing ;");
-			// id ( ) 
-			case TOK_LEFT_PAR:
-				do {
-					getToken();
-					// expects a term
-					if(!isTerm())
-						break;
-				} while(getType(TOK_LIST_DELIM));
-	
-				if(!isType(TOK_RIGHT_PAR))
-					return throw("Expected ) or a list of terms");	
-				if(!getType(TOK_DELIM))
-					return throw("Expected ;");	
-				return SYN_OK;
-		}	
+		return assign_statement();	
 	}
 	// statement->COMPOUND
 	 else if(isType(TOK_LEFT_BRACE))
@@ -300,12 +322,9 @@ int body()
 		
 }
 
-// start->eps
-// start->class-decl start
-int start() {
+// <class-definition> -> class <id> <compound>
+int classdef() {
 	// on EOF apply start->eps
-	if(getToken() == TOK_EOF)
-		return SYN_OK;
 
 	/* class-decl start */
 	// class-decl->class id { C-BODY } 
@@ -332,10 +351,27 @@ int start() {
 
 	// class has been parsed correctly	
 	hint("Class '%s' parsed.",className);
+}
+
+// <class-definition-list> -> <class-definition> <class-definition-list>
+// <class-definition-list> -> eps
+int classdeflist()
+{
+	// choose <class-definition-list> -> eps on token eps
+	if(getToken() == TOK_EOF)
+		return SYN_OK;
 	
-	// continue with other classes
-	return start();	
-	
+	// else continue with: 
+	// <class-definition-list> -> <class-definition> <class-definition-list>
+	if(classdef() == SYN_ERR)
+		return SYN_ERR;
+
+	return classdeflist();
+}
+
+int parse()
+{
+	return classdeflist();
 }
 
 int main(int argc, char* argv[])
@@ -350,7 +386,7 @@ int main(int argc, char* argv[])
 	if(result)
 	{
 		// parse the code
-		int result = start();
+		int result = parse();
 		printf("State: %d\n",result);
 		return result;
 	} else {
