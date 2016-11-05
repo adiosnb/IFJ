@@ -116,6 +116,8 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 		}
+		scanner_closeFile();
+		
 	} else {
 		printf("Error has occured while opening the file %s.\n",name);	
 	}
