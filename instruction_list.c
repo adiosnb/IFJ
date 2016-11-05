@@ -117,8 +117,8 @@ void debug_print(instruction_list_t* list){
 
     while (current != NULL){
         printf(        "┌──────INSTRUCTION LIST────────┐ ┌───────INTERPRETER TABLE──────┐ ┌────────────S TABLE───────────┐\n"
-                       "| Addr: %5i %5i %5i      | | Key :                          | Key: \n"
-                       "| Inst: %15s        | | Cont:                       +   | Cont:\n"
+                       "| Addr: %5i %5i %5i      | | Key :                        | | Key:                         |\n"
+                       "| Inst: %15s        | | Cont:                        | | Cont:                        |\n"
                        "└──────────────────────────────┘ └──────────────────────────────┘ └──────────────────────────────┘\n",
                        current->instruction.addr1,
                        current->instruction.addr2,
