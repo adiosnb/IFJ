@@ -1,0 +1,60 @@
+<source-program>              -> <class-definition-list> <end>
+<end>                         -> EOF
+<class-definition-list>       -> <class-definition> <more-class-definition>
+<more-class-definition>       -> <class-definition-list> 
+<more-class-definition>       -> epsilon
+
+<class-definition>            -> class <identifier> <compound-statement>
+
+<definition>                  -> <static-type> <type-specifier> <identifier> <more-definition>
+<more-definition>             -> ( <function-parameters-list> ) <compound-statement>
+<more-definition>             -> <variable-initialization> ;
+
+<variable-initialization>        -> = expression
+<variable-initialization>        -> epsilon
+
+<function-parameters-list>     -> <definition> <more-function-parameters>
+<function-parameters-list>     -> epsilon
+<more-function-parameters>     -> , <function-parameters-list> 
+<more-function-parameters>     -> epsilon
+
+<static-type>                 -> epsilon
+<static-type>                  -> static
+
+<statement>                    -> <compound-statement>
+<statement>                   -> <assign-statement>
+<statement>                   -> <selection-statement>
+<statement>                    -> <iteration-statement>
+<statement>                    -> <jump-statement>
+
+<block-items-list>             -> <block-item> <more-block-items>
+<more-block-items>             -> <block-items-list>
+<more-block-items>             -> epsilon
+<block-item>                   -> <definition>
+
+<compound-statement>           -> { <block-items-list> }
+<assign-statement>             -> identifier <next> ;
+<selection-statement>          -> if ( expression ) <compound-statement> else <compound-statement>
+<iteration-statement>          -> while ( expression ) <compound-statement>
+<jump-statement>               -> return <expr> ;
+
+<next>                         -> ( <function-parameters-list> ) 
+<next>                         -> = <more-next>
+
+<more-next>                    -> <identifier> ( <function-parameters-list> ) 
+<more-next>                    -> expression 
+
+<identifier>                   -> simple-identifier
+<identifier>                   -> fully-qualified-identifier
+<identifier>                   -> decimal-constant
+<identifier>                   -> floating-point-constant
+
+<type-specifier>               -> void
+<type-specifier>               -> double
+<type-specifier>               -> int
+<type-specifier>               -> String
+<type-specifier>               -> epsilon
+
+
+<expr>                         -> epsilon
+<expr>                         -> expression
