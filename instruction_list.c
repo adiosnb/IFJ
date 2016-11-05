@@ -116,11 +116,10 @@ void debug_print(instruction_list_t* list){
     };
 
     while (current != NULL){
-        printf(        "*****************************************\n"
-                       "* Inst addr1 : %i                       *\n"
-                       "* Inst addr2 : %i                       *\n"
-                       "* Inst addr3 : %i                       *\n"
-                       "* Instruction: %s                       *\n",
+        printf(        "┌──────────────────────────────────────┐\n"
+                       "| Inst address: %5i %5i %5i      |\n"
+                       "| Instruction : %15s        |\n"
+                       "└──────────────────────────────────────┘\n",
                        current->instruction.addr1,
                        current->instruction.addr2,
                        current->instruction.addr3,
