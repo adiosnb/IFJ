@@ -14,6 +14,7 @@
 #include "instructions.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 
 instruction_list_t *init_inst_list() {
@@ -79,4 +80,51 @@ instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum in
     list->last = new_instruction;
 
     return new_instruction;
+}
+
+void debug_print(instruction_list_t* list){
+
+    instruction_item_t *current = list->first;
+
+    char *msg[] = {
+            "INST_NOP",
+            "INST_ADD",
+            "INST_SUB",
+            "INST_MUL",
+            "INST_DIV",
+            "INST_PUSH",
+            "INST_POP",
+            "INST_STORE",
+            "INST_JMP",
+            "INST_JEQ",
+            "INST_JNEQ",
+            "INST_JZ",
+            "INST_CALL",
+            "INST_RET",
+            "INST_WRITE",
+            "INST_READ_INT",
+            "INST_READ_DOUBLE",
+            "INST_READ_STRING",
+            "INST_STR_LEN",
+            "INST_STR_CMP",
+            "INST_STR_FIND",
+            "INST_STR_SORT",
+            "INST_STR_SUBSTR",
+            "INST_HALT",
+            "INST_LABEL",
+            NULL,
+    };
+
+    while (current != NULL){
+        printf(        "┌──────────────────────────────────────┐\n"
+                       "| Inst address: %5i %5i %5i      |\n"
+                       "| Instruction : %15s        |\n"
+                       "└──────────────────────────────────────┘\n",
+                       current->instruction.addr1,
+                       current->instruction.addr2,
+                       current->instruction.addr3,
+                       msg[current->instruction.type]);
+        current = current->next;
+    }
+
 }

@@ -1,10 +1,10 @@
 #ifndef INTERPRET
 #define INTERPRET
 
-#include "stable.h"
+#include "inter_table.h"
 #include "instruction_list.h"
 
-int interpret(instruction_list_t *instruction_list, stab_t *stable);
+int interpret(instruction_list_t *instruction_list, inter_table_t *stable);
 
 void add();      //DEST OP1 OP2
 void sub();      //dest op1 op2

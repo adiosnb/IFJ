@@ -2,16 +2,16 @@
 // Created by k on 9.10.2016.
 //
 #include <stdlib.h>
-#include "stable.h"
+#include "inter_table.h"
 
 unsigned hash_fun_ptr(unsigned id, unsigned stab_size){
     return id % stab_size;
 }
 
 //alokuje priestor pre tabulku a zaroven ho nuluje
-stab_t *stable_init(unsigned size){
-    stab_t *pom;
-    if ((pom = calloc(1, sizeof(stab_t) + sizeof(stab_element_t) * size)) == NULL) //TODO : kiko pozri ci tu nema byt *stab_element_t
+inter_table_t *inter_table_init(unsigned size){
+    inter_table_t *pom;
+    if ((pom = calloc(1, sizeof(inter_table_t) + sizeof(inter_table_elem_t) * size)) == NULL) //TODO : kiko pozri ci tu nema byt *inter_table_elem_t
         return NULL;
     pom->stab_size = size;
     pom->hash_fun_ptr = hash_fun_ptr;
@@ -21,7 +21,7 @@ stab_t *stable_init(unsigned size){
 }
 
 //rekurzivne prejde jednosmerne viazany zoznam elementov a uvolni pamat
-void stable_destroy_element(stab_element_t *p_element){
+void stable_destroy_element(inter_table_elem_t *p_element){
     if (p_element->stab_next->stab_next != NULL)
         stable_destroy_element(p_element->stab_next);
     free(p_element->stab_next);
@@ -30,8 +30,8 @@ void stable_destroy_element(stab_element_t *p_element){
 }
 
 //zavola funkciu na destrukciu prvkov v tabulke a potm uvolni tabulku
-void stable_destroy(stab_t **p_table) {
-    stab_element_t *current, *next;
+void inter_table_destroy(inter_table_t **p_table) {
+    inter_table_elem_t *current, *next;
 
     for (unsigned i = 0; i < p_table[0]->stab_size; i++) {
         current = p_table[0]->arr[i];
@@ -46,21 +46,21 @@ void stable_destroy(stab_t **p_table) {
 }
 
 //pridava polozku do zoznamu
-int stable_add_var(unsigned id, argument_var_t *p_var, stab_t *p_stable){
+int inter_table_add_var(inter_table_t *p_stable, unsigned id, argument_var_t *p_var){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
-    stab_element_t *pom = p_stable->arr[index];
+    inter_table_elem_t *pom = p_stable->arr[index];
 
     if (p_stable->arr[index] != NULL) {
         //nastavy pom na posledny prvok
         while (pom->stab_next != NULL)
             pom = pom->stab_next;
         //za posledny prvok sa naalokuje miesto na dalsi
-        if ((pom->stab_next = malloc(sizeof(stab_element_t))) == NULL){
+        if ((pom->stab_next = malloc(sizeof(inter_table_elem_t))) == NULL){
             return 1; //todo dohodnut sa na error hlaske
         }
         pom = pom->stab_next;
     } else {
-        if ((p_stable->arr[index] = malloc(sizeof(stab_element_t))) == NULL) {
+        if ((p_stable->arr[index] = malloc(sizeof(inter_table_elem_t))) == NULL) {
             return 1;
         }
 
@@ -76,9 +76,9 @@ int stable_add_var(unsigned id, argument_var_t *p_var, stab_t *p_stable){
 }
 
 //vrati polozku zo zoznamu
-argument_var_t *stable_get_var(unsigned id, stab_t *p_stable){
+argument_var_t *inter_table_get_var(inter_table_t *p_stable, unsigned id){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
-    stab_element_t *pom = p_stable->arr[index];
+    inter_table_elem_t *pom = p_stable->arr[index];
 
     if (pom == NULL)
         return NULL;
@@ -92,9 +92,9 @@ argument_var_t *stable_get_var(unsigned id, stab_t *p_stable){
 }
 
 //odstrni polozkiu zo zoznamu
-void stable_remove_var(unsigned id, stab_t *p_stable){
+void inter_table_remove_var(inter_table_t *p_stable, unsigned id){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
-    stab_element_t *pom = p_stable->arr[index];
+    inter_table_elem_t *pom = p_stable->arr[index];
 
     if (pom == NULL)
         return;
