@@ -22,14 +22,14 @@ symbol =>   "trieda.funkcia"
 symbol =>   "trieda.funkcia.argumentA"
 symbol =>   "trieda.funkcia.argumentB"
 
-struct {
-    char *str;          // symbol
+struct struct stable_data {
+    char *key;          // symbol
     data_t data;        // data
 }
 
 // Data symbolu
-typedef struct stable_data {
+typedef struct {
     int type;                   // premenna:    int, double, String alebo funkcia: f-int, f-double,f-String, f-void
     stable_data *ptr;           // funkcia:
     int inter_table;
-}
+}data_t;

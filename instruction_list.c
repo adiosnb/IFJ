@@ -12,6 +12,7 @@
 
 #include "instruction_list.h"
 #include "instructions.h"
+#include "inter_table.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -81,8 +82,8 @@ instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum in
 
     return new_instruction;
 }
-
-void debug_print(instruction_list_t* list){
+/*
+void debug_print(instruction_list_t* list, inter_table_t *inter_tab){
 
     instruction_item_t *current = list->first;
 
@@ -116,15 +117,18 @@ void debug_print(instruction_list_t* list){
     };
 
     while (current != NULL){
-        printf(        "┌──────────────────────────────────────┐\n"
-                       "| Inst address: %5i %5i %5i      |\n"
-                       "| Instruction : %15s        |\n"
-                       "└──────────────────────────────────────┘\n",
+
+        printf(        "┌──────INSTRUCTION LIST────────┐ ┌───────INTERPRETER TABLE──────┐ ┌────────────S TABLE───────────┐\n"
+                       "| Addr: %5i %5i %5i      | | Key :                        | | Key:                         |\n"
+                       "| Inst: %15s        | | Cont:                        | | Cont:                        |\n"
+                       "└──────────────────────────────┘ └──────────────────────────────┘ └──────────────────────────────┘\n",
                        current->instruction.addr1,
                        current->instruction.addr2,
                        current->instruction.addr3,
                        msg[current->instruction.type]);
+
         current = current->next;
     }
+    printf("Instruction stream\n");
 
-}
+}*/
