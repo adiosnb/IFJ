@@ -29,10 +29,10 @@ int main() {
     }
 
 
-    for (int i = 0; i< 5000000; i++){
+   /*for (int i = 0; i< 5000000; i++){
         create_and_add_instruction(i_list, INST_PUSH, 0, 0, 0);//push cisla 5
     }
-
+*/
 
     //definicia argumentov
     tmp_var.arg_type = STACK_EBP;
@@ -101,7 +101,7 @@ int main() {
 
 
 
-
+    debug_print(i_list);
 
     interpret(i_list, sym_tab);
 
