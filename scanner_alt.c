@@ -1,11 +1,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "scanner.h"
+#include "scanner_alt.h"
 #include "str.h"
 
 FILE*	fHandle = NULL;
-string_t first, second;
+string_t first, second, literal;
 
 
 int	scanner_openFile(char* fileName)
@@ -57,6 +57,7 @@ char*	createString2(const char* str, const char* second)
 // processes text literals such as "text" or "tex\t"
 int	process_literal()
 {
+    str_reinit(&literal);
 	fgetc(fHandle);
 	// a normal state is used when awaiting regular ASCII input
 	// SPECIAL state is reached after receiving '\' 
@@ -64,7 +65,7 @@ int	process_literal()
 	int c, state = NORMAL;
 
 	// TODO: provide a better string datatype which would allow 'unlimited' strings
-	char tempString[1001] = "\0";
+	//char tempString[1001] = "\0";
 	int i = 0;
 
 	int octBase= 64;
@@ -78,7 +79,7 @@ int	process_literal()
 				{
 					// when the end of terminal is reached
 					g_lastToken.type = TOK_LITERAL;
-					g_lastToken.data.string = createString(tempString);
+					g_lastToken.data.string = literal.str;
 					// TODO: add pointer to symbol
 					return TOK_LITERAL;
 
@@ -87,7 +88,7 @@ int	process_literal()
 					state = SPECIAL;
 					break;
 				} else {
-					tempString[i++] = c;
+					ADD_CHAR(literal,c);
 				}
 				break;
 			// process escape sequences (e.g. \n) or report invalid ones
@@ -100,15 +101,15 @@ int	process_literal()
 						break;
 					case '\\':
 					case '\"':
-						tempString[i++] = c;
+                        ADD_CHAR(literal,c);
 						state = NORMAL;
 						break;
 					case 'n':
-						tempString[i++] = '\n';
+                        ADD_CHAR(literal,'\n');
 						state = NORMAL;
 						break;
 					case 't':
-						tempString[i++] = '\t';
+                        ADD_CHAR(literal,'\t');
 						state = NORMAL;
 						break;
 					default:
@@ -135,8 +136,7 @@ int	process_literal()
 					if(octBase == 0)
 					{
 						//concatenate a new char
-						tempString[i++] = sum;
-						// reload default values 
+                        ADD_CHAR(literal,sum);
 						octBase= 64;
 						sum = 0;
 						// and continue reading the rest of literal
@@ -180,7 +180,7 @@ int	process_identifier()
 	str_reinit(&first);
 	str_reinit(&second);
 
-	int i = 0,c;
+	int c;
 	// nonAlpha is toggled to 1 if at least one character is non-alphanumerical
 	// -> useful for skipping keyword comparing 
 	int isNonAlpha = 0;
@@ -214,7 +214,6 @@ int	process_identifier()
 					fprintf(stderr,"Error: Multiple '.' in identifier.\n");
 					return TOK_ERROR;
 				}
-				i = 0;
 				continue;
 			}
 			
@@ -245,9 +244,9 @@ int	process_identifier()
 			if(state == SECOND)
 			{
 				// if the second part of ID fullfills requirements
-				if(i > 0 && isdigit(second.str[0]) == 0)
+				if((first.len && second.len))
 				{
-					g_lastToken.data.string = createString2(first.str,second.str);
+					g_lastToken.data.string = second.str;
 					g_lastToken.type = TOK_SPECIAL_ID;
 				}
 				else {
@@ -255,7 +254,7 @@ int	process_identifier()
 					return TOK_ERROR;
 				}
 			} else 
-				g_lastToken.data.string = createString(first.str);
+				g_lastToken.data.string = first.str;
 				return g_lastToken.type;
 		}
 	}
@@ -501,8 +500,7 @@ int	process_comments(int isBlock)
 
 int	getToken()
 {
-	first = str_init();
-	second = str_init();
+
 	// let's get a character from source code's stream
 	int c;
 	while((c = fgetc(fHandle)) != EOF)
