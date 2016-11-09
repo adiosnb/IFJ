@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "scanner/scanner.h"
+#include "scanner/scanner_alt.h"
 #include "utils/dynamic_stack.h"
 
 const char op_table[][14] =
