@@ -1,7 +1,13 @@
 
+#ifndef SCANNER_ALT
+#define SCANNER_ALT
+
 #include <stdio.h>
+#include "str.h"
 
 enum returnCodes { ERROR, OK};
+
+extern string_t first, second, literal;
 
 // As different classes require different data, tokens carry an union
 // allowing all neccessary kinds of data
@@ -95,3 +101,7 @@ int	scanner_rewind();
 
 // Process another token, update g_lastToken structure and return OK on succ 
 int	getToken();
+// Return token
+int	ungetToken();
+
+#endif
