@@ -10,7 +10,7 @@ int	isTokenKeyword(int kw)
 
 int	isIdentifier()
 {
-	return (g_lastToken.type == TOK_KEYWORD
+	return (g_lastToken.type == TOK_ID
 		||  g_lastToken.type == TOK_SPECIAL_ID);
 }
 
@@ -118,11 +118,13 @@ int next()
 	{
 		case TOK_ASSIGN:
 			return more_next();
-		case TOK_LEFT_BRACE:
+		case TOK_LEFT_PAR:
 			if(function_parameters_list() == SYN_ERR)
 				return SYN_ERR;	
 			if(getToken() != TOK_RIGHT_PAR)
 				return throw("Expected )");
+			if(getToken() != TOK_DELIM)
+				return throw("Expected ;");
 			return SYN_OK;
 	}
 	return throw("Expected = or (");
@@ -277,6 +279,7 @@ int statement()
 			break;
 		}
 		case TOK_ID:
+		case TOK_SPECIAL_ID:
 			return assign_statement();	
 		case TOK_LEFT_BRACE:
 			return compound_statement();
