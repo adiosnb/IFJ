@@ -22,7 +22,7 @@ const char op_table[][14] =
 /* $  */{'<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '_', '=' },
 };
 
-//#define NDEBUG
+#define NDEBUG
 #define DOLLAR  13 
 static inline int edit_const_id_span(int a)
 {
@@ -90,12 +90,6 @@ void parse_expression(void)
         return;
     }
     
-    int x;
-    while ((x = edit_const_id_span(getToken())) != TOK_EOF)
-        printf("%s", tokens[x]);
-    putchar('\n');
-    return;
-
     stack_t pda = stack_ctor();
     int c =  edit_const_id_span(getToken());
 
@@ -122,7 +116,7 @@ void parse_expression(void)
                         c =  edit_const_id_span(getToken());
                         break;
                 case '>':
-                        printf("%s", tokens[stack_top(&pda)]);
+                        printf("%s\n", tokens[stack_top(&pda)]);
 #if defined NDEBUG
                         printf("Pop: %s\n", tokens[stack_top(&pda)]);
 #endif
