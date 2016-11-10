@@ -188,12 +188,13 @@ int selection_statement()
 		return SYN_OK;	
 		
 	}	
+	return throw("Expected IF");
 }
 
 //<assign-statement>             -> identifier <next> ;
 int assign_statement()
 {
-	int type = getToken();
+	getToken();
 	if(isIdentifier())
 	{
 		return next();
@@ -211,6 +212,7 @@ int compound_statement()
 
 	if(getToken() != TOK_RIGHT_BRACE)
 		return throw("Expected {");
+	return SYN_OK;
 }
 
 
@@ -327,6 +329,7 @@ int function_parameters_list()
 	if(getToken() == TOK_RIGHT_PAR)
 	{
 		ungetToken();
+		return SYN_OK;
 	} else {
 		ungetToken();
 
