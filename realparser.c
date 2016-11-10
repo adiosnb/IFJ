@@ -14,8 +14,17 @@ int	isIdentifier()
 		||  g_lastToken.type == TOK_SPECIAL_ID);
 }
 
+int	isTokenTypeSpecifier()
+{
+	return (g_lastToken.type == TOK_KEYWORD && (
+		g_lastToken.data.integer == KW_VOID ||
+		g_lastToken.data.integer == KW_INT ||
+		g_lastToken.data.integer == KW_DOUBLE||
+		g_lastToken.data.integer == KW_STRING));
+}
 
-int 	throw(char* error)
+
+/*int 	throw(char* error)
 {
 	static int hasThrown = 0;
 	if(!hasThrown)
@@ -23,12 +32,12 @@ int 	throw(char* error)
 	hasThrown = 1;
 	return SYN_ERR;
 }
+*/
 
-int	hint(char* msg)
-{
-	fprintf(stderr,msg);
-	return 0;
-}
+#define hint(format,...) fprintf(stderr,"[Hint]: "format"\n", ##__VA_ARGS__)
+
+#define throw(format,...) fprintf(stderr,"[%s:%d]: "format"\n", __FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
+
 
 
 int class_definition_list();
@@ -39,6 +48,8 @@ int definition();
 int block_items_list();
 int compound_statement();
 int function_parameters_list();
+int statement();
+int parameter_definition();
 
 /*<expr>                         -> expression
 <expr>                         -> eps
@@ -105,7 +116,7 @@ int next()
 {	
 	switch(getToken())
 	{
-		case TOK_EQ:
+		case TOK_ASSIGN:
 			return more_next();
 		case TOK_LEFT_BRACE:
 			if(function_parameters_list() == SYN_ERR)
@@ -200,38 +211,43 @@ int compound_statement()
 
 	if(getToken() != TOK_RIGHT_BRACE)
 		return throw("Expected {");
-
 }
 
 
 //<block-item>                   -> <definition>
+//<block-item>                   -> <statement>
 int block_item()
 {
-	return definition();
+	getToken();
+	if(isTokenKeyword(KW_STATIC) || isTokenTypeSpecifier())
+	{	
+		ungetToken(); 
+		return definition();
+	} else {
+		ungetToken();
+		return statement();
+	}
+	return SYN_ERR;
 }
 
-
-//<more-block-items>             -> eps
-//<more-block-items>             -> <block-items-list>
-int more_block_items()
+//<block-items-list>             -> <block-item> <block-items-list>
+//<block-items-list>             -> eps
+int block_items_list()
 {
-	if(getToken() == TOK_RIGHT_BRACE)
+	int type = getToken();
+	if(type == TOK_EOF)
+		return throw("Missing }");
+	if(type == TOK_RIGHT_BRACE)
 	{
 		ungetToken();
 		return SYN_OK;
-	} else {
-		ungetToken();
-		return block_items_list();	
 	}
-}
-
-//<block-items-list>             -> <block-item> <more-block-items>
-int block_items_list()
-{
+	ungetToken();
+	
 	if(block_item() == SYN_ERR)	
 		return SYN_ERR;
 
-	return more_block_items();
+	return block_items_list();
 }
 
 //<statement>                    -> <jump-statement>
@@ -274,7 +290,7 @@ int statement()
 int static_type()
 {
 	getToken();
-	if(isTokenKeyword(KW_STRING))
+	if(isTokenKeyword(KW_STATIC))
 		return 1;
 	else
 		ungetToken();
@@ -283,14 +299,16 @@ int static_type()
 
 
 //<more-function-parameters>     -> eps
-//<more-function-parameters>     -> , <function-parameters-list> 
+//<more-function-parameters>     -> , <parameter-declaration> <more-function-parameters> 
 
 int more_function_parameters()
 {
 	switch(getToken())
 	{
 		case TOK_LIST_DELIM:
-				return function_parameters_list();
+				if(parameter_definition() == SYN_ERR)
+					return SYN_ERR;
+				return more_function_parameters();
 		default:
 			hint("more_function_parameters is strange");
 		case TOK_RIGHT_PAR:
@@ -302,7 +320,7 @@ int more_function_parameters()
 }
 
 //<function-parameters-list>     -> eps
-//<function-parameters-list>     -> <definition> <more-function-parameters>
+//<function-parameters-list>     -> <parameter-definition> <more-function-parameters>
 
 int function_parameters_list()
 {
@@ -312,7 +330,7 @@ int function_parameters_list()
 	} else {
 		ungetToken();
 
-		if(definition() == SYN_ERR)
+		if(parameter_definition() == SYN_ERR)
 			return SYN_ERR;
 		return more_function_parameters();
 	}
@@ -323,7 +341,7 @@ int function_parameters_list()
 
 int variable_initialization()
 {
-	if(getToken() == TOK_EQ)
+	if(getToken() == TOK_ASSIGN)
 	{
 		return expression();
 		
@@ -336,7 +354,6 @@ int variable_initialization()
 
 //<more-definition>             -> <variable-initialization> ;
 //<more-definition>             -> ( <function-parameters-list> ) <compound-statement>
-// TODO: id(param,param) 
 
 int more_definition()
 {
@@ -353,14 +370,28 @@ int more_definition()
 		if(variable_initialization() == SYN_ERR)
 			return SYN_ERR;
 		
-		if(getToken() == TOK_DELIM)
-			return SYN_ERR;
+		if(getToken() != TOK_DELIM)
+			return throw("Missing ';'");
 
 		return SYN_OK;
 	
 	}
 	
 }
+//<parameter-definition>                  -> <type-specifier-opt> <identifier> 
+
+int parameter_definition()
+{
+	if(type_specifier() == SYN_ERR)
+		return throw("Expected type-specifier (void,int,double,String)\n");
+
+	// TODO - special ID	
+	if(getToken() != TOK_ID)
+		return throw("Expected simple-id");
+
+	return SYN_OK;
+}
+
 
 
 //<definition>                  -> <static-type> <type-specifier> <identifier> <more-definition>
@@ -368,6 +399,7 @@ int more_definition()
 int definition()
 {
 	int isStatic = static_type();
+	hint("IsStatic ? %d",isStatic);
 	
 	if(type_specifier() == SYN_ERR)
 		return throw("Expected type-specifier (void,int,double,String)\n");
@@ -394,24 +426,22 @@ int class_definition()
 
 }
 
-
-//<more-class-definition>       -> eps
-//<more-class-definition>       -> <class-definition-list> 
-int more_class_definition()
-{
-	if(getToken() == TOK_EOF)
-		return SYN_OK;
-
-	ungetToken();
-	return class_definition_list();
-	
-}
-
-//<class-definition-list>       -> <class-definition> <more-class-definition>
+//<class-definition-list>       -> <class-definition> <class-definition-list>
+//<class-definition-list>       -> eps
 int class_definition_list()
 {
-	class_definition();
-	return more_class_definition();
+	int result = getToken();
+	if(result == TOK_EOF || result == TOK_ERROR)
+	{
+		ungetToken();
+		return SYN_OK;
+	}
+	ungetToken();
+	hint("Result is: %d",result);
+
+	if(class_definition() == SYN_ERR)
+		return SYN_ERR;
+	return class_definition_list();
 }
 
 
@@ -425,6 +455,14 @@ int source_program()
 
 int main()
 {
+	if(scanner_openFile("source.java"))
+	{
+		int result = source_program();
+		scanner_closeFile();
+		fprintf(stderr,"Result: %d\n",result);
+		return 0;
+	}
+	return 1;
 }
 
 
