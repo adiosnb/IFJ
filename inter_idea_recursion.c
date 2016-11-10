@@ -5,80 +5,6 @@
 #include "interpret.h"
 #include "inter_idea_recursion.h"
 
-void debug_print_instruction_list(instruction_list_t* list){
-
-    instruction_item_t *current = list->first;
-
-    char *msg[] = {
-            "INST_NOP",
-            "INST_ADD",
-            "INST_SUB",
-            "INST_MUL",
-            "INST_DIV",
-            "INST_PUSH",
-            "INST_POP",
-            "INST_STORE",
-            "INST_JMP",
-            "INST_JEQ",
-            "INST_JNEQ",
-            "INST_JZ",
-            "INST_CALL",
-            "INST_RET",
-            "INST_WRITE",
-            "INST_READ_INT",
-            "INST_READ_DOUBLE",
-            "INST_READ_STRING",
-            "INST_STR_LEN",
-            "INST_STR_CMP",
-            "INST_STR_FIND",
-            "INST_STR_SORT",
-            "INST_STR_SUBSTR",
-            "INST_HALT",
-            "INST_LABEL",
-            NULL,
-    };
-
-    while (current != NULL){
-        printf(        "┌──────────────────────────────────────┐\n"
-                               "| Inst address: %5i %5i %5i      |\n"
-                               "| Instruction : %15s        |\n"
-                               "└──────────────────────────────────────┘\n",
-                       current->instruction.addr1,
-                       current->instruction.addr2,
-                       current->instruction.addr3,
-                       msg[current->instruction.type]);
-        current = current->next;
-    }
-    printf("Instruction stream\n");
-
-}
-
-void debug_print_inter_table(inter_table_t *inter_tab){ // TODO naplnit tabulku inter aj stable
-
-    int i = 0;
-    inter_table_elem_t* current_table_element = inter_tab->arr[0]; // prvy element tabulky
-
-    while (inter_tab->arr[i] == NULL || inter_tab->arr[i]->stab_next == NULL){
-        i++;
-        current_table_element = inter_tab->arr[i];
-    }
-
-    while (inter_tab->stab_size > i){
-        printf(        "┌──────────────────────────────────────┐\n"
-                               "| Key, arg_type %7i %7i        |\n"
-                               "| Data : %15i        |\n"
-                               "└──────────────────────────────────────┘\n",
-                       current_table_element->stab_key,
-                       current_table_element->stab_content.arg_type,
-                       current_table_element->stab_content.data.i
-                       );
-        current_table_element = inter_tab->arr[i]->stab_next;
-
-    }
-
-
-
-}
 
 int main() {
 
@@ -174,10 +100,6 @@ int main() {
 
     create_and_add_instruction(i_list, INST_HALT, 0, 0, 0); //koniec porgramu
 
-
-
-    //debug_print_instruction_list(i_list);
-    debug_print_inter_table(inter_tab);
 
     interpret(i_list, inter_tab);
 
