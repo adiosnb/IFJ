@@ -1,6 +1,17 @@
+[11/11/2016/
+TODO:
+	parser: fix bugs, correctly handle declarations, set up the cooperation with the table of symbols (TOS)
+
+	semantic analysis implementation
+
+-------------------------------------------
+  PERMANENT ASSIGMENTS
+-------------------------------------------
 Adam: parser,
 
-Roman: scanner, parser, unittest, stavovy automat,
+Roman:
+	DONE basic parser
+	TODO fix all bugs, make sure implementation fits the grammar
 
 Kiko: algoritmy, testy, 
 
@@ -11,7 +22,7 @@ Adio: interpret, stack, makefile,
 -------------------------------------------
   THINGS TO DO WITHOUT ASSIGNMENT
 -------------------------------------------
-- dynamic-string(type) = a dynamically-changing linked list for holding really long strings
+- DONE: dynamic-string(type) = a dynamically-changing linked list for holding really long strings
                   - needed for scanner (identifiers)
 
 // Tabulka symbolov - dvojica symbol:data
