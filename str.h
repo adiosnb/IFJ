@@ -19,5 +19,7 @@ void str_destroy(string_t str);
 
 void str_print(string_t str);
 void str_resize(string_t *str);
+void str_append_str(string_t *str_dest,string_t *str_src);
+void str_append_chars(string_t *str_dest,char *str_src);
 
 #endif  //STR

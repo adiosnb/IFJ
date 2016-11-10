@@ -6,7 +6,7 @@
 string_t str_init(){
     string_t new_str;
 
-    new_str.str = calloc(STR_ALLOC_SIZE,sizeof(char));
+    new_str.str = calloc(STR_ALLOC_SIZE + 1,sizeof(char));
     if (new_str.str == NULL){
         //TODO error
     }
@@ -23,7 +23,7 @@ void str_reinit(string_t *str){
     str->max = STR_ALLOC_SIZE;
     str->len = 0;
 
-    if ((str->str = calloc(STR_ALLOC_SIZE,sizeof(char))) != NULL) {
+    if ((str->str = calloc(STR_ALLOC_SIZE + 1,sizeof(char))) != NULL) {
         //TODO error
     }
 }
@@ -34,7 +34,7 @@ void str_print(string_t str){
 void str_resize(string_t *str) {
     char *new_str;
     str->max += STR_ALLOC_SIZE;
-    if ((new_str = calloc(str->max, sizeof(char))) == NULL){
+    if ((new_str = calloc(str->max + 1, sizeof(char))) == NULL){
         //TODO error
     }
     strcpy(new_str,str->str);
