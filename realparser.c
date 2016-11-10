@@ -100,12 +100,16 @@ int more_next()
 
 		if(getToken() != TOK_RIGHT_PAR)
 			return throw("Expected )");
-		return SYN_OK;
 	} else {
 		ungetToken();
 		ungetToken();
-		return expression();
+		if(expression() == SYN_ERR)
+			return SYN_ERR;
 	}	
+	// both ends on ;
+	if(getToken() != TOK_DELIM)
+		return throw("Expected ;");
+	return SYN_OK;
 }
 
 
