@@ -64,10 +64,6 @@ int	process_literal()
 	enum States {NORMAL, SPECIAL,OCTAL};
 	int c, state = NORMAL;
 
-	// TODO: provide a better string datatype which would allow 'unlimited' strings
-	//char tempString[1001] = "\0";
-	int i = 0;
-
 	int octBase= 64;
 	char sum = 0;
 	while((c = fgetc(fHandle)) != EOF)
@@ -175,8 +171,6 @@ int	isKeyword(const char* str,int* typeOfKeyword)
 
 int	process_identifier()
 {
-	//TODO: unlimited length of ID
-
 	str_reinit(&first);
 	str_reinit(&second);
 
@@ -258,6 +252,31 @@ int	process_identifier()
 				return g_lastToken.type;
 		}
 	}
+
+	if (first.len) {
+		if (state == FIRST){
+			int typeOfKeyword;
+			if(isKeyword(first.str,&typeOfKeyword))
+			{
+				g_lastToken.type = TOK_KEYWORD;
+				g_lastToken.data.integer = typeOfKeyword;
+				return TOK_KEYWORD;
+			} else {
+				g_lastToken.type = TOK_ID;
+				g_lastToken.data.string = first.str;
+				return TOK_ID;
+			}
+		} else {
+			if (second.len){
+				g_lastToken.type = TOK_ID;
+				g_lastToken.data.string = second.str;
+				return TOK_ID;
+			} else {
+				return TOK_ERROR;
+			}
+		}
+	}
+
 	return TOK_ERROR;
 	
 }
@@ -351,6 +370,28 @@ int	process_number()
 				
 		}
 	}
+
+	if (i) {
+		switch (state){
+			case INT:
+				g_lastToken.type = TOK_CONST;
+				g_lastToken.data.integer = atoi(buff);
+				return TOK_CONST;
+				break;
+			case DOUBLE:
+				g_lastToken.type = TOK_DOUBLECONST;
+				g_lastToken.data.real= atof(buff);
+				return TOK_DOUBLECONST;
+				break;
+
+			case EXP_RADIX:
+				g_lastToken.type = TOK_DOUBLECONST;
+				g_lastToken.data.real= atof(buff);
+				return TOK_DOUBLECONST;
+				break;
+		}
+	}
+
 	return TOK_ERROR;
 }
 
