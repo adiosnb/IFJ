@@ -133,10 +133,13 @@ void ret(){
 
         //ziskanie polohykam zapisat navratovu hodnotu a jej zapis
         destination = glob_ins_list->active->instruction.addr2;
-        if (destination->arg_type == STACK_EBP) {
-            stack_actualize_from_ebp(glob_stack, *return_value, destination->data.i);
-        } else {
-            *destination = *return_value;   //TODO check
+        //ak nechecme nikam ulozit navratovau hodnotu funkcie tak zapis preskocime
+        if (destination != NULL) {
+            if (destination->arg_type == STACK_EBP) {
+                stack_actualize_from_ebp(glob_stack, *return_value, destination->data.i);
+            } else {
+                *destination = *return_value;   //TODO check
+            }
         }
     } else {
         //vratenie sa spat odkial sa volala funkcia
