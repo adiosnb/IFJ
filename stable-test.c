@@ -18,7 +18,9 @@ int main(){
     char string1[] = "string1";
     char string2[] = "string2";
     char string3[] = "string3";
-    char string_concat[] = "string1.string2.string3";
+    char string_concat1[] = "string1.string2";
+    char string_concat2[] = "string1.string2.";
+    char string_blank[] = "";
 
     stab_t *sym_table;
     sym_table = stable_init(1024);
@@ -33,11 +35,18 @@ int main(){
     pom = stable_get_var(sym_table, string3);
     printf("string3:  %d\n", pom->type);
 
-    if(!stable_add_concatenate(sym_table, string1, string2, string3, cont2))
+    if(!stable_add_concatenate(sym_table, string1, string2, NULL, cont2))
         printf("nedostatok miesta\n");
 
-    pom = stable_get_var(sym_table, string_concat);
-    printf("string concat 2:  %d\n", pom->type);
+    pom = stable_get_var(sym_table, string_concat1);
+    printf("string1.string2:  %d\n", pom->type);
+
+    if(!stable_add_concatenate(sym_table, string1, string2, string_blank, cont3))
+        printf("nedostatok miesta\n");
+
+    pom = stable_get_var(sym_table, string_concat2);
+    printf("string1.string2.:  %d\n", pom->type);
+
 
     if(stable_search(sym_table, string1))
         printf("string 1 sa nasiel\n");
