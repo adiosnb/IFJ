@@ -62,8 +62,8 @@ int dest_inst_list(instruction_list_t *list) {
 }
 
 
-instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum instructions type, unsigned addr1,
-                                               unsigned addr2, unsigned addr3) {
+instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum instructions type, argument_var_t *addr1,
+                                               argument_var_t *addr2, argument_var_t *addr3) {
 
     instruction_item_t *new_instruction;
 
@@ -82,53 +82,3 @@ instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum in
 
     return new_instruction;
 }
-/*
-void debug_print(instruction_list_t* list, inter_table_t *inter_tab){
-
-    instruction_item_t *current = list->first;
-
-    char *msg[] = {
-            "INST_NOP",
-            "INST_ADD",
-            "INST_SUB",
-            "INST_MUL",
-            "INST_DIV",
-            "INST_PUSH",
-            "INST_POP",
-            "INST_STORE",
-            "INST_JMP",
-            "INST_JEQ",
-            "INST_JNEQ",
-            "INST_JZ",
-            "INST_CALL",
-            "INST_RET",
-            "INST_WRITE",
-            "INST_READ_INT",
-            "INST_READ_DOUBLE",
-            "INST_READ_STRING",
-            "INST_STR_LEN",
-            "INST_STR_CMP",
-            "INST_STR_FIND",
-            "INST_STR_SORT",
-            "INST_STR_SUBSTR",
-            "INST_HALT",
-            "INST_LABEL",
-            NULL,
-    };
-
-    while (current != NULL){
-
-        printf(        "┌──────INSTRUCTION LIST────────┐ ┌───────INTERPRETER TABLE──────┐ ┌────────────S TABLE───────────┐\n"
-                       "| Addr: %5i %5i %5i      | | Key :                        | | Key:                         |\n"
-                       "| Inst: %15s        | | Cont:                        | | Cont:                        |\n"
-                       "└──────────────────────────────┘ └──────────────────────────────┘ └──────────────────────────────┘\n",
-                       current->instruction.addr1,
-                       current->instruction.addr2,
-                       current->instruction.addr3,
-                       msg[current->instruction.type]);
-
-        current = current->next;
-    }
-    printf("Instruction stream\n");
-
-}*/
