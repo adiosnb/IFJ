@@ -82,11 +82,12 @@ int main() {
 
 
     //MAIN
-    ptr_inst = create_and_add_instruction(i_list, INST_WRITE, 10, 0, 0); //echo number 10
+    ptr_inst = create_and_add_instruction(i_list, INST_LABEL, 0, 0, 0); //echo number 10
     ptr_to_tab = inter_table_get_var(inter_tab,MAIN);
     ptr_to_tab->arg_type = INSTRUCTION;
     ptr_to_tab->data.instruction = ptr_inst;
 
+    create_and_add_instruction(i_list, INST_WRITE, inter_table_get_var(inter_tab,10), 0, 0);
 
     create_and_add_instruction(i_list, INST_PUSH, inter_table_get_var(inter_tab,0), 0, 0);//push cisla 5
     create_and_add_instruction(i_list, INST_PUSH, inter_table_get_var(inter_tab,0), 0, 0);//push cisla -1
