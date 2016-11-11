@@ -10,7 +10,6 @@
  *   Notes :                Stack
  ***************************************/
 #include "stack.h"
-#include "instruction_list.h"
 
 #include <stdlib.h>
 #include <stdio.h>

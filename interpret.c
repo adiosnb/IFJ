@@ -1,9 +1,7 @@
 #include <stdio.h>
 
 #include "interpret.h"
-#include "inter_table.h"
 #include "stack.h"
-#include "instruction_list.h"
 
 #include <stdlib.h>
 
