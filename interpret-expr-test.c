@@ -39,7 +39,7 @@ int main () {
     input_data.data.data.i = 1;
     stable_add_var(sym_tab, stack_top, input_data);
 
-    create_and_add_instruction(i_list, INST_PUSH, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_INT, 0, 0, 0);
     ptr_to_table1 = stable_get_var(sym_tab, lokal_a);
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table1->data, 0, 0);
     ptr_to_table1 = stable_get_var(sym_tab, lokal_b);

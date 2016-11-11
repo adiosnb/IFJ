@@ -24,6 +24,9 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_EXPR_MUL,      //take last 2 operands from stack   TODO
     INST_EXPR_DIV,      //take last 2 operands from stack   TODO
     INST_PUSH,          //var to push       ---             ---
+    INST_PUSH_INT,      //---               ---             ---
+    INST_PUSH_DOUBLE,   //---               ---             ---
+    INST_PUSH_STRING,   //---               ---             ---
     INST_POP,           //no inputs
     INST_STORE,         //destination       source          ---
     INST_JMP,           //addr to jump      ---             ---
