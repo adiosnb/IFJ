@@ -5,6 +5,7 @@
 #ifndef IFJ_STABLE_H
 #define IFJ_STABLE_H
 
+#include <stdbool.h>
 #include "instruction_list.h"
 
 typedef struct {
