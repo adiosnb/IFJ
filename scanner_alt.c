@@ -192,9 +192,12 @@ int	process_identifier()
 		
 			// store the incoming char into either first or second part of ID
 			if(state == FIRST) {
-				ADD_CHAR(first, c);
-			}else{
-			    ADD_CHAR(second,c);}
+				//ADD_CHAR(first, c);
+				str_add_char(&first,c);
+			}else {
+				//ADD_CHAR(second,c);}
+				str_add_char(&second, c);
+			}
 		} else {
 			// if it is a ID splitter (FIRST.SECOND)
 			if(c == '.')
