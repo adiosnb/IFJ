@@ -146,7 +146,16 @@ bool stable_search(stab_t *p_stable, char *srch_el){
 bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, data_t data){
     char *pom;
     int j = 0, i = 0;
-    int size = strlen(clss) + strlen(fnct) + strlen(local);
+    int size = 0;
+
+    if (clss != NULL) {
+        size += strlen(clss);
+        if (fnct != NULL) {
+            size += strlen(fnct);
+            if (local != NULL)
+                size += strlen(local);
+        }
+    }
 
     if ((pom = malloc(size * sizeof(char) + 2)) == NULL) //+2 lebo sa vkadaju max 2x '.'
         return false;
