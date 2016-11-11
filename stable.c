@@ -80,8 +80,7 @@ int stable_add_var(stab_t *p_stable, char *id, data_t p_var){
         pom = p_stable->arr[index];
     }
 
-    pom->stab_content.inter_table = p_var.inter_table;
-    pom->stab_content.type = p_var.type;
+    pom->stab_content = p_var;
 
     char *new_key = NULL;
     if ((new_key = malloc(sizeof(char) * strlen(id) + 1)) == NULL)

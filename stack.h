@@ -34,6 +34,8 @@ argument_var_t stack_pop(stack_t *stack);
 
 argument_var_t stack_top(stack_t *stack);
 
+argument_var_t *stack_top_ptr(stack_t *stack);
+
 argument_var_t stack_ebp_relative(stack_t *stack,int position);
 
 argument_var_t *stack_ebp_relative_ptr(stack_t *stack, int position);

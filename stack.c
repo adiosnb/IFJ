@@ -60,6 +60,9 @@ argument_var_t stack_top(stack_t *stack){
     return stack->data[stack->used - 1];    //-1 je tam preto ze nepouzivam premennu stack.top ale stack.used
 }
 
+argument_var_t *stack_top_ptr(stack_t *stack) {
+    return &stack->data[stack->used - 1];
+}
 
 argument_var_t stack_ebp_relative(stack_t *stack, int position){
     return stack->data[stack->base + position - 1];

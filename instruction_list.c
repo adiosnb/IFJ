@@ -11,8 +11,6 @@
  ***************************************/
 
 #include "instruction_list.h"
-#include "instructions.h"
-#include "inter_table.h"
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -4,14 +4,15 @@
 #include <stdlib.h>
 #include "inter_table.h"
 
-unsigned hash_fun_ptr(unsigned id, unsigned stab_size){
+unsigned hash_fun_ptr(unsigned id, unsigned stab_size) {
     return id % stab_size;
 }
 
 //alokuje priestor pre tabulku a zaroven ho nuluje
-inter_table_t *inter_table_init(unsigned size){
+inter_table_t *inter_table_init(unsigned size) {
     inter_table_t *pom;
-    if ((pom = calloc(1, sizeof(inter_table_t) + sizeof(inter_table_elem_t) * size)) == NULL) //TODO : kiko pozri ci tu nema byt *inter_table_elem_t
+    if ((pom = calloc(1, sizeof(inter_table_t) + sizeof(inter_table_elem_t) * size)) ==
+        NULL) //TODO : kiko pozri ci tu nema byt *inter_table_elem_t
         return NULL;
     pom->tab_size = size;
     pom->hash_fun_ptr = hash_fun_ptr;
@@ -21,7 +22,7 @@ inter_table_t *inter_table_init(unsigned size){
 }
 
 //rekurzivne prejde jednosmerne viazany zoznam elementov a uvolni pamat
-void stable_destroy_element(inter_table_elem_t *p_element){
+void stable_destroy_element(inter_table_elem_t *p_element) {
     if (p_element->tab_next->tab_next != NULL)
         stable_destroy_element(p_element->tab_next);
     free(p_element->tab_next);
@@ -46,7 +47,7 @@ void inter_table_destroy(inter_table_t **p_table) {
 }
 
 //pridava polozku do zoznamu
-int inter_table_add_var(inter_table_t *p_stable, unsigned id, argument_var_t *p_var){
+int inter_table_add_var(inter_table_t *p_stable, unsigned id, argument_var_t *p_var) {
     unsigned index = hash_fun_ptr(id, p_stable->tab_size);
     inter_table_elem_t *pom = p_stable->arr[index];
 
@@ -55,7 +56,7 @@ int inter_table_add_var(inter_table_t *p_stable, unsigned id, argument_var_t *p_
         while (pom->tab_next != NULL)
             pom = pom->tab_next;
         //za posledny prvok sa naalokuje miesto na dalsi
-        if ((pom->tab_next = malloc(sizeof(inter_table_elem_t))) == NULL){
+        if ((pom->tab_next = malloc(sizeof(inter_table_elem_t))) == NULL) {
             return 1; //todo dohodnut sa na error hlaske
         }
         pom = pom->tab_next;
@@ -76,7 +77,7 @@ int inter_table_add_var(inter_table_t *p_stable, unsigned id, argument_var_t *p_
 }
 
 //vrati polozku zo zoznamu
-argument_var_t *inter_table_get_var(inter_table_t *p_stable, unsigned id){
+argument_var_t *inter_table_get_var(inter_table_t *p_stable, unsigned id) {
     unsigned index = hash_fun_ptr(id, p_stable->tab_size);
     inter_table_elem_t *pom = p_stable->arr[index];
 
@@ -92,7 +93,7 @@ argument_var_t *inter_table_get_var(inter_table_t *p_stable, unsigned id){
 }
 
 //odstrni polozkiu zo zoznamu
-void inter_table_remove_var(inter_table_t *p_stable, unsigned id){
+void inter_table_remove_var(inter_table_t *p_stable, unsigned id) {
     unsigned index = hash_fun_ptr(id, p_stable->tab_size);
     inter_table_elem_t *pom = p_stable->arr[index];
 
