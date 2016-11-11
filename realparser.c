@@ -4,6 +4,9 @@
 int inFunction = 0;
 #define setInFunction(st) inFunction = st
 
+int inCall = 0;
+#define setInCall(st) inCall= st
+
 enum syntaxCorrectness {SYN_OK,SYN_ERR};
 
 int	isTokenKeyword(int kw)
@@ -98,8 +101,10 @@ int more_next()
 	getToken();
 	if(getToken() == TOK_LEFT_PAR)
 	{	
+		setInCall(1);
 		if(function_parameters_list() == SYN_ERR)
 			return SYN_ERR;
+		setInCall(0);
 
 		if(getToken() != TOK_RIGHT_PAR)
 			return throw("Expected )");
@@ -126,8 +131,10 @@ int next()
 		case TOK_ASSIGN:
 			return more_next();
 		case TOK_LEFT_PAR:
+			setInCall(1);
 			if(function_parameters_list() == SYN_ERR)
 				return SYN_ERR;	
+			setInCall(0);
 			if(getToken() != TOK_RIGHT_PAR)
 				return throw("Expected )");
 			if(getToken() != TOK_DELIM)
@@ -377,6 +384,8 @@ int more_definition()
 		else
 			return throw("Err - declaration of function in function");
 
+		
+		setInCall(0);
 		if(function_parameters_list() == SYN_ERR)
 			return SYN_ERR;
 		if(getToken() != TOK_RIGHT_PAR)
@@ -404,6 +413,7 @@ int more_definition()
 
 int parameter_definition()
 {
+	hint("Parameter definition - isCall: %d",inCall);
 	if(type_specifier() == SYN_ERR)
 		return throw("Expected type-specifier (void,int,double,String)\n");
 
