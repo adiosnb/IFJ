@@ -27,14 +27,18 @@ stab_t *stable_init(unsigned size){
     return pom;
 }
 
+/*
 //rekurzivne prejde jednosmerne viazany zoznam elementov a uvolni pamat
 void stable_destroy_element(stab_element_t *p_element){
+
     if (p_element->stab_next->stab_next != NULL)
         stable_destroy_element(p_element->stab_next);
+
     free(p_element->stab_next);
     p_element->stab_next = NULL;
     return;
 }
+*/
 
 //zavola funkciu na destrukciu prvkov v tabulke a potm uvolni tabulku
 void stable_destroy(stab_t **p_table) {
@@ -44,6 +48,7 @@ void stable_destroy(stab_t **p_table) {
         current = p_table[0]->arr[i];
         while (current != NULL) {
             next = current->stab_next;
+            free(current->stab_key);
             free(current);
             current = next;
         }
@@ -77,7 +82,20 @@ int stable_add_var(stab_t *p_stable, char *id, data_t p_var){
 
     pom->stab_content.inter_table = p_var.inter_table;
     pom->stab_content.type = p_var.type;
-    pom->stab_key = id;
+
+    char *new_key = NULL;
+    if ((new_key = malloc(sizeof(char) * strlen(id) + 1)) == NULL)
+        return 1;
+
+    int i = -1;
+    do{
+        i++;
+        new_key[i] = id[i];
+    }while (id[i] != '\0');
+
+    //strcpy(new_key, id);
+    pom->stab_key = new_key;
+
     pom->stab_next = NULL;
 
 
@@ -123,6 +141,7 @@ void stable_remove_var(stab_t *p_stable, char *id){
         vymaz = pom->stab_next;
         pom->stab_next = pom->stab_next->stab_next;
     }
+    free(vymaz->stab_key);
     free(vymaz);
 
     return;
@@ -157,7 +176,7 @@ bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *loca
         }
     }
 
-    if ((pom = malloc(size * sizeof(char) + 2)) == NULL) //+2 lebo sa vkadaju max 2x '.'
+    if ((pom = malloc(size * sizeof(char) + 2 +1)) == NULL) //+2 lebo sa vkadaju max 2x '.' +1 lebo '\0'
         return false;
 
     if(clss != NULL)
@@ -178,8 +197,13 @@ bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *loca
             pom[j++] = local[i++];
     }
 
-    if(stable_add_var(p_stable, pom, data))
+    pom[j] = '\0';
+
+    if(stable_add_var(p_stable, pom, data)) {
+        free(pom);
         return false;
+    }
+    free(pom);
     return true;
 
 
