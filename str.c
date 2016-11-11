@@ -75,5 +75,6 @@ void str_read_str_stdin(string_t* dest_str){
 }
 
 void str_destroy(string_t str) {
-    free(str.str);
+	if(str)
+	    free(str.str);
 }
