@@ -27,4 +27,5 @@ add_executable(read_test ${READ_TEST})
 add_executable(str_test ${str_test})
 add_executable(my_scanner ${my_scanner})
 add_executable(scanner ${scanner})
+
 add_executable(stable-test ${stable_test})
