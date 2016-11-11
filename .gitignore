@@ -5,3 +5,4 @@ interpret_idea
 main
 .idea/
 *.o
+a.out

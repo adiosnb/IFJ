@@ -42,6 +42,28 @@ void str_resize(string_t *str) {
     str->str = new_str;
 }
 
+
+void str_append_chars(string_t *str_dest,char *str_src){
+    int i = 0;
+
+    while (str_src[i] != '\0'){
+        if (str_dest->len < str_dest->max) {
+            str_resize(str_dest);
+        }
+        str_dest->str[str_dest->len++] = str_src[i++];
+    }
+}
+
+void str_append_str(string_t *str_dest,string_t *str_src){
+    while ((str_dest->len + str_src->len) > str_dest->max) {
+        str_resize(str_dest);
+    }
+
+    for (int i = 0; i < str_src->len; i++){
+        str_dest->str[str_dest->len++] = str_src->str[i];
+    }
+
+}
 void str_destroy(string_t str) {
     free(str.str);
 }
