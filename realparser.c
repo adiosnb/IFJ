@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "scanner.h"
 
+int inFunction = 0;
+#define setInFunction(st) inFunction = st
+
 enum syntaxCorrectness {SYN_OK,SYN_ERR};
 
 int	isTokenKeyword(int kw)
@@ -369,12 +372,21 @@ int more_definition()
 {
 	if(getToken() == TOK_LEFT_PAR)
 	{
+		if(!inFunction)
+			setInFunction(1);
+		else
+			return throw("Err - declaration of function in function");
+
 		if(function_parameters_list() == SYN_ERR)
 			return SYN_ERR;
 		if(getToken() != TOK_RIGHT_PAR)
 			return throw("Expected ')'");		
 			
-		return compound_statement();
+		if(compound_statement() == SYN_ERR)
+			return SYN_ERR;
+		
+		setInFunction(0);
+		return SYN_OK;
 	} else {
 		ungetToken();
 		if(variable_initialization() == SYN_ERR)
@@ -409,6 +421,10 @@ int parameter_definition()
 int definition()
 {
 	int isStatic = static_type();
+	if(inFunction && isStatic)
+		return throw("Expected non-static definition in function");
+	else if(inFunction == 0 && isStatic == 0)
+		return throw("Expected static keyword for symbol defined in class");
 	hint("IsStatic ? %d",isStatic);
 	
 	if(type_specifier() == SYN_ERR)
