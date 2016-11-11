@@ -7,10 +7,12 @@
 
 #include <stdbool.h>
 #include "instruction_list.h"
+#include "instruction_list.h"
 
 typedef struct {
     int type;
     int inter_table;
+    argument_var_t data;
 }data_t;
 
 typedef struct STAB_ELEMENT{
