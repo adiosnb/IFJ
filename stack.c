@@ -75,6 +75,14 @@ int stack_actualize_from_ebp(stack_t *stack, argument_var_t arg, int position){
     return 0;
 }
 
+argument_var_t stack_from_top(stack_t *stack, int position){
+    return stack->data[stack->used - 1 - position];
+}
+
+argument_var_t *stack_from_top_ptr(stack_t *stack, int position) {
+    return &stack->data[stack->used - 1 - position];
+}
+
 
 void print_stack(stack_t *stack) {
     printf("\n---------------------------------\n");

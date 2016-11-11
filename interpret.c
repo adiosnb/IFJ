@@ -2,6 +2,7 @@
 
 #include "interpret.h"
 #include "stack.h"
+#include "instruction_list.h"
 
 #include <stdlib.h>
 
@@ -413,6 +414,38 @@ void divisoin(){
     } else {
         arg1->data.i = (int) (a / b);
     }
+}
+
+void expr_add(){
+    argument_var_t dest, op1, op2;
+
+    op1 = stack_from_top(glob_stack,0);
+    op2 = stack_from_top(glob_stack,1);
+
+    double a,b;
+
+    if (op1.arg_type == INTEGER && op2.arg_type == INTEGER){
+        dest.arg_type == INTEGER;
+        dest.data.d = op1.data.i + op2.data.i;
+    } else {
+        if (op1.arg_type == DOUBLE && op2.arg_type == DOUBLE)
+        {
+            dest.arg_type == DOUBLE;
+            dest.data.d = op1.data.d + op2.data.d;
+        } else {
+            if (op1.arg_type == DOUBLE && !op2.arg_type == DOUBLE) {
+                dest.arg_type == DOUBLE;
+                dest.data.d = op1.data.d + op2.data.i;
+            } else {
+                dest.arg_type == DOUBLE;
+                dest.data.d = op1.data.i + op2.data.d;
+            }
+        }
+    }
+
+    pop();
+    pop();
+    stack_push(&glob_stack,dest);
 }
 
 void pop(){

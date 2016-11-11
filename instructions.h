@@ -19,6 +19,10 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_SUB,           // destination      operand1        operand2
     INST_MUL,           // destination      operand1        operand2
     INST_DIV,           // destination      operand1        operand2
+    INST_EXPR_ADD,      //take last 2 operands from stack   TODO
+    INST_EXPR_SUB,      //take last 2 operands from stack   TODO
+    INST_EXPR_MUL,      //take last 2 operands from stack   TODO
+    INST_EXPR_DIV,      //take last 2 operands from stack   TODO
     INST_PUSH,          //var to push       ---             ---
     INST_POP,           //no inputs
     INST_STORE,         //destination       source          ---
