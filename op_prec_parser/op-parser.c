@@ -2,6 +2,7 @@
 
 #include "scanner/scanner_alt.h"
 #include "utils/dynamic_stack.h"
+#include "error/error.h"
 
 const char op_table[][14] =
 {
@@ -22,8 +23,9 @@ const char op_table[][14] =
 /* $  */{'<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '_', '=' },
 };
 
-#define NDEBUG
+//#define NDEBUG
 #define DOLLAR  13 
+
 static inline int edit_const_id_span(int a)
 {
    
@@ -37,7 +39,13 @@ static inline int edit_const_id_span(int a)
 
     if (a == TOK_EOF)
         a = DOLLAR;
-    return a;
+
+    // TODO: validate input symbol and print its string....how? scanner is not capable of doing that
+    if (a >= TOK_EQ && a <= DOLLAR)
+        return a;
+    else
+        error_and_die(ERR_SYNTAX, "Expression: invalid input symbol %s", g_lastToken.data.string);
+    return -1;    
 }
 
 
@@ -70,7 +78,7 @@ int temp = 40;
 
 const char *tokens[] = 
 {
-    "==", "!=", "<", ">", "<=", ">=", "+", "-", "*", "/", "ID", "(", ")", "$"
+    "==", "!=", "<", ">", "<=", ">=", "+", "-", "*", "/", "i", "(", ")", "$"
 };
 
 void print_stack(stack_t *s)
@@ -92,6 +100,7 @@ void parse_expression(void)
     
     stack_t pda = stack_ctor();
     int c =  edit_const_id_span(getToken());
+    int top;
 
     stack_push(&pda, DOLLAR);
 //    printf("Push: '%s'\n", tokens[stack_top(&pda)]);
@@ -116,14 +125,21 @@ void parse_expression(void)
                         c =  edit_const_id_span(getToken());
                         break;
                 case '>':
-                        printf("%s\n", tokens[stack_top(&pda)]);
+                        do
+                        {
+                            top = stack_top(&pda);
+                            if (top != TOK_LEFT_PAR && top != TOK_RIGHT_PAR)
+                                printf("%s ", tokens[stack_top(&pda)]);
 #if defined NDEBUG
-                        printf("Pop: %s\n", tokens[stack_top(&pda)]);
+                            printf("Pop: %s\n", tokens[stack_top(&pda)]);
 #endif
-                        stack_pop(&pda);
+                            stack_pop(&pda);
 #if defined NDEBUG
-                        print_stack(&pda);                        
+                            print_stack(&pda);                        
 #endif
+                        }
+                        while (compare_token(stack_top(&pda), top) != '<');
+
                         break; 
                 case '_':
                         fprintf(stderr, "Expression syntax error: %s\n", tokens[stack_top(&pda)]); return; 
@@ -131,6 +147,7 @@ void parse_expression(void)
     }
     while (c != DOLLAR || stack_top(&pda) != DOLLAR);
 
+    putchar('\n');
 #if defined NDEBUG
     printf("Input: %s\n", tokens[c]);
     printf("Stack: %s\n", tokens[stack_top(&pda)]);
@@ -141,6 +158,5 @@ void parse_expression(void)
 int main(void)
 {
 	parse_expression();
-	putchar('\n');
 	return 0;
 }
