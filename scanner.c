@@ -48,22 +48,28 @@ int	scanner_openFile(char* fileName)
 
 int	scanner_closeFile()
 {
+	// destroy local strings
+	str_destroy(first);
+	str_destroy(second);
+	str_destroy(literal);
+
+	// if file is opened
 	if(fHandle)
 	{
 		fclose(fHandle);
 		fHandle = NULL;
-		
-		// clean single linked list
-		t_tokenElem *ptr = tokenList,*helpptr = tokenList;
-		while(ptr)
-		{
-			helpptr = ptr;
-			ptr = ptr->next;
-			freeToken(&helpptr->token);
-			free(helpptr);
-		}
-		tokenList = NULL;
-	} 
+	}	
+	// clean single linked list
+	t_tokenElem *ptr = tokenList,*helpptr = tokenList;
+	while(ptr)
+	{
+		helpptr = ptr;
+		ptr = ptr->next;
+		freeToken(&helpptr->token);
+		free(helpptr);
+	}
+	tokenList = NULL;
+
 	return 0;
 }
 
@@ -127,7 +133,7 @@ int	process_literal()
 				{
 					// when the end of terminal is reached
 					g_lastToken.type = TOK_LITERAL;
-					g_lastToken.data.string = literal.str;
+					g_lastToken.data.string = createString(literal.str);
 					// TODO: add pointer to symbol
 					return TOK_LITERAL;
 
@@ -295,7 +301,7 @@ int	process_identifier()
 				// if the second part of ID fullfills requirements
 				if((first.len && second.len))
 				{
-					g_lastToken.data.string = second.str;
+					g_lastToken.data.string = createString(second.str);
 					g_lastToken.type = TOK_SPECIAL_ID;
 				}
 				else {
@@ -303,7 +309,7 @@ int	process_identifier()
 					return TOK_ERROR;
 				}
 			} else 
-				g_lastToken.data.string = first.str;
+				g_lastToken.data.string = createString(first.str);
 				return g_lastToken.type;
 		}
 	}
@@ -318,13 +324,13 @@ int	process_identifier()
 				return TOK_KEYWORD;
 			} else {
 				g_lastToken.type = TOK_ID;
-				g_lastToken.data.string = first.str;
+				g_lastToken.data.string = createString(first.str);
 				return TOK_ID;
 			}
 		} else {
 			if (second.len){
 				g_lastToken.type = TOK_ID;
-				g_lastToken.data.string = second.str;
+				g_lastToken.data.string = createString(second.str);
 				return TOK_ID;
 			} else {
 				return TOK_ERROR;
