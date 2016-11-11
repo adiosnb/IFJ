@@ -5,6 +5,7 @@
 #ifndef IFJ_STABLE_H
 #define IFJ_STABLE_H
 
+#include <stdbool.h>
 #include "instruction_list.h"
 
 typedef struct {
@@ -20,7 +21,7 @@ typedef struct STAB_ELEMENT{
 
 typedef struct {
     unsigned stab_size;
-    unsigned (*hash_fun_ptr)(unsigned, unsigned);
+    unsigned (*hash_fun_ptr)(char *id, unsigned);
     unsigned stab_count;
     stab_element_t *arr[];
 }stab_t;
@@ -35,13 +36,13 @@ void stable_destroy(stab_t **p_table);
 void stable_remove_var(stab_t *p_stable, char *id);
 
 //prida prvok do tabulky
-int stable_add_var(stab_t *p_stable, char *id, stab_element_t *p_var);
+int stable_add_var(stab_t *p_stable, char *id, data_t p_var);
 
 //vrati ukazatel na dotazovany prvok
-argument_var_t *stable_get_var(stab_t *p_stable, char *id);
+data_t *stable_get_var(stab_t *p_stable, char *id);
 
 //prida prvok zadany oddelene ako 3x string (class, function, local); pri nedostatku miest vracia false
-bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, stab_element_t *data);
+bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, data_t data);
 
 //true hodnotu ak sa prvok nasiel
 bool stable_search(stab_t *p_stable, char *srch_el);

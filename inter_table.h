@@ -6,15 +6,15 @@
 #define STAB_SIZE 200;
 
 typedef struct inter_table_elem{
-    unsigned stab_key;
-    argument_var_t stab_content;
-    struct inter_table_elem *stab_next;
+    unsigned tab_key;
+    argument_var_t tab_content;
+    struct inter_table_elem *tab_next;
 }inter_table_elem_t;
 
 typedef struct {
-    unsigned stab_size;
+    unsigned tab_size;
     unsigned (*hash_fun_ptr)(unsigned, unsigned);
-    unsigned stab_count;
+    unsigned tab_count;
     inter_table_elem_t *arr[];
 }inter_table_t;
 

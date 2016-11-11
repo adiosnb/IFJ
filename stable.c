@@ -2,6 +2,7 @@
 // Created by k on 9.10.2016.
 //
 #include <stdlib.h>
+#include <string.h>
 #include "stable.h"
 
 unsigned hash_fun_ptr(char *id, unsigned stab_size){
@@ -52,7 +53,8 @@ void stable_destroy(stab_t **p_table) {
 }
 
 //pridava polozku do zoznamu
-int stable_add_var(stab_t *p_stable, char *id, stab_element_t *p_var){
+int stable_add_var(stab_t *p_stable, char *id, data_t p_var){
+
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
 
@@ -73,7 +75,8 @@ int stable_add_var(stab_t *p_stable, char *id, stab_element_t *p_var){
         pom = p_stable->arr[index];
     }
 
-    pom->stab_content = *p_var;
+    pom->stab_content.inter_table = p_var.inter_table;
+    pom->stab_content.type = p_var.type;
     pom->stab_key = id;
     pom->stab_next = NULL;
 
@@ -82,14 +85,14 @@ int stable_add_var(stab_t *p_stable, char *id, stab_element_t *p_var){
 }
 
 //vrati polozku zo zoznamu
-argument_var_t *stable_get_var(stab_t *p_stable, char *id){
+data_t *stable_get_var(stab_t *p_stable, char *id){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
 
     if (pom == NULL)
         return NULL;
 
-    //najde polozku s id
+    //najde polozku s id ( x == y tak strcmp == 0)
     while (strcmp(pom->stab_key, id))//todo skontroluj
         if ((pom = pom->stab_next) == NULL)
             return NULL;
@@ -101,34 +104,46 @@ argument_var_t *stable_get_var(stab_t *p_stable, char *id){
 void stable_remove_var(stab_t *p_stable, char *id){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
+    stab_element_t *vymaz;
 
     if (pom == NULL)
         return;
 
-    //najde polozku pred polozkou s id
-    while (strcmp(pom->stab_next->stab_key, id)) //todo skontroluj
-        if ((pom = pom->stab_next) == NULL)
-            return;
+    //ak je to 1. polozka
+    if (!strcmp(pom->stab_key, id)) {
+        p_stable->arr[index] = pom->stab_next;
+        vymaz = pom;
+    }
+    else {
+        //ak je to 2. az n polozka
+        //najde polozku pred polozkou s id
+        while (strcmp(pom->stab_next->stab_key, id)) //todo skontroluj
+            if ((pom = pom->stab_next) == NULL)
+                return;
+        vymaz = pom->stab_next;
+        pom->stab_next = pom->stab_next->stab_next;
+    }
+    free(vymaz);
 
     return;
 }
 
 bool stable_search(stab_t *p_stable, char *srch_el){
-    unsigned index = hash_fun_ptr(id, p_stable->stab_size);
+    unsigned index = hash_fun_ptr(srch_el, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
 
     if (pom == NULL)
         return false;
 
     //najde polozku s id
-    while (strcmp(pom->stab_key, id))
+    while (strcmp(pom->stab_key, srch_el))
         if ((pom = pom->stab_next) == NULL)
             return false;
 
     return true;
 }
 
-bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, stab_element_t *data){
+bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, data_t data){
     char *pom;
     int j = 0, i = 0;
     int size = strlen(clss) + strlen(fnct) + strlen(local);
@@ -154,7 +169,7 @@ bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *loca
             pom[j++] = local[i++];
     }
 
-    if(stable_add_var(p_stable, pom, &data))
+    if(stable_add_var(p_stable, pom, data))
         return false;
     return true;
 
