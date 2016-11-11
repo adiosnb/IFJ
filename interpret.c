@@ -325,7 +325,7 @@ void sub(){
     if (arg1->arg_type == DOUBLE){
         arg1->data.d = a - b;
     } else {
-        arg1->data.i = (int) (a / b);
+        arg1->data.i = (int) (a - b);
     }
 }
 
@@ -367,9 +367,9 @@ void mul(){
 
     //zapisanie vysledku
     if (arg1->arg_type == DOUBLE){
-        arg1->data.d ;
+        arg1->data.d = a*b;
     } else {
-        arg1->data.i = (int) (a / b);
+        arg1->data.i = (int) (a * b);
     }
 }
 

@@ -85,7 +85,7 @@ void print_stack(stack_t *stack) {
     printf("\n---------------------------------\n");
 }
 
-int resize(stack_t **stack) {
+void resize(stack_t **stack) {
     *stack = realloc(*stack,sizeof(stack_t) + sizeof(argument_var_t)*(stack[0]->used + MINIMAL_MALLOC_SIZE));
     stack[0]->size += MINIMAL_MALLOC_SIZE;
 }
