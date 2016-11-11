@@ -10,7 +10,6 @@
  *   Notes :                Stack
  ***************************************/
 #include "stack.h"
-#include "instruction_list.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -61,6 +60,9 @@ argument_var_t stack_top(stack_t *stack){
     return stack->data[stack->used - 1];    //-1 je tam preto ze nepouzivam premennu stack.top ale stack.used
 }
 
+argument_var_t *stack_top_ptr(stack_t *stack) {
+    return &stack->data[stack->used - 1];
+}
 
 argument_var_t stack_ebp_relative(stack_t *stack, int position){
     return stack->data[stack->base + position - 1];
@@ -76,6 +78,14 @@ int stack_actualize_from_ebp(stack_t *stack, argument_var_t arg, int position){
     return 0;
 }
 
+argument_var_t stack_from_top(stack_t *stack, int position){
+    return stack->data[stack->used - 1 - position];
+}
+
+argument_var_t *stack_from_top_ptr(stack_t *stack, int position) {
+    return &stack->data[stack->used - 1 - position];
+}
+
 
 void print_stack(stack_t *stack) {
     printf("\n---------------------------------\n");
@@ -85,7 +95,7 @@ void print_stack(stack_t *stack) {
     printf("\n---------------------------------\n");
 }
 
-int resize(stack_t **stack) {
+void resize(stack_t **stack) {
     *stack = realloc(*stack,sizeof(stack_t) + sizeof(argument_var_t)*(stack[0]->used + MINIMAL_MALLOC_SIZE));
     stack[0]->size += MINIMAL_MALLOC_SIZE;
 }
