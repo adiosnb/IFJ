@@ -26,7 +26,7 @@ const char op_table[][14] =
 //#define NDEBUG
 #define DOLLAR  13 
 
-static inline int edit_const_id_span(int a)
+static inline int validate_ins(int a)
 {
    
     switch (a)
@@ -47,28 +47,45 @@ static inline int edit_const_id_span(int a)
         error_and_die(ERR_SYNTAX, "Expression: invalid input symbol %s", g_lastToken.data.string);
     return -1;    
 }
+// top is top terminal of pushdown automaton and ins is input symbol
+static void generate_syntax_error(int top, int ins)
+{
+    top = validate_ins(top);
+    ins = validate_ins(ins);
+    
+    if (top == TOK_ID && ins == TOK_ID)
+        error_and_die(ERR_SYNTAX, "Expression: missing operator between two identifiers");
+    if (top == TOK_ID && ins == TOK_LEFT_PAR)
+        error_and_die(ERR_SYNTAX, "Expression: missing operator between identifier and '('");
+    if (top == TOK_LEFT_PAR && ins == DOLLAR)
+        error_and_die(ERR_SYNTAX, "Expression: missing ')'"); 
+    if (top == TOK_RIGHT_PAR && ins == TOK_ID)
+        error_and_die(ERR_SYNTAX, "Expression: missing operator between ')' and identifier"); 
+    if (top == TOK_RIGHT_PAR && ins == TOK_LEFT_PAR)
+        error_and_die(ERR_SYNTAX, "Expression: missing operator between ')' and '('"); 
+    if (top == DOLLAR && ins == TOK_RIGHT_PAR)
+        error_and_die(ERR_SYNTAX, "Expression: unbalanced ')'");
+}
+
+#define IS_OPERATOR(op)    (op == TOK_NOTEQ || op == TOK_LESS || op == TOK_GREATER || op == TOK_LE || op == TOK_GE || op == TOK_PLUS || op == TOK_MINUS || op == TOK_MUL || op == TOK_DIV)    
+
+
+static void generate_reduction_error(int top, int ins)
+{
+    top = validate_ins(top);
+    ins = validate_ins(ins);
+    
+    if (IS_OPERATOR(top) && (ins != TOK_ID || ins != TOK_LEFT_PAR))
+        error_and_die(ERR_SYNTAX, "Expression: missing operator between two identifiers");
+    if (top == TOK_RIGHT_PAR && ins == TOK_LEFT_PAR)
+        error_and_die(ERR_SYNTAX, "Expression: no epxression between parentheses"); 
+}
+
 
 
 static char compare_token(int pda_symbol, int input_symbol)
 {
     
-//    if (a > TOK_RIGHT_PAR || a < 0)
-//    {
-//        fprintf(stderr, "Bad token '%c' !\n", a);
-//        return -1;
-//    }
-//
-//    if (b > TOK_RIGHT_PAR || b < 0)
-//    {
-//        fprintf(stderr, "Bad token '%c' !\n", b);
-//        return -1;
-//    }
-//    fprintf(stderr,"TOK: %i\n", op_table[a][b]);
-//     
-    
-
-//    printf("input_symbol: '%i'\n", input_symbol);
-
     return op_table[pda_symbol][input_symbol];
 }
 
@@ -90,6 +107,8 @@ void print_stack(stack_t *s)
     putchar('\n');
 }
 
+// TODO: symbol table checking data types
+
 void parse_expression(void)
 {
     if (!scanner_openFile("input_test.txt"))
@@ -99,7 +118,7 @@ void parse_expression(void)
     }
     
     stack_t pda = stack_ctor();
-    int c =  edit_const_id_span(getToken());
+    int c =  validate_ins(getToken());
     int top;
 
     stack_push(&pda, DOLLAR);
@@ -122,12 +141,14 @@ void parse_expression(void)
                         printf("Push: %s\n", tokens[stack_top(&pda)]);
                         print_stack(&pda);                        
 #endif
-                        c =  edit_const_id_span(getToken());
+                        c =  validate_ins(getToken());
                         break;
                 case '>':
                         do
                         {
                             top = stack_top(&pda);
+                            
+        //                    generate_reduction_error(stack_top(&pda), c);
                             if (top != TOK_LEFT_PAR && top != TOK_RIGHT_PAR)
                                 printf("%s ", tokens[stack_top(&pda)]);
 #if defined NDEBUG
@@ -138,12 +159,12 @@ void parse_expression(void)
                             print_stack(&pda);                        
 #endif
                         }
-                        while (compare_token(stack_top(&pda), top) != '<');
-
+                        while(compare_token(stack_top(&pda), top) != '<');
                         break; 
                 case '_':
-                        fprintf(stderr, "Expression syntax error: %s\n", tokens[stack_top(&pda)]); return; 
-        }
+                        generate_syntax_error(stack_top(&pda), c); 
+                        return;
+            }
     }
     while (c != DOLLAR || stack_top(&pda) != DOLLAR);
 

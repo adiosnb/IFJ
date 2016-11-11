@@ -4,7 +4,7 @@
 #include <sys/types.h> 
 #include <stdbool.h>
 
-typedef int obj_t;
+typedef  int  obj_t;
 extern const size_t INIT_SIZE;  
 
 typedef struct {

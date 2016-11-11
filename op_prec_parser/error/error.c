@@ -1,6 +1,7 @@
 #include "error.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void error_and_die(enum error_type type, const char *fmt, ...)
 {
