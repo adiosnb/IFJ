@@ -11,6 +11,7 @@ string_t str_init(){
         //TODO error
     }
     new_str.len = 0;
+    new_str.max = STR_ALLOC_SIZE;
 
     return new_str;
 }
@@ -66,7 +67,6 @@ void str_append_str(string_t *str_dest,string_t *str_src){
 }
 
 void str_read_str_stdin(string_t* dest_str){
-    char input[STR_ALLOC_SIZE + 1] = {0,};
     int c;
 
     while ((c = fgetc(stdin)) != EOF && c != '\n'){

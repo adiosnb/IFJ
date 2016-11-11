@@ -10,9 +10,8 @@ int main() {
 
     printf("\n###################TEST1####################\n");
 
-    for (int i=0; i< 300000 ; i++){
-        //ADD_CHAR(str1,(i%10)+'0');
-        str_add_char(&str1,'0'%10);
+    for (int i=0; i< 3000 ; i++){
+        str_add_char(&str1,'0' + i%10);
     }
 
     str_print(str1);
@@ -20,7 +19,7 @@ int main() {
 
     str_reinit(&str1);
     for (int i=0; i< 30 ; i++){
-        ADD_CHAR(str1,(i%10)+'0');
+        str_add_char(&str1,'0' + i%10);
     }
     str_print(str1);
     str_reinit(&str1);
