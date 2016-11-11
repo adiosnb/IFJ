@@ -448,6 +448,7 @@ void divisoin(){
 }
 
 void expr_add(){
+    print_stack(glob_stack);    //TODO : delete it after debug
     argument_var_t dest, op1, op2;
 
     op1 = stack_pop(glob_stack);
@@ -478,6 +479,7 @@ void expr_add(){
 }
 
 void expr_sub() {
+    print_stack(glob_stack);    //TODO : delete it after debug
     argument_var_t dest, op1, op2;
 
     op1 = stack_pop(glob_stack);
@@ -507,6 +509,7 @@ void expr_sub() {
 }
 
 void expr_mul() {
+    print_stack(glob_stack);    //TODO : delete it after debug
     argument_var_t dest, op1, op2;
 
     op1 = stack_pop(glob_stack);
@@ -536,6 +539,7 @@ void expr_mul() {
 }
 
 void expr_div() {
+    print_stack(glob_stack);    //TODO : delete it after debug
     argument_var_t dest, op1, op2;
 
     op1 = stack_pop(glob_stack);
@@ -546,6 +550,7 @@ void expr_div() {
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
         dest.data.i = op1.data.i / op2.data.i;
+        //printf("op1 : %d ## op2 : %d ## op1 / op2 = %d \n",op1.data.i,op2.data.i,dest.data.i);  //debug vypis
     } else {
         if (op1.arg_type == DOUBLE && op2.arg_type == DOUBLE) {
             dest.arg_type = DOUBLE;

@@ -10,6 +10,7 @@
  *   Notes :                Stack
  ***************************************/
 #include "stack.h"
+#include "instruction_list.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -89,9 +90,25 @@ argument_var_t *stack_from_top_ptr(stack_t *stack, int position) {
 
 void print_stack(stack_t *stack) {
     printf("\n---------------------------------\n");
-    for (int i = 0; i < stack->used; i ++){
-        printf("%d : %d\n",i,stack->data[i].data.i);
+    for (int i = 0; i < stack->used - 1; i++) {
+        switch (stack->data[i].arg_type) {
+            case INTEGER:
+                printf("%d : %d\n", i, stack->data[i].data.i);
+                break;
+            case DOUBLE:
+                printf("%d : %g\n", i, stack->data[i].data.d);
+                break;
+        }
     }
+    switch (stack->data[stack->used - 1].arg_type) {
+        case INTEGER:
+            printf("%d : %d\n", stack->used - 1, stack->data[stack->used - 1].data.i);
+            break;
+        case DOUBLE:
+            printf("%d : %g\n", stack->used - 1, stack->data[stack->used - 1].data.d);
+            break;
+    }
+
     printf("\n---------------------------------\n");
 }
 
