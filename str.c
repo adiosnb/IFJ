@@ -47,7 +47,7 @@ void str_append_chars(string_t *str_dest,char *str_src){
     int i = 0;
 
     while (str_src[i] != '\0'){
-        if (str_dest->len < str_dest->max) {
+        if (str_dest->len >= str_dest->max) {
             str_resize(str_dest);
         }
         str_dest->str[str_dest->len++] = str_src[i++];
@@ -64,6 +64,16 @@ void str_append_str(string_t *str_dest,string_t *str_src){
     }
 
 }
+
+void str_read_str_stdin(string_t* dest_str){
+    char input[STR_ALLOC_SIZE + 1] = {0,};
+    int c;
+
+    while ((c = fgetc(stdin)) != EOF && c != '\n'){
+       str_add_char(dest_str,(char)c);
+    }
+}
+
 void str_destroy(string_t str) {
     free(str.str);
 }
