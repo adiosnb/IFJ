@@ -22,18 +22,34 @@ int main(){
     char string_concat2[] = "string1.string2.";
     char string_blank[] = "";
 
-    stab_t *sym_table;
-    sym_table = stable_init(1024);
+    printf("\n################### TEST_INIT ####################\n");
+    stab_t *sym_table = stable_init(1024);
+    if(sym_table == NULL)
+        printf("\nstable_init FAILED !\n");
+     else
+        printf("\nstable_init OK !\n");
 
-    stable_add_var(sym_table, string1, cont1);
+
+
+
+    printf("\n################### TEST_ADD_VAR ##################\n");
+
+    if(stable_add_var(sym_table, string1, cont1) == 1)
+        printf("\nstable_add_var FAILED !\n");
+    else
+        printf("\nstable add_var OK !\n");
+
     stable_add_var(sym_table, string2, cont2);
     stable_add_var(sym_table, string3, cont3);
 
+
     pom = stable_get_var(sym_table, string1);
-    printf("string1:  %d\n", pom->type);
+    if  (pom != NULL)
+        printf("string1:  %d\n", pom->type);
 
     pom = stable_get_var(sym_table, string3);
-    printf("string3:  %d\n", pom->type);
+    if  (pom != NULL)
+        printf("string3:  %d\n", pom->type);
 
     if(!stable_add_concatenate(sym_table, string1, string2, NULL, cont2))
         printf("nedostatok miesta\n");
@@ -58,7 +74,11 @@ int main(){
     else
         printf("string 2 sa nenasiel\n");
 
-    stable_remove_var(sym_table, string1);
+    printf("\n################### TEST_REMOVE_VAR ##################\n");
+    if(stable_remove_var(sym_table, string1) == false)
+        printf("\nstable_remove_var FAILED !\n");
+    else
+        printf("\nstable_remove_var OK !\n");
     stable_remove_var(sym_table, string2);
     stable_remove_var(sym_table, string3);
 
