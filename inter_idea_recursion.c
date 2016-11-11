@@ -175,9 +175,9 @@ int main() {
     create_and_add_instruction(i_list, INST_HALT, 0, 0, 0); //koniec porgramu
 
 
-
+    //vypisy su zabugovane
     //debug_print_instruction_list(i_list);
-    debug_print_inter_table(inter_tab);
+    //debug_print_inter_table(inter_tab);
 
     interpret(i_list, inter_tab);
 

@@ -14,7 +14,7 @@
 #define INSTRUCTION_LIST
 
 #include "instructions.h"
-
+#include "str.h"
 
 //return values from functions
 #define OK              0
@@ -51,7 +51,7 @@ typedef struct {
 typedef union {
     int i;
     double d;
-    char *s;
+    string_t s;
     instruction_item_t *instruction;
 } var_u;
 
