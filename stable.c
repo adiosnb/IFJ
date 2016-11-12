@@ -172,7 +172,7 @@ bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *loca
         }
     }
 
-    if ((pom = malloc(size * sizeof(char) + 2 +1)) == NULL) //+2 lebo sa vkadaju max 2x '.' +1 lebo '\0'
+    if ((pom = malloc(size * sizeof(char) + 2 + 1)) == NULL) //+2 lebo sa vkadaju max 2x '.' +1 lebo '\0'
         return false;
 
     if(clss != NULL)
