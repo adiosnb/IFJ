@@ -241,6 +241,7 @@ void push() {
             break;
         case INST_PUSH_STRING:
             tmp_var.arg_type = STRING;
+            //TODO init str
             break;
 
     }

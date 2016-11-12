@@ -39,6 +39,8 @@ int main () {
     input_data.data.data.i = 1;
     stable_add_var(sym_tab, stack_top, input_data);
 
+    stable_print(sym_tab);
+
     //TEST1
     printf("#################### INTEGET-ONLY ##############\n");
     printf("####################TEST1#######################\n");

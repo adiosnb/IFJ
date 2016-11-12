@@ -3,7 +3,9 @@
 //
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "stable.h"
+#include "instruction_list.h"
 
 unsigned hash_fun_ptr(char *id, unsigned stab_size){
     int i = 0, pom = 0;
@@ -202,5 +204,36 @@ bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *loca
     free(pom);
     return true;
 
+}
 
+void stable_print(stab_t *stable) {
+    stab_element_t *current;
+    printf("************** STABLE ****************\n");
+    for (int i = 0; i < stable->stab_size; i++) {
+        current = stable->arr[i];
+        while (current != NULL) {
+            printf("KEY : %s \t\t CONTENT : ", current->stab_key);
+            switch (current->stab_content.data.arg_type) {
+                case INTEGER:
+                    printf("%d\n", current->stab_content.data.data.i);
+                    break;
+                case DOUBLE:
+                    printf("%g\n", current->stab_content.data.data.d);
+                    break;
+                case STRING:
+                    printf("%s\n", current->stab_content.data.data.s.str);
+                    break;
+                case STACK_EBP:
+                    printf("position on stack >> %d\n", current->stab_content.data.data.i);
+                    break;
+                default:
+                    printf("on top of stack\n");
+                    break;
+            }
+
+
+            current = current->stab_next;
+        }
+    }
+    printf("********** STABLE END ****************\n");
 }

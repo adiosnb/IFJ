@@ -49,4 +49,6 @@ bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *loca
 //true hodnotu ak sa prvok nasiel
 bool stable_search(stab_t *p_stable, char *srch_el);
 
+void stable_print(stab_t *stable);
+
 #endif //IFJ_STABLE_H
