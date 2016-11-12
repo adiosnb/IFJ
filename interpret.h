@@ -8,9 +8,9 @@
 #include "instruction_list.h"
 #include "stack.h"
 
-stack_t *glob_stack;
-stab_t *glob_stable;
-instruction_list_t *glob_ins_list;
+extern stack_t *glob_stack;
+extern stab_t *glob_stable;
+extern instruction_list_t *glob_ins_list;
 
 int interpret(instruction_list_t *instruction_list, stab_t *stable);
 
