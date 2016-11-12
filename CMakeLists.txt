@@ -14,8 +14,9 @@ set(my_scanner scanner_alt.c scanner-unit_alt.c str.c )
 set(scanner scanner.c scanner-unit.c str.c)
 set(interpret-expr-test interpret.c interpret-expr-test.c instruction_list.c stack.c stable.c)
 set(stable_test stable-test.c stable.c stack.h)
+set(interpret-str-test interpret-expr-test.c interpret.c stack.c stable.c instruction_list.c)
 
-
+set(str-list-test str.c str-list-test.c)
 
 add_executable(main ${SOURCE_FILES})
 
@@ -25,3 +26,7 @@ add_executable(my_scanner ${my_scanner})
 add_executable(scanner ${scanner})
 add_executable(interpret-expr-test ${interpret-expr-test})
 add_executable(stable-test ${stable_test})
+
+add_executable(interpret-str-test ${interpret-str-test})
+
+add_executable(str-list-test ${str-list-test})

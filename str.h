@@ -9,6 +9,22 @@ typedef struct string {
     char *str;
 } string_t;
 
+typedef struct str_list {
+    char *str;
+    struct str_list *next;
+} str_list_item_t;
+
+typedef struct {
+    str_list_item_t *first;
+    str_list_item_t *last;
+} str_list_t;
+
+str_list_t str_list_init();
+
+void str_list_add(str_list_t *list, char *str);
+
+void str_list_destroy(str_list_t *list);
+
 string_t str_init();
 void str_reinit(string_t *str);
 void str_destroy(string_t str);

@@ -79,3 +79,42 @@ void str_destroy(string_t str) {
 	    free(str.str);
 	str.str = NULL;
 }
+
+/*
+ * Nasleduje spajany zoznam nad char*
+ */
+
+str_list_t str_list_init() {
+    str_list_t list;
+    list.first = NULL;
+    list.last = NULL;
+    return list;
+}
+
+void str_list_add(str_list_t *list, char *str) {
+    str_list_item_t *new_item;
+    if ((new_item = malloc(sizeof(struct str_list))) == NULL) {
+        //TODO error
+        exit(1);
+    }
+    if (list->last != NULL) {
+        new_item->str = str;
+        new_item->next = NULL;
+        list->last->next = new_item;
+        list->last = new_item;
+    } else {
+        list->first = list->last = new_item;
+        new_item->str = str;
+    }
+}
+
+void str_list_destroy(str_list_t *list) {
+    str_list_item_t *current;
+
+    while (list->first != NULL) {
+        current = list->first;
+        list->first = list->first->next;
+        free(current->str);
+        free(current);
+    }
+}
