@@ -86,13 +86,7 @@ int stable_add_var(stab_t *p_stable, char *id, data_t p_var){
     if ((new_key = malloc(sizeof(char) * strlen(id) + 1)) == NULL)
         return 1;
 
-    int i = -1;
-    do{
-        i++;
-        new_key[i] = id[i];
-    }while (id[i] != '\0');
-
-    //strcpy(new_key, id);
+    strcpy(new_key, id);
     pom->stab_key = new_key;
 
     pom->stab_next = NULL;
@@ -110,21 +104,24 @@ data_t *stable_get_var(stab_t *p_stable, char *id){
         return NULL;
 
     //najde polozku s id ( x == y tak strcmp == 0)
-    while (strcmp(pom->stab_key, id))//todo skontroluj
-        if ((pom = pom->stab_next) == NULL)
-            return NULL;
+    while (pom != NULL){
+        if (!strcmp(pom->stab_key,id)){
+            return &pom->stab_content;
+        }
+        pom = pom->stab_next;
+    }
 
-    return &pom->stab_content;
+    return NULL;
 }
 
 //odstrni polozkiu zo zoznamu
-void stable_remove_var(stab_t *p_stable, char *id){
+bool stable_remove_var(stab_t *p_stable, char *id){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
     stab_element_t *vymaz;
 
     if (pom == NULL)
-        return;
+        return false;
 
     //ak je to 1. polozka
     if (!strcmp(pom->stab_key, id)) {
@@ -136,14 +133,14 @@ void stable_remove_var(stab_t *p_stable, char *id){
         //najde polozku pred polozkou s id
         while (strcmp(pom->stab_next->stab_key, id)) //todo skontroluj
             if ((pom = pom->stab_next) == NULL)
-                return;
+                return false;
         vymaz = pom->stab_next;
         pom->stab_next = pom->stab_next->stab_next;
     }
     free(vymaz->stab_key);
     free(vymaz);
 
-    return;
+    return true;
 }
 
 bool stable_search(stab_t *p_stable, char *srch_el){
@@ -175,7 +172,7 @@ bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *loca
         }
     }
 
-    if ((pom = malloc(size * sizeof(char) + 2 +1)) == NULL) //+2 lebo sa vkadaju max 2x '.' +1 lebo '\0'
+    if ((pom = malloc(size * sizeof(char) + 2 + 1)) == NULL) //+2 lebo sa vkadaju max 2x '.' +1 lebo '\0'
         return false;
 
     if(clss != NULL)

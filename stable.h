@@ -35,7 +35,7 @@ stab_t *stable_init(unsigned size);
 void stable_destroy(stab_t **p_table);
 
 //odstrani jeden prvok z tabulky
-void stable_remove_var(stab_t *p_stable, char *id);
+bool stable_remove_var(stab_t *p_stable, char *id);
 
 //prida prvok do tabulky
 int stable_add_var(stab_t *p_stable, char *id, data_t p_var);
