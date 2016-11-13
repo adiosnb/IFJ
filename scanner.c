@@ -38,7 +38,9 @@ void freeToken(t_token* tok)
 	if(tok->type == TOK_ID  
 		|| tok->type == TOK_LITERAL
 		|| tok->type == TOK_SPECIAL_ID)
+	{
 		free(tok->data.string);
+	}
 }
 
 // scanner get char
