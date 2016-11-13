@@ -7,6 +7,10 @@ int inFunction = 0;
 int inCall = 0;
 #define setInCall(st) inCall= st
 
+int ident= 0;
+#define incIdent() ident++;
+#define decIdent() ident--;
+
 enum syntaxCorrectness {SYN_OK,SYN_ERR};
 
 int	isTokenKeyword(int kw)
@@ -251,7 +255,11 @@ int block_item()
 		return definition();
 	} else {
 		ungetToken();
-		return statement();
+		incIdent();
+		int res = statement();
+		decIdent();
+		return res;
+			
 	}
 	return SYN_ERR;
 }
@@ -460,6 +468,8 @@ int parameter_definition()
 
 int definition()
 {
+	if(ident != 0)
+		return throw("Declaration in blocks are forbidden.");
 	int isStatic = static_type();
 	if(inFunction && isStatic)
 		return throw("Expected non-static definition in function");
