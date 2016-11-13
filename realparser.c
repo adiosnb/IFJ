@@ -46,7 +46,8 @@ int	isTokenTypeSpecifier()
 
 #define hint(format,...) fprintf(stderr,"[Hint]: "format"\n", ##__VA_ARGS__)
 
-#define throw(format,...) fprintf(stderr,"[%s:%d]: "format"\n", __FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
+//#define throw(format,...) fprintf(stderr,"[%s:%d]: "format"\n", __FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
+#define throw(format,...) fprintf(stderr,"[input:%d:%d] [%s:%d] "format"\n", getTokLine(),getTokTabs(),__FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
 
 
 
@@ -104,6 +105,19 @@ int type_specifier_opt()
 
 int expression()
 {
+	while(1)
+	{
+		int state = getToken();
+		switch(state)
+		{
+			case TOK_DELIM:
+			case TOK_RIGHT_PAR:
+				ungetToken();
+				return SYN_OK;
+			default:
+				break;
+		}
+	}
 	return SYN_OK;
 }
 //<more-next>                    -> expression 
