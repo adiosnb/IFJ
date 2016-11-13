@@ -11,7 +11,7 @@ int main() {
     char str1[] = "qwertyuiop";
 
     data_t *ptr_to_table1, *ptr_to_table2, *ptr_to_table3;
-
+/*
 
     printf("Test nad string operaciami v globalnych premennych\n"
                    "v str1 je ulozeny retazec\n"
@@ -143,5 +143,43 @@ int main() {
 
     dest_inst_list(&i_list);
     stable_destroy(&sym_tab);
+
+*/
+    printf("\n\nTEST 3\n"
+                   "");
+
+    i_list = init_inst_list();
+    sym_tab = stable_init(10);
+
+
+    tmp_var.data.arg_type = STACK_EBP;
+
+    tmp_var.data.data.i = 1;
+    stable_add_var(sym_tab, "INT.A", tmp_var);
+    tmp_var.data.data.i = 2;
+    stable_add_var(sym_tab, "str_1", tmp_var);
+    tmp_var.data.data.i = 3;
+    stable_add_var(sym_tab, "str_2", tmp_var);
+
+    create_and_add_instruction(i_list, INST_PUSH_INT, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_STRING, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_STRING, 0, 0, 0);
+    ptr_to_table1 = stable_get_var(sym_tab, "str_1");
+    ptr_to_table2 = stable_get_var(sym_tab, "str_2");
+    ptr_to_table3 = stable_get_var(sym_tab, "INT.A");
+    create_and_add_instruction(i_list, INST_READ_STRING, &ptr_to_table1->data, 0, 0);
+    create_and_add_instruction(i_list, INST_READ_STRING, &ptr_to_table2->data, 0, 0);
+
+    create_and_add_instruction(i_list, INST_STR_CMP, &ptr_to_table3->data, &ptr_to_table2->data, &ptr_to_table1->data);
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table3->data, 0, 0);
+
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
+
+    interpret(i_list, sym_tab);
+
+
+    dest_inst_list(&i_list);
+    stable_destroy(&sym_tab);
+
     return 0;
 }

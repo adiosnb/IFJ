@@ -42,8 +42,6 @@ void str_resize(string_t *str) {
     free(str->str);
     str->str = new_str;
 }
-
-
 void str_append_chars(string_t *str_dest,char *str_src){
     int i = 0;
 
@@ -54,7 +52,6 @@ void str_append_chars(string_t *str_dest,char *str_src){
         str_dest->str[str_dest->len++] = str_src[i++];
     }
 }
-
 void str_append_str(string_t *str_dest,string_t *str_src){
     while ((str_dest->len + str_src->len) > str_dest->max) {
         str_resize(str_dest);
@@ -65,7 +62,6 @@ void str_append_str(string_t *str_dest,string_t *str_src){
     }
 
 }
-
 void str_concatenate(string_t *str_dest, string_t *str_src1, string_t *str_src2) {
     if (str_dest == str_src1 || str_dest == str_src2) {
         string_t tmp_str = str_init();          //pomocny string kde sa ulozi predosly vysledok
@@ -92,7 +88,6 @@ void str_concatenate(string_t *str_dest, string_t *str_src1, string_t *str_src2)
         }
     }
 }
-
 void str_read_str_stdin(string_t* dest_str){
     int c;
     str_reinit(dest_str);
@@ -101,6 +96,18 @@ void str_read_str_stdin(string_t* dest_str){
     }
 }
 
+int str_cmp(string_t str1, string_t str2) {
+    int ret = strcmp(str1.str, str2.str);
+    if (!ret) {
+        return 0;
+    } else {
+        if (ret > 0) {
+            return 1;
+        } else {
+            return -1;
+        }
+    }
+}
 void str_destroy(string_t str) {
 	if(str.str)
 	    free(str.str);

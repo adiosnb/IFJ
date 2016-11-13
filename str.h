@@ -31,6 +31,7 @@ void str_concatenate(string_t *str_dest, string_t *str_src1, string_t *str_src2)
 void str_append_chars(string_t *str_dest,char *str_src);
 void str_read_str_stdin(string_t* dest_str);
 
+int str_cmp(string_t str1, string_t str2);
 
 //makro pre pridanie znaku do stringu
 #define ADD_CHAR(string,c)  {if (!(string.len < string.max)) str_resize(&string);\

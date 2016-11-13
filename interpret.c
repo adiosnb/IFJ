@@ -106,6 +106,9 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_STR_CONCATENATE:
                 concatenate();
                 break;
+            case INST_STR_CMP:
+                interpret_str_cmp();
+                break;
             default:
                 printf("Interpret: Unnknown intruction\n");
                 break;
@@ -777,4 +780,28 @@ void concatenate() {
     }
 
     str_concatenate(&arg1->data.s, &arg2->data.s, &arg3->data.s);
+}
+
+void interpret_str_cmp() {
+    argument_var_t *arg1, *arg2, *arg3;
+
+    //nacita hodnoty z tabulky symbolov
+    arg1 = glob_ins_list->active->instruction.addr1;
+    arg2 = glob_ins_list->active->instruction.addr2;
+    arg3 = glob_ins_list->active->instruction.addr3;
+
+    //nacita hodnoty zo stacku ak su tam, ak nie su to globalne premenne a berie ich priamo z tabulky symbolov
+    if (arg1->arg_type == STACK_EBP) {
+        arg1 = stack_ebp_relative_ptr(glob_stack, arg1->data.i);
+    }
+
+    if (arg2->arg_type == STACK_EBP) {
+        arg2 = stack_ebp_relative_ptr(glob_stack, arg2->data.i);
+    }
+
+    if (arg3->arg_type == STACK_EBP) {
+        arg3 = stack_ebp_relative_ptr(glob_stack, arg3->data.i);
+    }
+
+    arg1->data.i = str_cmp(arg2->data.s, arg3->data.s);
 }
