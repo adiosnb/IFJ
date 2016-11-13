@@ -1,4 +1,5 @@
 #include "interpret.h"
+#include "instruction_list.h"
 
 stack_t *glob_stack;
 stab_t *glob_stable;
@@ -80,6 +81,9 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_READ_DOUBLE:
                 read_double();
                 break;
+            case INST_READ_STRING:
+                read_string();
+                break;
             case INST_JZ:
                 jump_zero();
                 break;
@@ -89,11 +93,25 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_JNEQ:
                 jump_not_equal();
                 break;
+            case INST_STR_INIT:
+                interpret_str_init();
+                break;
+            case INST_STR_REINIT:
+                interpret_str_reinit();
+                break;
+            case INST_STR_LEN:
+                str_len();
+                break;
+            case INST_STR_CONCATENATE:
+                concatenate();
+                break;
             default:
                 printf("Interpret: Unnknown intruction\n");
                 break;
         }
-        //print_stack(glob_stack);
+
+        /*print_stack(glob_stack);
+        stable_print(stable);*/
         glob_ins_list->active = glob_ins_list->active->next;
     }
 
@@ -170,7 +188,7 @@ void write() {
             printf("%lf",tmp_ptr->data.d);
             break;
         case STRING:
-            printf("%s",tmp_ptr->data.s);
+            printf("%s", tmp_ptr->data.s.str);
             break;
         case ON_TOP:
             tmp_var = stack_top(glob_stack);
@@ -218,6 +236,10 @@ void read_double(){
     } else {
         tmp_ptr->data.d = readed_double;
     }
+}
+
+void read_string() {
+    str_read_str_stdin(&glob_ins_list->active->instruction.addr1->data.s);
 }
 
 void push() {
@@ -277,8 +299,8 @@ void add(){
 
     //nacita hodnoty z tabulky symbolov
     arg1 = glob_ins_list->active->instruction.addr1;
-    arg3 = glob_ins_list->active->instruction.addr3;
     arg2 = glob_ins_list->active->instruction.addr2;
+    arg3 = glob_ins_list->active->instruction.addr3;
 
     double a,b;
 
@@ -455,8 +477,6 @@ void expr_add(){
     op1 = stack_pop(glob_stack);
     op2 = stack_pop(glob_stack);
 
-    double a,b;
-
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER){
         dest.arg_type = INTEGER;
         dest.data.i = op1.data.i + op2.data.i;
@@ -486,8 +506,6 @@ void expr_sub() {
     op1 = stack_pop(glob_stack);
     op2 = stack_pop(glob_stack);
 
-    double a, b;
-
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
         dest.data.i = op1.data.i - op2.data.i;
@@ -516,8 +534,6 @@ void expr_mul() {
     op1 = stack_pop(glob_stack);
     op2 = stack_pop(glob_stack);
 
-    double a, b;
-
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
         dest.data.i = op1.data.i * op2.data.i;
@@ -545,8 +561,6 @@ void expr_div() {
 
     op1 = stack_pop(glob_stack);
     op2 = stack_pop(glob_stack);
-
-    double a, b;
 
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
@@ -689,3 +703,45 @@ void jump_not_equal(){      //TODO test it
             }
         }
     }}
+
+void interpret_str_init() {
+    glob_ins_list->active->instruction.addr1->data.s = str_init();
+}
+
+void interpret_str_reinit() {
+    str_reinit(&glob_ins_list->active->instruction.addr1->data.s);
+}
+
+void str_len() {
+    argument_var_t *arg1, *arg2;
+
+    //nacita hodnoty z tabulky symbolov
+    arg1 = glob_ins_list->active->instruction.addr1;
+    arg2 = glob_ins_list->active->instruction.addr2;
+
+    arg1->data.i = arg2->data.s.len;
+}
+
+void concatenate() {
+    argument_var_t *arg1, *arg2, *arg3;
+
+    //nacita hodnoty z tabulky symbolov
+    arg1 = glob_ins_list->active->instruction.addr1;
+    arg2 = glob_ins_list->active->instruction.addr2;
+    arg3 = glob_ins_list->active->instruction.addr3;
+
+    //nacita hodnoty zo stacku ak su tam, ak nie su to globalne premenne a berie ich priamo z tabulky symbolov
+    if (arg1->arg_type == STACK_EBP) {
+        arg1 = stack_ebp_relative_ptr(glob_stack, arg1->data.i);
+    }
+
+    if (arg2->arg_type == STACK_EBP) {
+        arg2 = stack_ebp_relative_ptr(glob_stack, arg2->data.i);
+    }
+
+    if (arg3->arg_type == STACK_EBP) {
+        arg3 = stack_ebp_relative_ptr(glob_stack, arg3->data.i);
+    }
+
+    str_concatenate(&arg1->data.s, &arg2->data.s, &arg3->data.s);
+}

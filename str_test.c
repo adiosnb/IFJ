@@ -3,10 +3,11 @@
 
 int main() {
 
-    string_t str1,str2;
+    string_t str1, str2, str3;
 
     str1 = str_init();
     str2 = str_init();
+    str3 = str_init();
 
     printf("\n###################TEST1####################\n");
 
@@ -48,8 +49,55 @@ int main() {
     str_read_str_stdin(&str1);
     str_print(str1);
 
+    printf("\n################## TEST6 ###################\n");
+    printf("str3 = str2 + str1\n");
+    str_reinit(&str1);
+    str_reinit(&str2);
+    str_reinit(&str3);
+
+    str_append_chars(&str1, "abcdefgh");
+    str_append_chars(&str2, "123456789");
+    str_concatenate(&str3, &str2, &str1);
+
+    printf("str1 = ");
+    str_print(str1);
+    printf("str2 = ");
+    str_print(str2);
+    printf("str3 = ");
+    str_print(str3);
+
+
+    printf("\n################## TEST7 ###################\n");
+    printf("str2 = str1 + str1\n");
+    str_reinit(&str1);
+    str_reinit(&str2);
+
+    str_append_chars(&str1, "abcdefgh");
+    str_concatenate(&str2, &str1, &str1);
+
+    printf("str1 = ");
+    str_print(str1);
+    printf("str2 = ");
+    str_print(str2);
+
+
+    printf("\n################## TEST8 ###################\n");
+    printf("str1 = str1 + str1\n");
+    str_reinit(&str1);
+
+    str_append_chars(&str1, "abcdefgh");
+
+    printf("<before> str1 = ");
+    str_print(str1);
+    str_concatenate(&str1, &str1, &str1);
+    printf("<after> str1 = ");
+    str_print(str1);
+
+
+
     str_destroy(str1);
     str_destroy(str2);
+    str_destroy(str3);
 
     return 0;
 }

@@ -66,9 +66,36 @@ void str_append_str(string_t *str_dest,string_t *str_src){
 
 }
 
+void str_concatenate(string_t *str_dest, string_t *str_src1, string_t *str_src2) {
+    if (str_dest == str_src1 || str_dest == str_src2) {
+        string_t tmp_str = str_init();          //pomocny string kde sa ulozi predosly vysledok
+        str_append_str(&tmp_str, str_dest);
+        str_concatenate(str_dest, &tmp_str, &tmp_str);    //rekurzivne volanie na konkatenaciu stringov
+        str_destroy(tmp_str);
+    } else {
+        int len = str_src1->len + str_src2->len;  //velkost vysledneho stringu
+        int len_first = str_src1->len;
+        int i, j;
+
+        str_reinit(str_dest);
+
+        //zvacsenie stringu aby mohol pohltit oba stringy
+        while (len > str_dest->max) {
+            str_resize(str_dest);
+        }
+
+        for (i = 0; i < len_first; i++) {
+            str_dest->str[str_dest->len++] = str_src1->str[i];
+        }
+        for (j = 0; i < len; i++, j++) {
+            str_dest->str[str_dest->len++] = str_src2->str[j];
+        }
+    }
+}
+
 void str_read_str_stdin(string_t* dest_str){
     int c;
-
+    str_reinit(dest_str);
     while ((c = fgetc(stdin)) != EOF && c != '\n'){
        str_add_char(dest_str,(char)c);
     }
@@ -78,43 +105,4 @@ void str_destroy(string_t str) {
 	if(str.str)
 	    free(str.str);
 	str.str = NULL;
-}
-
-/*
- * Nasleduje spajany zoznam nad char*
- */
-
-str_list_t str_list_init() {
-    str_list_t list;
-    list.first = NULL;
-    list.last = NULL;
-    return list;
-}
-
-void str_list_add(str_list_t *list, char *str) {
-    str_list_item_t *new_item;
-    if ((new_item = malloc(sizeof(struct str_list))) == NULL) {
-        //TODO error
-        exit(1);
-    }
-    if (list->last != NULL) {
-        new_item->str = str;
-        new_item->next = NULL;
-        list->last->next = new_item;
-        list->last = new_item;
-    } else {
-        list->first = list->last = new_item;
-        new_item->str = str;
-    }
-}
-
-void str_list_destroy(str_list_t *list) {
-    str_list_item_t *current;
-
-    while (list->first != NULL) {
-        current = list->first;
-        list->first = list->first->next;
-        free(current->str);
-        free(current);
-    }
 }

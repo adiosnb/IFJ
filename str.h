@@ -19,11 +19,6 @@ typedef struct {
     str_list_item_t *last;
 } str_list_t;
 
-str_list_t str_list_init();
-
-void str_list_add(str_list_t *list, char *str);
-
-void str_list_destroy(str_list_t *list);
 
 string_t str_init();
 void str_reinit(string_t *str);
@@ -31,6 +26,8 @@ void str_destroy(string_t str);
 void str_print(string_t str);
 void str_resize(string_t *str);
 void str_append_str(string_t *str_dest,string_t *str_src);
+
+void str_concatenate(string_t *str_dest, string_t *str_src1, string_t *str_src2);
 void str_append_chars(string_t *str_dest,char *str_src);
 void str_read_str_stdin(string_t* dest_str);
 

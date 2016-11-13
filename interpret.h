@@ -25,7 +25,7 @@ void expr_div();
 void write();    //src
 void read_int();//dst
 void read_double();//dst
-void read_string();//
+void read_string();//dst
 void call();    //instruction_item_ptr
 void ret();     //
 void push();     //src
@@ -35,5 +35,12 @@ void inst_jump();//instruction_item_ptr
 void jump_zero();//instruction_item_ptr  num_fot_condition
 void jump_equal();//instruction_item_ptr  num_for_condition num_for_condition
 void jump_not_equal();//instruction_item_ptr  num_for_condition num_for_condition
+void interpret_str_init();
+
+void interpret_str_reinit();
+
+void str_len();//dst  src
+void concatenate();
+
 
 #endif //INTERPRET

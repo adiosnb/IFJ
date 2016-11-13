@@ -38,13 +38,15 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_WRITE,         //source            ---             ---
     INST_READ_INT,      //destination       ---             ---
     INST_READ_DOUBLE,   //destination       ---             ---
-    INST_READ_STRING,   //TODO
-    INST_STR_LEN,       //TODO
+    INST_READ_STRING,   //destination       ---             ---
+    INST_STR_INIT,      //str to init       ---             ---
+    INST_STR_REINIT,    //str to reinit     ---             ---
+    INST_STR_LEN,       //destination       source          ---
+    INST_STR_CONCATENATE,//destination      str1            str2
     INST_STR_CMP,       //TODO
     INST_STR_FIND,      //TODO
     INST_STR_SORT,      //TODO
     INST_STR_SUBSTR,    //TODO
-    INST_STR_INIT,      //str to init       ---             ---
     INST_HALT,          //no imputs
     INST_LABEL,         //no inputs
 };
