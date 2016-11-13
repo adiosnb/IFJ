@@ -42,7 +42,7 @@ argument_var_t *stack_ebp_relative_ptr(stack_t *stack, int position);
 
 argument_var_t stack_from_top(stack_t *stack, int position);
 
-argument_var_t *stack_from_top_ptr(stack_t *stack, int position); //TODO check
+argument_var_t *stack_from_top_ptr(stack_t *stack, int position);
 
 int stack_actualize_from_ebp(stack_t *stack, argument_var_t arg, int position);
 

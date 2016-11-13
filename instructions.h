@@ -43,7 +43,7 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_STR_REINIT,    //str to reinit     ---             ---
     INST_STR_LEN,       //destination       source          ---
     INST_STR_CONCATENATE,//destination      str1            str2
-    INST_STR_CMP,       //destination       str1,           str2
+    INST_STR_CMP,       //destination       str1            str2
     INST_STR_FIND,      //TODO
     INST_STR_SORT,      //TODO
     INST_STR_SUBSTR,    //TODO

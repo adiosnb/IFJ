@@ -11,7 +11,7 @@ int main() {
     char str1[] = "qwertyuiop";
 
     data_t *ptr_to_table1, *ptr_to_table2, *ptr_to_table3;
-/*
+
 
     printf("Test nad string operaciami v globalnych premennych\n"
                    "v str1 je ulozeny retazec\n"
@@ -144,7 +144,7 @@ int main() {
     dest_inst_list(&i_list);
     stable_destroy(&sym_tab);
 
-*/
+
     printf("\n\nTEST 3\n"
                    "");
 

@@ -176,7 +176,7 @@ void ret(){
             if (destination->arg_type == STACK_EBP) {
                 stack_actualize_from_ebp(glob_stack, *return_value, destination->data.i);
             } else {
-                *destination = *return_value;   //TODO check
+                *destination = *return_value;
             }
         }
     } else {
@@ -279,7 +279,7 @@ void push() {
             break;
         case INST_PUSH_STRING:
             tmp_var.arg_type = STRING;
-            //TODO init str
+            tmp_var.data.s = str_init();
             break;
 
     }
@@ -487,7 +487,6 @@ void divisoin(){
 }
 
 void expr_add(){
-    print_stack(glob_stack);    //TODO : delete it after debug
     argument_var_t dest, op1, op2;
 
     op1 = stack_pop(glob_stack);
@@ -516,7 +515,6 @@ void expr_add(){
 }
 
 void expr_sub() {
-    print_stack(glob_stack);    //TODO : delete it after debug
     argument_var_t dest, op1, op2;
 
     op1 = stack_pop(glob_stack);
@@ -544,7 +542,6 @@ void expr_sub() {
 }
 
 void expr_mul() {
-    print_stack(glob_stack);    //TODO : delete it after debug
     argument_var_t dest, op1, op2;
 
     op1 = stack_pop(glob_stack);
@@ -572,7 +569,6 @@ void expr_mul() {
 }
 
 void expr_div() {
-    print_stack(glob_stack);    //TODO : delete it after debug
     argument_var_t dest, op1, op2;
 
     op1 = stack_pop(glob_stack);
