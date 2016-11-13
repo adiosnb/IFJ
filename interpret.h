@@ -14,6 +14,8 @@ extern instruction_list_t *glob_ins_list;
 
 int interpret(instruction_list_t *instruction_list, stab_t *stable);
 
+void halt();
+
 void add();      //DEST OP1 OP2
 void sub();      //dest op1 op2
 void mul();      //dest op1 op2

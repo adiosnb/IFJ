@@ -234,7 +234,7 @@ int main () {
     create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
 
     interpret(i_list, sym_tab);
-    dest_inst_list(i_list);
+    dest_inst_list(&i_list);
     printf("\n\n");
 
 
@@ -262,7 +262,7 @@ int main () {
     create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
 
     interpret(i_list, sym_tab);
-    dest_inst_list(i_list);
+    dest_inst_list(&i_list);
     printf("\n\n");
 
 

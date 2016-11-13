@@ -58,6 +58,7 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
                 store();
                 break;
             case INST_HALT:
+                halt();
                 instruction_list->active = glob_ins_list->last;
                 break;
             case INST_CALL:
@@ -117,6 +118,14 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
 
     stack_destroy(&glob_stack);
     return 0;
+}
+
+void halt() {
+    if (glob_stack != NULL) {
+        while (glob_stack->used) {
+            pop();
+        }
+    }
 }
 
 void call() {
@@ -239,7 +248,11 @@ void read_double(){
 }
 
 void read_string() {
-    str_read_str_stdin(&glob_ins_list->active->instruction.addr1->data.s);
+    argument_var_t *arg_ptr = glob_ins_list->active->instruction.addr1;
+    if (arg_ptr->arg_type == STACK_EBP) {
+        arg_ptr = stack_ebp_relative_ptr(glob_stack, arg_ptr->data.i);
+    }
+    str_read_str_stdin(&arg_ptr->data.s);
 }
 
 void push() {
@@ -585,7 +598,11 @@ void expr_div() {
 }
 
 void pop(){
-    stack_pop(glob_stack);
+    argument_var_t tmp;
+    tmp = stack_pop(glob_stack);
+    if (tmp.arg_type == STRING) {
+        str_destroy(tmp.data.s);
+    }
 }
 
 void inst_jump() {
@@ -718,6 +735,14 @@ void str_len() {
     //nacita hodnoty z tabulky symbolov
     arg1 = glob_ins_list->active->instruction.addr1;
     arg2 = glob_ins_list->active->instruction.addr2;
+
+    if (arg1->arg_type == STACK_EBP) {
+        arg1 = stack_ebp_relative_ptr(glob_stack, arg1->data.i);
+    }
+
+    if (arg2->arg_type == STACK_EBP) {
+        arg2 = stack_ebp_relative_ptr(glob_stack, arg2->data.i);
+    }
 
     arg1->data.i = arg2->data.s.len;
 }

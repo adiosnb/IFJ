@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "stable.h"
 #include "interpret.h"
+#include "instruction_list.h"
 
 int main() {
     stab_t *sym_tab;
@@ -73,7 +74,72 @@ int main() {
                    "praca so stringami na zasobniku\n"
                    "vytvorime 3 lokalne stringy {str1,str2,str3}\n"
                    "do prvych 2 nacitame hodnotu pomocou read_string\n"
-                   "a do str3 ulozime ich konkatenaciu\n\n");
+                   "a do str3 ulozime ich konkatenaciu\n\n"
+                   "Umiestnenie na stacku:\n"
+                   "-----------------------------\n"
+                   "|str1                      1|\n"
+                   "|str2                      2|\n"
+                   "|str3                      3|\n"
+                   "|len1                      4|\n"
+                   "|len2                      5|\n"
+                   "|l2n3                      6|\n"
+                   "-----------------------------\n"
+    );
+
+    i_list = init_inst_list();
+    sym_tab = stable_init(10);
+
+    tmp_var.data.arg_type = STACK_EBP;
+    tmp_var.data.data.i = 1;
+    stable_add_var(sym_tab, "str_1", tmp_var);
+    tmp_var.data.data.i = 2;
+    stable_add_var(sym_tab, "str_2", tmp_var);
+    tmp_var.data.data.i = 3;
+    stable_add_var(sym_tab, "str_3", tmp_var);
+    tmp_var.data.data.i = 4;
+    stable_add_var(sym_tab, "len_1", tmp_var);
+    tmp_var.data.data.i = 5;
+    stable_add_var(sym_tab, "len_2", tmp_var);
+    tmp_var.data.data.i = 6;
+    stable_add_var(sym_tab, "len_3", tmp_var);
+    stable_print(sym_tab);
+
+    //vytvorenie lokalnych premennych
+    create_and_add_instruction(i_list, INST_PUSH_STRING, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_STRING, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_STRING, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_INT, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_INT, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_INT, 0, 0, 0);
+
+    ptr_to_table1 = stable_get_var(sym_tab, "str_1");
+    ptr_to_table2 = stable_get_var(sym_tab, "str_2");
+    ptr_to_table3 = stable_get_var(sym_tab, "len_1");
+
+    create_and_add_instruction(i_list, INST_READ_STRING, &ptr_to_table1->data, 0, 0);
+    create_and_add_instruction(i_list, INST_STR_LEN, &ptr_to_table3->data, &ptr_to_table1->data, 0);
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table1->data, 0, 0);
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table3->data, 0, 0);
+
+    ptr_to_table3 = stable_get_var(sym_tab, "len_2");
+    create_and_add_instruction(i_list, INST_READ_STRING, &ptr_to_table2->data, 0, 0);
+    create_and_add_instruction(i_list, INST_STR_LEN, &ptr_to_table3->data, &ptr_to_table2->data, 0);
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table2->data, 0, 0);
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table3->data, 0, 0);
+
+    ptr_to_table1 = stable_get_var(sym_tab, "str_1");
+    ptr_to_table2 = stable_get_var(sym_tab, "str_2");
+    ptr_to_table3 = stable_get_var(sym_tab, "str_3");
+    create_and_add_instruction(i_list, INST_STR_CONCATENATE, &ptr_to_table3->data, &ptr_to_table1->data,
+                               &ptr_to_table2->data);
+    ptr_to_table2 = stable_get_var(sym_tab, "len_3");
+    create_and_add_instruction(i_list, INST_STR_LEN, &ptr_to_table2->data, &ptr_to_table3->data, 0);
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table3->data, 0, 0);
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table2->data, 0, 0);
+
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
+
+    interpret(i_list, sym_tab);
 
     dest_inst_list(&i_list);
     stable_destroy(&sym_tab);
