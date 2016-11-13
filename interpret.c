@@ -722,11 +722,19 @@ void jump_not_equal(){      //TODO test it
     }}
 
 void interpret_str_init() {
-    glob_ins_list->active->instruction.addr1->data.s = str_init();
+    argument_var_t *arg_ptr = glob_ins_list->active->instruction.addr1;
+    if (arg_ptr->arg_type == STACK_EBP) {
+        arg_ptr = stack_ebp_relative_ptr(glob_stack, arg_ptr->data.i);
+    }
+    arg_ptr->data.s = str_init();
 }
 
 void interpret_str_reinit() {
-    str_reinit(&glob_ins_list->active->instruction.addr1->data.s);
+    argument_var_t *arg_ptr = glob_ins_list->active->instruction.addr1;
+    if (arg_ptr->arg_type == STACK_EBP) {
+        arg_ptr = stack_ebp_relative_ptr(glob_stack, arg_ptr->data.i);
+    }
+    str_reinit(&arg_ptr->data.s);
 }
 
 void str_len() {
