@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "scanner_alt.h"
+#include "scanner.h"
 #include "str.h"
 
 FILE*	fHandle = NULL;
@@ -25,6 +25,10 @@ t_tokenElem*	currentToken = NULL;
 // global structure to get the data returned by last getToken 
 t_token	g_lastToken;
 
+// the count of lines & chars
+int lines = 0, chars = -1;
+
+
 // Utility func
 
 void freeToken(t_token* tok)
@@ -34,6 +38,27 @@ void freeToken(t_token* tok)
 		|| tok->type == TOK_LITERAL
 		|| tok->type == TOK_SPECIAL_ID)
 		free(tok->data.string);
+}
+
+// scanner get char
+int sgetc(FILE* f)
+{
+	int result = fgetc(f);
+	chars++;
+	if(result == '\n')
+	{
+		lines++;
+		chars = -1;
+	}
+	return result;	
+}
+
+// scanner sungetc
+int sungetc(int c, FILE* f)
+{
+	ungetc(c,f);
+	chars--;
+	return 0;
 }
 
 /* Public functions */
@@ -124,7 +149,24 @@ char* 	getTokString()
 		return NULL;
 }
 
+// Returns last token line
+int	getTokLine()
+{
+	if(currentToken)
+		return currentToken->token.line;
+	else
+		return 0;
+}
+// Returns last token line
+int	getTokTabs()
+{
+	if(currentToken)
+		return currentToken->token.character;
+	else
+		return 0;
+}
 
+/* Utility */
 char*	createString(const char* str)
 {
 	char* nstr = malloc(strlen(str)+1);
@@ -152,7 +194,7 @@ char*	createString2(const char* str, const char* second)
 int	process_literal()
 {
     str_reinit(&literal);
-	fgetc(fHandle);
+	sgetc(fHandle);
 	// a normal state is used when awaiting regular ASCII input
 	// SPECIAL state is reached after receiving '\' 
 	enum States {NORMAL, SPECIAL,OCTAL};
@@ -160,7 +202,7 @@ int	process_literal()
 
 	int octBase= 64;
 	char sum = 0;
-	while((c = fgetc(fHandle)) != EOF)
+	while((c = sgetc(fHandle)) != EOF)
 	{
 		switch(state)
 		{
@@ -186,7 +228,7 @@ int	process_literal()
 				switch(c)
 				{
 					case '0': case '1': case '2': case '3': 
-						ungetc(c,fHandle);
+						sungetc(c,fHandle);
 						state = OCTAL;
 						break;
 					case '\\':
@@ -275,7 +317,7 @@ int	process_identifier()
 
 	enum states {FIRST,SECOND};
 	int state = FIRST;
-	while((c = fgetc(fHandle)) != EOF)
+	while((c = sgetc(fHandle)) != EOF)
 	{
 		int res = isalnum(c);
 	
@@ -309,7 +351,7 @@ int	process_identifier()
 			}
 			
 			// the last character is probably a part of another token->return back
-			ungetc(c,fHandle);
+			sungetc(c,fHandle);
 
 			// if we captured only a single word, it migh be a keyword
 			if(state != SECOND)
@@ -387,7 +429,7 @@ int	process_number()
 
 	enum numberType {INT, DOT,DOUBLE,EXP,EXP_SIGN,EXP_RADIX};
 	int state = INT;
-	while((c = fgetc(fHandle)) != EOF)
+	while((c = sgetc(fHandle)) != EOF)
 	{
 		switch(state)
 		{
@@ -400,7 +442,7 @@ int	process_number()
 					else if(tolower(c) == 'e')
 						state = EXP;
 				} else {
-					ungetc(c,fHandle);
+					sungetc(c,fHandle);
 					g_lastToken.type = TOK_CONST;
 					g_lastToken.data.integer = atoi(buff);
 					return TOK_CONST;
@@ -420,7 +462,7 @@ int	process_number()
 				if(!isdigit(c) && tolower(c) != 'e')
 				{
 					// new float
-					ungetc(c,fHandle);
+					sungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
 					g_lastToken.data.real= atof(buff);
 					return TOK_DOUBLECONST;
@@ -458,7 +500,7 @@ int	process_number()
 				else 
 				{
 					//new float
-					ungetc(c,fHandle);
+					sungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
 					g_lastToken.data.real= atof(buff);
 					return TOK_DOUBLECONST;
@@ -518,7 +560,7 @@ int	process_operator(char op)
 
 int	process_relation(char c)
 {
-	int nextc = fgetc(fHandle);
+	int nextc = sgetc(fHandle);
 	// TODO: what exactly should we do upon receiving an EOF ?
 	if(nextc == EOF)
 		return TOK_ERROR;
@@ -530,7 +572,7 @@ int	process_relation(char c)
 				g_lastToken.type = TOK_EQ;
 			} else {
 				// assigment
-				ungetc(nextc,fHandle);
+				sungetc(nextc,fHandle);
 				g_lastToken.type = TOK_ASSIGN;
 			}
 			return g_lastToken.type;
@@ -546,7 +588,7 @@ int	process_relation(char c)
 			if(nextc == '=')
 				g_lastToken.type = TOK_LE;
 			else {
-				ungetc(nextc,fHandle);
+				sungetc(nextc,fHandle);
 				g_lastToken.type = TOK_LESS;
 			}
 			return g_lastToken.type;
@@ -555,7 +597,7 @@ int	process_relation(char c)
 			if(nextc == '=')
 				g_lastToken.type = TOK_GE;
 			else {
-				ungetc(nextc,fHandle);
+				sungetc(nextc,fHandle);
 				g_lastToken.type = TOK_GREATER;
 			}
 			return g_lastToken.type;
@@ -604,7 +646,7 @@ int	process_comments(int isBlock)
 	enum waitingState {FOR_END, NORMAL};
 	enum commentaryType {LINE,BLOCK};
 	int c,state = NORMAL;
-	while((c = fgetc(fHandle)) != EOF)
+	while((c = sgetc(fHandle)) != EOF)
 	{
 		switch(isBlock)
 		{
@@ -640,8 +682,10 @@ int	intern_getToken()
 {
 	// let's get a character from source code's stream
 	int c;
-	while((c = fgetc(fHandle)) != EOF)
+	while((c = sgetc(fHandle)) != EOF)
 	{
+		g_lastToken.line = lines;
+		g_lastToken.character = chars;
 		// if the stream is at its end, either return EOF token
 		// or report error (multiple EOF tokens reached)
 		if(c == EOF)
@@ -650,7 +694,7 @@ int	intern_getToken()
 		{
 			// literals start with "
 			case '\"':
-				ungetc(c,fHandle);
+				sungetc(c,fHandle);
 				return  process_literal();
 				break;
 			// skip these chars
@@ -660,7 +704,7 @@ int	intern_getToken()
 				break;
 			// start of commentaries or / operator
 			case '/':
-				c = fgetc(fHandle);
+				c = sgetc(fHandle);
 				switch(c)
 				{
 					case EOF:
@@ -671,7 +715,7 @@ int	intern_getToken()
 						break;
 					default:
 						// it was an operator /
-						ungetc(c,fHandle);
+						sungetc(c,fHandle);
 						return process_operator('/');
 				}
 				break;
@@ -695,11 +739,11 @@ int	intern_getToken()
 			default:
 				if(isalpha(c) || c == '_' || c == '$')
 				{
-					ungetc(c,fHandle);
+					sungetc(c,fHandle);
 					return process_identifier();
 				} else if(isdigit(c))
 				{
-					ungetc(c,fHandle);
+					sungetc(c,fHandle);
 					return process_number();
 				} else {
 					fprintf(stderr,"Error: No token defined for 0x%X character\n",c);
