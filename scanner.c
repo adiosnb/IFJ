@@ -379,7 +379,7 @@ int	process_identifier()
 				// if the second part of ID fullfills requirements
 				if((first.len && second.len))
 				{
-					g_lastToken.data.string = createString(second.str);
+					g_lastToken.data.string = createString2(first.str,second.str);
 					g_lastToken.type = TOK_SPECIAL_ID;
 				}
 				else {

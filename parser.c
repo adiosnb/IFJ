@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <string.h>
+
 #include "scanner.h"
 
 int inFunction = 0;
@@ -44,7 +46,7 @@ int	isTokenTypeSpecifier()
 }
 */
 
-#define hint(format,...) fprintf(stderr,"[Hint]: "format"\n", ##__VA_ARGS__)
+#define hint(format,...) fprintf(stderr,"[Hint:%d:%d]: "format"\n", getTokLine(), getTokTabs(),##__VA_ARGS__)
 
 //#define throw(format,...) fprintf(stderr,"[%s:%d]: "format"\n", __FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
 #define throw(format,...) fprintf(stderr,"[input:%d:%d] [%s:%d] "format"\n", getTokLine(),getTokTabs(),__FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
@@ -125,25 +127,66 @@ int expression()
 int more_next()
 {
 	getToken();
+	int isPrint = !strcmp(getTokString(),"ifj16.print");
 	if(getToken() == TOK_LEFT_PAR)
 	{	
-		setInCall(1);
-		if(function_parameters_list() == SYN_ERR)
-			return SYN_ERR;
-		setInCall(0);
+		// is it a ID = ifj16.print() case ?
+		if(isPrint)
+		{
+			return throw("Semantic error");
+		}
+		else {
+			hint("MORE-Function call of '%s'",getTokString());
+			setInCall(1);
+			if(function_parameters_list() == SYN_ERR)
+				return SYN_ERR;
+			setInCall(0);
 
-		if(getToken() != TOK_RIGHT_PAR)
-			return throw("Expected )");
+			if(getToken() != TOK_RIGHT_PAR)
+				return throw("Expected )");
+		}
+		return SYN_OK;
 	} else {
 		ungetToken();
 		ungetToken();
 		if(expression() == SYN_ERR)
 			return SYN_ERR;
 	}	
-	// both ends on ;
+	return SYN_OK;
+}
+// builtin_print is a special case of function call which supports
+// a concatenation as an argument
+int builtin_print()
+{
+	if(getToken() == TOK_RIGHT_PAR)
+		return throw("Expected a term or concatenation");
+	ungetToken();	
+	do {
+		int res = getToken();
+		switch(res)
+		{
+			case TOK_ID:
+			case TOK_SPECIAL_ID:
+			case TOK_CONST:
+			case TOK_DOUBLECONST:
+			case TOK_LITERAL:
+				break;
+			default:
+				return throw("Expected an identifier or a constant.");
+		}
+		
+		res = getToken();
+		if(res == TOK_RIGHT_PAR)
+			break;
+		if(res != TOK_PLUS)
+			return throw("Expected +");
+
+	} while (1);
 	if(getToken() != TOK_DELIM)
 		return throw("Expected ;");
+
 	return SYN_OK;
+	
 }
 
 
@@ -152,20 +195,31 @@ int more_next()
 
 int next()
 {	
+	int isPrint = !strcmp(getTokString(),"ifj16.print");
 	switch(getToken())
 	{
 		case TOK_ASSIGN:
-			return more_next();
-		case TOK_LEFT_PAR:
-			setInCall(1);
-			if(function_parameters_list() == SYN_ERR)
-				return SYN_ERR;	
-			setInCall(0);
-			if(getToken() != TOK_RIGHT_PAR)
-				return throw("Expected )");
+			if(more_next() == SYN_ERR)
+				return SYN_ERR;
 			if(getToken() != TOK_DELIM)
 				return throw("Expected ;");
 			return SYN_OK;
+		case TOK_LEFT_PAR:
+			if(isPrint)
+			{
+				return builtin_print();
+			} else {
+				hint("Function call of '%s'",getTokString());
+				setInCall(1);
+				if(function_parameters_list() == SYN_ERR)
+					return SYN_ERR;	
+				setInCall(0);
+				if(getToken() != TOK_RIGHT_PAR)
+					return throw("Expected )");
+				if(getToken() != TOK_DELIM)
+					return throw("Expected ;");
+				return SYN_OK;
+			}
 	}
 	return throw("Expected = or (");
 }
@@ -177,7 +231,12 @@ int jump_statement()
 	getToken();
 	if(!isTokenKeyword(KW_RETURN))
 		return throw("Expected return");
-	return expression();
+	if(expression() == SYN_ERR)
+		return SYN_ERR;
+	if(getToken() != TOK_DELIM)
+		return throw("Expected ; at the end of return statement.");
+	return SYN_OK;
+
 }
 
 //<iteration-statement>          -> while ( expression ) <compound-statement>
@@ -390,18 +449,17 @@ int function_parameters_list()
 }
 
 //<variable-initialization>        -> eps
-//<variable-initialization>        -> = expression
+//<variable-initialization>        -> = <more-next>
 
 int variable_initialization()
 {
-	if(getToken() == TOK_ASSIGN)
-	{
-		return expression();
-		
-	} else {
-		ungetToken();
+	int res = getToken();
+	ungetToken();
+	if(res == TOK_DELIM)
 		return SYN_OK;
-	}
+	if(getToken() != TOK_ASSIGN)
+		return throw("Expected = in inicialization");
+	return more_next();
 }
 
 
@@ -435,7 +493,7 @@ int more_definition()
 			return SYN_ERR;
 		
 		if(getToken() != TOK_DELIM)
-			return throw("Missing ';'");
+			return throw("Missing ';' in definition");
 
 		return SYN_OK;
 	
