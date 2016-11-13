@@ -529,15 +529,20 @@ int source_program()
 }
 
 
-int main()
+int main(int argc, char ** argv)
 {
-	if(scanner_openFile("source.java"))
+	if(argc < 2)
+	{
+		return throw("USAGE: filename");
+	}
+	if(scanner_openFile(argv[1]))
 	{
 		int result = source_program();
 		scanner_closeFile();
 		fprintf(stderr,"Result: %d\n",result);
 		return 0;
 	}
+	return throw("Failed to open %s",argv[1]);
 	return 1;
 }
 
