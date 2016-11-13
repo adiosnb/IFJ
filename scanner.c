@@ -3,6 +3,7 @@
 #include <string.h>
 #include "scanner.h"
 #include "str.h"
+#include "error.h"
 
 FILE*	fHandle = NULL;
 string_t first, second, literal;
@@ -245,9 +246,8 @@ int	process_literal()
 						state = NORMAL;
 						break;
 					default:
-
-						// TODO: report an error - invalid escape sequence
 						fprintf(stderr, "Error while reading literal\n");
+						errorLeave(LEXICAL_ERROR);
 						return TOK_ERROR;
 						break;
 				}
@@ -345,6 +345,7 @@ int	process_identifier()
 					// already processing the second part of ID
 					// > lex. error
 					fprintf(stderr,"Error: Multiple '.' in identifier.\n");
+					errorLeave(LEXICAL_ERROR);
 					return TOK_ERROR;
 				}
 				continue;
@@ -384,6 +385,8 @@ int	process_identifier()
 				}
 				else {
 					// error in the second part of ID
+					fprintf(stderr,"Error: the second part doesn't full fill requirements\n");  
+					errorLeave(LEXICAL_ERROR);
 					return TOK_ERROR;
 				}
 			} else 
@@ -455,6 +458,7 @@ int	process_number()
 					state = DOUBLE;
 				} else {
 					// emit error, number ends with '.' without any following digit
+					errorLeave(LEXICAL_ERROR);	
 					return TOK_ERROR;
 				}
 				break;
@@ -779,10 +783,11 @@ int getToken()
 	if(currentToken == NULL || currentToken->next == NULL)
 	{
 		// then process new from file
+		int ret = intern_getToken();	
+		// get results and store them in double-linked-list
 		t_tokenElem* newel = malloc(sizeof(t_tokenElem));
 		if(newel)
 		{
-			int ret = intern_getToken();	
 			newel->prev = currentToken;
 			newel->next = NULL;
 			newel->token = g_lastToken;
@@ -795,6 +800,9 @@ int getToken()
 		}
 		// malloc error
 		// TODO: global error module
+		fprintf(stderr,"Internal eror - malloc failure");
+		errorLeave(INTERNAL_ERROR);
+		
 		
 	} 
 	// otherwise move to the next in linked list
