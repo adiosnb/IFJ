@@ -60,8 +60,7 @@ int parameter_definition();
 /*<expr>                         -> expression
 <expr>                         -> eps
 */
-
-/*<type-specifier>               -> eps
+/*
 <type-specifier>               -> String
 <type-specifier>               -> int
 <type-specifier>               -> double
@@ -78,9 +77,18 @@ int type_specifier()
 		case KW_STRING:
 			return SYN_OK;	
 		default:
-			ungetToken();
+			return SYN_ERR;
 	}
 	return SYN_OK;	
+}
+
+//<type-specifier-opt>               ->type-specifier 
+//<type-specifier-opt>               ->eps
+int type_specifier_opt()
+{
+	if(type_specifier() == SYN_ERR)
+		ungetToken();
+	return SYN_OK;
 }
 
 /*
@@ -277,20 +285,23 @@ int block_items_list()
 int statement()
 {
 	int type = getToken();
+	int val = getTokInt();
 	ungetToken();
 	switch(type)
 	{
 		case TOK_KEYWORD:
 		{
-			if(isTokenKeyword(KW_RETURN))
-				return jump_statement();
-			else if(isTokenKeyword(KW_IF))
-				return selection_statement();
-			else if(isTokenKeyword(KW_WHILE))
-				return iteration_statement();
-			else
-				return throw("Got keyword, Expected if, while or return");
-			break;
+			switch(val)
+			{
+				case KW_RETURN:
+					return jump_statement();
+				case KW_IF:
+					return selection_statement();
+				case KW_WHILE:
+					return iteration_statement();
+				default:
+					return throw("Got keyword, Expected if, while or return");
+			}
 		}
 		case TOK_ID:
 		case TOK_SPECIAL_ID:
@@ -414,12 +425,31 @@ int more_definition()
 int parameter_definition()
 {
 	hint("Parameter definition - isCall: %d",inCall);
-	if(type_specifier() == SYN_ERR)
-		return throw("Expected type-specifier (void,int,double,String)\n");
+	// if we define a formal parameter, we require a type specifier
+	if(inCall == 0)
+		if(type_specifier() == SYN_ERR)
+			return throw("Expected type-specifier (void,int,double,String)\n");
+	// otherwise no type is taken
 
-	// TODO - special ID	
-	if(getToken() != TOK_ID)
-		return throw("Expected simple-id");
+	switch(getToken())
+	{
+		case TOK_DOUBLECONST:
+		case TOK_CONST:
+		case TOK_LITERAL:
+		case TOK_SPECIAL_ID:
+			// full indentifier and constants are only allowed in function call
+			if(!inCall)
+				return throw("Expected simple indentifier");
+		case TOK_ID:
+			break;
+		default:
+			if(inCall)
+				return throw("Expected any identifier/constant");
+			else
+				return throw("Expected single identifier");
+			
+		
+	}
 
 	return SYN_OK;
 }
