@@ -1,21 +1,14 @@
 #include <stdio.h>
 #include "stable.h"
 #include "interpret.h"
-#include "instruction_list.h"
-#include "str.h"
-
-
 
 int main() {
     stab_t *sym_tab;
     data_t tmp_var;
-    data_t *ptr_to_tab;
     instruction_list_t *i_list;
-    instruction_item_t *ptr_inst;
 
     char str1[] = "qwertyuiop";
 
-    data_t input_data;
     data_t *ptr_to_table1, *ptr_to_table2, *ptr_to_table3;
 
 
@@ -40,7 +33,7 @@ int main() {
     stable_add_var(sym_tab, "INT.A", tmp_var);
     stable_add_var(sym_tab, "INT.B", tmp_var);
 
-    stable_print(sym_tab);
+    //stable_print(sym_tab);
 
     i_list = init_inst_list();
 
@@ -70,8 +63,19 @@ int main() {
     create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
 
     interpret(i_list, sym_tab);
-    stable_print(sym_tab);
-    dest_inst_list(i_list);
+    //stable_print(sym_tab);
+
+    dest_inst_list(&i_list);
+    stable_destroy(&sym_tab);
+
+    printf("\n\n"
+                   "TEST2\n"
+                   "praca so stringami na zasobniku\n"
+                   "vytvorime 3 lokalne stringy {str1,str2,str3}\n"
+                   "do prvych 2 nacitame hodnotu pomocou read_string\n"
+                   "a do str3 ulozime ich konkatenaciu\n\n");
+
+    dest_inst_list(&i_list);
     stable_destroy(&sym_tab);
     return 0;
 }

@@ -47,19 +47,22 @@ void stable_destroy_element(stab_element_t *p_element){
 void stable_destroy(stab_t **p_table) {
     stab_element_t *current, *next;
 
-    for (unsigned i = 0; i < p_table[0]->stab_size; i++) {
-        current = p_table[0]->arr[i];
-        while (current != NULL) {
-            next = current->stab_next;
-            free(current->stab_key);
-            if (current->stab_content.data.arg_type == STRING) {
-                str_destroy(current->stab_content.data.data.s);
+    if (*p_table != NULL) {
+        for (unsigned i = 0; i < p_table[0]->stab_size; i++) {
+            current = p_table[0]->arr[i];
+            while (current != NULL) {
+                next = current->stab_next;
+                free(current->stab_key);
+                if (current->stab_content.data.arg_type == STRING) {
+                    str_destroy(current->stab_content.data.data.s);
+                }
+                free(current);
+                current = next;
             }
-            free(current);
-            current = next;
         }
+        free(*p_table);
+        *p_table = NULL;
     }
-    free(*p_table);
     return;
 }
 

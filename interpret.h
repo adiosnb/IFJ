@@ -36,11 +36,17 @@ void jump_zero();//instruction_item_ptr  num_fot_condition
 void jump_equal();//instruction_item_ptr  num_for_condition num_for_condition
 void jump_not_equal();//instruction_item_ptr  num_for_condition num_for_condition
 void interpret_str_init();
-
 void interpret_str_reinit();
-
 void str_len();//dst  src
 void concatenate();
+
+void interpret_str_cmp();
+
+void interpret_str_find();
+
+void interpret_str_sort();
+
+void interpret_str_substr();
 
 
 #endif //INTERPRET

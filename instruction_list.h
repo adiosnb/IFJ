@@ -63,7 +63,7 @@ typedef struct {
 
 instruction_list_t *init_inst_list();
 
-int dest_inst_list(instruction_list_t *list);
+int dest_inst_list(instruction_list_t **list);
 int add_intstruction(instruction_list_t *i_list,instruction_item_t *instruction);
 
 instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum instructions type, argument_var_t *addr1,

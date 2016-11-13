@@ -44,18 +44,20 @@ instruction_list_t *init_inst_list() {
 }
 
 
-int dest_inst_list(instruction_list_t *list) {
+int dest_inst_list(instruction_list_t **list) {
     instruction_item_t *current_item, *next_item;
 
-    current_item = list->first;
-    while (current_item != NULL) {          //cycle through all items in list
-        next_item = current_item->next;
-        free(current_item);                //deleting of each item of list
-        current_item = next_item;
+    if (*list != NULL) {
+        current_item = (*list)->first;
+        while (current_item != NULL) {          //cycle through all items in list
+            next_item = current_item->next;
+            free(current_item);                //deleting of each item of list
+            current_item = next_item;
+        }
+
+        free(*list);                            //deleting of whole lsit
+        *list = NULL;
     }
-
-    free(list);                            //deleting of whole lsit
-
     return OK;
 }
 
