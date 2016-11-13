@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "stable.h"
 #include "instruction_list.h"
+#include "str.h"
 
 unsigned hash_fun_ptr(char *id, unsigned stab_size){
     int i = 0, pom = 0;
@@ -51,6 +52,9 @@ void stable_destroy(stab_t **p_table) {
         while (current != NULL) {
             next = current->stab_next;
             free(current->stab_key);
+            if (current->stab_content.data.arg_type == STRING) {
+                str_destroy(current->stab_content.data.data.s);
+            }
             free(current);
             current = next;
         }
@@ -67,8 +71,15 @@ int stable_add_var(stab_t *p_stable, char *id, data_t p_var){
 
     if (p_stable->arr[index] != NULL) {
         //nastavy pom na posledny prvok
-        while (pom->stab_next != NULL)
+        while (pom->stab_next != NULL) {
+            if (!strcmp(pom->stab_key, id)) {
+                return 1; //TODO netusim aku hodnotu vratit
+            }
             pom = pom->stab_next;
+        }
+        if (!strcmp(pom->stab_key, id)) {
+            return 1; //TODO netusim aku hodnotu vratit
+        }
         //za posledny prvok sa naalokuje miesto na dalsi
         if ((pom->stab_next = malloc(sizeof(stab_element_t))) == NULL){
             return 1; //todo dohodnut sa na error hlaske
