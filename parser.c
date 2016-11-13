@@ -1,444 +1,622 @@
+#include <stdio.h>
+#include <string.h>
+
 #include "scanner.h"
-#define SYN_OK 1
-#define SYN_ERR 2
 
-/******************************************************************************
- * Disclaimer
- *****************************************************************************/
+int inFunction = 0;
+#define setInFunction(st) inFunction = st
 
-// ARGUMENTS VS PARAMETERS:
-// 	argument = certain value passed to func
-// 		e.g. func(a);	where a is an argument
-// 	parameter = expected variable
-// 		e.g. static int func( int a); where a is a formal parameter
+int inCall = 0;
+#define setInCall(st) inCall= st
 
+int ident= 0;
+#define incIdent() ident++;
+#define decIdent() ident--;
 
+enum syntaxCorrectness {SYN_OK,SYN_ERR};
 
-
-/******************************************************************************
- * Utility macro definition
- *****************************************************************************/
-// Compares the type and integral data of token, DOESN'T GET A NEW TOKEN
-#define isTypeOf(tp, of) (g_lastToken.type == tp && g_lastToken.data.integer == of)
-
-// GETS A NEW TOKEN and compares
-#define getType(type) (getToken() == type)
-
-// Compares the type of current token with tp
-#define isType(tp) (g_lastToken.type == tp)
-
-int state = 1;
-// throw error message on error event
-#define throw(message) (state)?(state = 0, fprintf(stderr,"[%s:%d] %s \n",__FILE__,\
-						__LINE__,message),SYN_ERR):(SYN_ERR) 
-
-// is token a data type (int/double/String) ?
-#define isDataType() 	(g_lastToken.data.integer == KW_STRING || \
-			g_lastToken.data.integer == KW_INT || \
-			g_lastToken.data.integer == KW_VOID|| \
-			g_lastToken.data.integer == KW_DOUBLE)
-
-// is the current token a keyword 'kw' ? 
-#define isKeyword(kw) (g_lastToken.type == TOK_KEYWORD && g_lastToken.data.integer == kw)
- 
-// DEBUGGING compiler hint: what has been processed
-#define hint(format,...) fprintf(stderr,"[Hint]: "format"\n", ##__VA_ARGS__)
-
-// Is token a term 
-#define isTerm() (g_lastToken.type == TOK_ID|| \
-		g_lastToken.type == TOK_SPECIAL_ID ||\
-		g_lastToken.type == TOK_LITERAL ||\
-		g_lastToken.type == TOK_CONST ||\
-		g_lastToken.type == TOK_DOUBLECONST)
-// ---------------------------------------------------------------------------
-// Examples
-// ---------------------------------------------------------------------------
-
-// getType(TOK_ID) will call scanner to get another token and compare the type
-
-// isType(TOK_ID) won't call scanner, but compare the current token instead
-
-// return throw("Message") will print out an error message and return SYN_ERR
- 
-// hint("Message",...); prints out an error message and is used for debugging
-
-/******************************************************************************
- * Functions
- *****************************************************************************/
-int statement();
-
-// TODO: replace this function with a properly-coded bottom-up parser
-int expr()
+int	isTokenKeyword(int kw)
 {
-	//NOTE: this is just a DEMO
-	while(getToken() != TOK_DELIM && !isType(TOK_RIGHT_PAR));
+	return (getLastToken() == TOK_KEYWORD && getTokInt() == kw);
+}
+
+int	isIdentifier()
+{
+	return (getLastToken() == TOK_ID
+		||  getLastToken() == TOK_SPECIAL_ID);
+}
+
+int	isTokenTypeSpecifier()
+{
+	return (getLastToken() == TOK_KEYWORD && (
+		getTokInt() == KW_VOID ||
+		getTokInt() == KW_INT ||
+		getTokInt() == KW_DOUBLE||
+		getTokInt() == KW_STRING));
+}
+
+
+/*int 	throw(char* error)
+{
+	static int hasThrown = 0;
+	if(!hasThrown)
+		fprintf(stderr,error);	
+	hasThrown = 1;
+	return SYN_ERR;
+}
+*/
+
+#define hint(format,...) fprintf(stderr,"[Hint:%d:%d]: "format"\n", getTokLine(), getTokTabs(),##__VA_ARGS__)
+
+//#define throw(format,...) fprintf(stderr,"[%s:%d]: "format"\n", __FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
+#define throw(format,...) fprintf(stderr,"[input:%d:%d] [%s:%d] "format"\n", getTokLine(),getTokTabs(),__FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
+
+
+
+int class_definition_list();
+int type_specifier();
+int iteration_statement();
+int jump_statement();
+int definition();
+int block_items_list();
+int compound_statement();
+int function_parameters_list();
+int statement();
+int parameter_definition();
+
+/*<expr>                         -> expression
+<expr>                         -> eps
+*/
+/*
+<type-specifier>               -> String
+<type-specifier>               -> int
+<type-specifier>               -> double
+<type-specifier>               -> void
+*/
+int type_specifier()
+{
+	getToken();
+	switch(getTokInt())
+	{
+		case KW_INT:
+		case KW_DOUBLE:
+		case KW_VOID:
+		case KW_STRING:
+			return SYN_OK;	
+		default:
+			return SYN_ERR;
+	}
+	return SYN_OK;	
+}
+
+//<type-specifier-opt>               ->type-specifier 
+//<type-specifier-opt>               ->eps
+int type_specifier_opt()
+{
+	if(type_specifier() == SYN_ERR)
+		ungetToken();
 	return SYN_OK;
 }
 
-// compound-> { ST ST ... }
-int comp()
+/*
+<identifier>                   -> floating-point-constant
+<identifier>                   -> decimal-constant
+<identifier>                   -> fully-qualified-identifier
+<identifier>                   -> simple-identifier
+*/
+
+int expression()
 {
-	if(!isType(TOK_LEFT_BRACE))
-		return throw("Expected a compound statement. Missing {");
-	 
-	// TODO: make this predictive
-	getToken();
-	while(!isType(TOK_RIGHT_BRACE))
+	while(1)
 	{
-		if(statement() == SYN_ERR)
-			return SYN_ERR;
-		getToken();
+		int state = getToken();
+		switch(state)
+		{
+			case TOK_DELIM:
+			case TOK_RIGHT_PAR:
+				ungetToken();
+				return SYN_OK;
+			default:
+				break;
+		}
 	}
 	return SYN_OK;
 }
-
-// <function-arguments-list> -> <definition> , <function-arguments-list>
-// <function-arguments-list> -> <definition> 
-int function_arguments_list()
+//<more-next>                    -> expression 
+//<more-next>                    -> <identifier> ( <function-parameters-list> ) 
+int more_next()
 {
-	if(!isTerm())
-		return throw("Expected term: 'identifier', real / integer costant or  literal.");
-	hint("\t\t >> Function argument: %s",g_lastToken.data.string);
+	getToken();
+	int isPrint = !strcmp(getTokString(),"ifj16.print");
+	if(getToken() == TOK_LEFT_PAR)
+	{	
+		// is it a ID = ifj16.print() case ?
+		if(isPrint)
+		{
+			return throw("Semantic error");
+		}
+		else {
+			hint("MORE-Function call of '%s'",getTokString());
+			setInCall(1);
+			if(function_parameters_list() == SYN_ERR)
+				return SYN_ERR;
+			setInCall(0);
+
+			if(getToken() != TOK_RIGHT_PAR)
+				return throw("Expected )");
+		}
+		return SYN_OK;
+	} else {
+		ungetToken();
+		ungetToken();
+		if(expression() == SYN_ERR)
+			return SYN_ERR;
+	}	
+	return SYN_OK;
+}
+// builtin_print is a special case of function call which supports
+// a concatenation as an argument
+int builtin_print()
+{
+	if(getToken() == TOK_RIGHT_PAR)
+		return throw("Expected a term or concatenation");
+	ungetToken();	
+	do {
+		int res = getToken();
+		switch(res)
+		{
+			case TOK_ID:
+			case TOK_SPECIAL_ID:
+			case TOK_CONST:
+			case TOK_DOUBLECONST:
+			case TOK_LITERAL:
+				break;
+			default:
+				return throw("Expected an identifier or a constant.");
+		}
+		
+		res = getToken();
+		if(res == TOK_RIGHT_PAR)
+			break;
+		if(res != TOK_PLUS)
+			return throw("Expected +");
+
+	} while (1);
+	if(getToken() != TOK_DELIM)
+		return throw("Expected ;");
+
+	return SYN_OK;
 	
-
-	if(getType(TOK_LIST_DELIM))
-	{
-		getToken();
-		return function_arguments_list();
-	} else if(isType(TOK_RIGHT_PAR))
-		return SYN_OK;	
-
-	return SYN_ERR;
 }
 
-//<jump-statement> -> return <expr> ;
+
+//<next>                         -> = <more-next>
+//<next>                         -> ( <function-parameters-list> ) 
+
+int next()
+{	
+	int isPrint = !strcmp(getTokString(),"ifj16.print");
+	switch(getToken())
+	{
+		case TOK_ASSIGN:
+			if(more_next() == SYN_ERR)
+				return SYN_ERR;
+			if(getToken() != TOK_DELIM)
+				return throw("Expected ;");
+			return SYN_OK;
+		case TOK_LEFT_PAR:
+			if(isPrint)
+			{
+				return builtin_print();
+			} else {
+				hint("Function call of '%s'",getTokString());
+				setInCall(1);
+				if(function_parameters_list() == SYN_ERR)
+					return SYN_ERR;	
+				setInCall(0);
+				if(getToken() != TOK_RIGHT_PAR)
+					return throw("Expected )");
+				if(getToken() != TOK_DELIM)
+					return throw("Expected ;");
+				return SYN_OK;
+			}
+	}
+	return throw("Expected = or (");
+}
+
+
+//<jump-statement>               -> return <expr> ;
 int jump_statement()
 {
-	if(expr() == SYN_ERR)
+	getToken();
+	if(!isTokenKeyword(KW_RETURN))
+		return throw("Expected return");
+	if(expression() == SYN_ERR)
 		return SYN_ERR;
-	if(!isType(TOK_DELIM))
-		return throw("Expected ;");
+	if(getToken() != TOK_DELIM)
+		return throw("Expected ; at the end of return statement.");
 	return SYN_OK;
+
 }
 
-// <iteration-statement> -> while ( EXPR ) <compound-statement>
+//<iteration-statement>          -> while ( expression ) <compound-statement>
+
 int iteration_statement()
 {
-	
-	if(!getType(TOK_LEFT_PAR))
-		return throw("Expecting ( after while");
-	
-	if(expr() == SYN_ERR)
-		return SYN_ERR;
-	
-	if(!isType(TOK_RIGHT_PAR))
-		return throw("Expecting ) after while");
 	getToken();
-	return comp();
+	if(!isTokenKeyword(KW_WHILE))
+		return throw("Expected return");
+
+	if(getToken() != TOK_LEFT_PAR)
+		return throw("Expected (");
+
+	if(expression() == SYN_ERR)
+		return SYN_ERR;
+
+	if(getToken() != TOK_RIGHT_PAR)
+		return throw("Expected )");
+
+	return compound_statement();
 }
 
-// <selection-statement> -> if(EXPR) <compound-statement>  else <compound-statement> 
+//<selection-statement>          -> if ( expression ) <compound-statement> else <compound-statement>
 int selection_statement()
 {
+	getToken();
+	if(isTokenKeyword(KW_IF))
+	{
+		if(getToken() != TOK_LEFT_PAR)
+			return throw("Expected (");
+		
+		if(expression() == SYN_ERR)
+			return SYN_ERR;
 
-	if(!getType(TOK_LEFT_PAR))
-		return throw("Expecting ( after if");
+		if(getToken() != TOK_RIGHT_PAR)
+			return throw("Expected )");
 	
-	if(expr() == SYN_ERR)
-		return SYN_ERR;
-	
-	if(!isType(TOK_RIGHT_PAR))
-		return throw("Expecting ) after expression: if (EXPR)");
+		
+		if(compound_statement() == SYN_ERR)
+			return SYN_ERR;		
 
-	getToken();
-	if(comp() == SYN_ERR)
-		return SYN_ERR;
-	
-	getToken();
-	if(!isTypeOf(TOK_KEYWORD,KW_ELSE))
-		return throw("Expecting 'else'");
-	getToken();
-	return comp();
+		getToken();
+
+		if(!isTokenKeyword(KW_ELSE))
+			return throw("Expected else");
+
+		if(compound_statement() == SYN_ERR)
+			return SYN_ERR;		
+		
+		return SYN_OK;	
+		
+	}	
+	return throw("Expected IF");
 }
 
-// <assign-statement> -> identifier <next>
+//<assign-statement>             -> identifier <next> ;
 int assign_statement()
 {
-	//char* ID = g_lastToken.data.string;
-	switch(getToken())
+	getToken();
+	if(isIdentifier())
 	{
-		// TODO: statement->id = id();
-		// id = EXPR;
-		case TOK_ASSIGN:
-			if(expr() == SYN_ERR)
-				return SYN_ERR;
-			if(isType(TOK_DELIM))
-				return SYN_OK;
-			return throw("Missing ;");
-		// id ( ) 
-		case TOK_LEFT_PAR:
-			if(!getType(TOK_RIGHT_PAR))
-				if(function_arguments_list() == SYN_ERR)
-					return SYN_ERR;
-			// expect ) 
-			if(!isType(TOK_RIGHT_PAR))
-				return throw("Expected ) or a list of terms");	
-			if(!getType(TOK_DELIM))
-				return throw("Expected ;");	
-			return SYN_OK;
-	}	
-	return SYN_ERR;
-}
-// <statement>-> <jump-statement>
-// <statement>-> <iteration_statement>
-// <statement>-> <selection_statement>
-// <statement>-> <assign-statement>
-// <statement>-> <compound>
-int statement()
-{
-	// if the rule starts with keyword (while, if, return)
-	//  SELECTION | JUMP | ITERATION 
-	if(isType(TOK_KEYWORD))
-	{
-		switch(g_lastToken.data.integer)
-		{
-			case KW_RETURN:
-				return jump_statement();
-			case KW_WHILE:
-				return iteration_statement();
-			case KW_IF:
-				return selection_statement();
-		}
-		return throw("Unexpected keyword, awaited one of 'return', 'if' or 'while' ");
-	}
-	// <statement>->id = EXPR;
-	// <statement>->id ( ) ; 
-	else if(isType(TOK_ID) || isType(TOK_SPECIAL_ID))
-	{
-		return assign_statement();	
-	}
-	// statement->COMPOUND
-	 else if(isType(TOK_LEFT_BRACE))
-		return comp();
-
-	return throw("Expecting a valid statement");
-
-}
-
-
-// function compound
-// func-comp->eps
-// func-comp->ST func-compound
-// func-comp->VAR-DEC func-compound
-int funccomp()
-{
-	if(getType(TOK_RIGHT_BRACE))
-		return SYN_OK;	
-
-	if((isType(TOK_KEYWORD) && (isDataType() || g_lastToken.data.integer == KW_STATIC)))
-	{
-		// TODO: no static definition in function, local variables can only be "local" ?
-		// VAR-DEC->static|EPS type id;
-		// VAR-DEC->static|EPS type id = EXPR;
-		// VAR-DEC block 
-			char* funcDec = NULL;
-			//TODO: remove if declaration of static var is forbidden in function
-			//if(g_lastToken.data.integer == KW_STATIC)
-			//	getToken();
-			if(!(isType(TOK_KEYWORD) && isDataType()))
-				return throw("Expected type-spec");	
-			if(!getType(TOK_ID))
-				return throw("Expected identifier");	
-			funcDec = g_lastToken.data.string;
-			if(!getType(TOK_DELIM))
-				return throw("Expected ;");	
-
-			hint("\tLocal variable '%s' declared.",funcDec);
-			return funccomp();	
+		return next();
 	} else
-	{
-		//statement
-		if(statement() == SYN_ERR)
-			return SYN_ERR;
-		return funccomp();
-	}
-
-	return throw("Expected statement or variable declaration in the body of function");
+		return throw("Expected identifier or full-identifier.");
 }
-
-// <function-parameters-list> -> <definition> , <function-parameters-list>
-// <function-parameters-list> -> <definition> 
-int function_parameters_list()
+//<compound-statement>           -> { <block-items-list> }
+int compound_statement()
 {
-		
-	if(!isType(TOK_KEYWORD))
-		return throw("Awaited 'type'");
-	if(!isDataType())
-		return throw("Expected 'String', 'int' or 'double'");
-	if(getToken() != TOK_ID)
-		return throw("Expected 'id' after 'type'");
-	hint("\t\t >> Function parameter: %s",g_lastToken.data.string);
-	
+	if(getToken() != TOK_LEFT_BRACE)
+		return throw("Expected {");
 
-	if(getType(TOK_LIST_DELIM))
-	{
-		getToken();
-		return function_parameters_list();
-	} else if(isType(TOK_RIGHT_PAR))
-		return SYN_OK;	
+	if(block_items_list() == SYN_ERR)
+		return SYN_ERR;
 
-	return throw("Expected ')' or 'int','double','String'");
-}
-
-
-//cbody->DECL cbody
-//cbody->eps
-//DECL->static type ID;
-//DECL->static type ID = EXPR;
-//DECL->static type ID (type id, type id, ...) {FUNCCOMP }
-int body()
-{
-	// choose cbody->eps on }
-	if(getToken() == TOK_RIGHT_BRACE)	
-		return SYN_OK;
-	// otherwise, process cbody->decl
-	// decl->static type id; | static type id = EXPR ;
-	if(isType(TOK_EOF))
-		return throw("Missing '}'");
-	if(!isTypeOf(TOK_KEYWORD,KW_STATIC))
-		return throw("Awaited 'static'");
-
-	// if we didn't get a proper type such as 'int', 'double', 'etc'
-	if(!(getToken() == TOK_KEYWORD && (isDataType())))
-		return throw("Awaited 'String','double','void' or 'int'");
-	
-	// get identifier
-	if(getToken() != TOK_ID)
-		return throw("Awaiting simple 'identifier'");
-
-	char* decId = g_lastToken.data.string;
-	switch(getToken())
-	{
-		// static type id;
-		case TOK_DELIM:
-			// yet another variable
-			hint("\tVariable '%s' declared.",decId);
-			break;
-		// static type id = EXPR ;
-		case TOK_ASSIGN:
-			// parse expresion
-			if(expr() == SYN_ERR)
-				return SYN_ERR;
-			if(!isType(TOK_DELIM)) 
-				return throw("Expected ';'");
-			hint("\tVariable '%s' declared.",decId);
-			break;
-
-		// static type id (type id, type id, ...) { FUNC-COMP }
-		case TOK_LEFT_PAR:
-			hint("\tParsing function '%s' body.",decId);
-			if(!getType(TOK_RIGHT_PAR))
-			{
-				// process arguments in ( ) 
-				if(function_parameters_list() != SYN_OK)
-					return SYN_ERR;
-			} else if (!isType(TOK_RIGHT_PAR)) 
-				return throw("Expected )");
-
-			if(getToken() != TOK_LEFT_BRACE)
-				return throw("Expected '{'");	
-			// parse the body of function 
-			if(funccomp() == SYN_ERR)
-				return SYN_ERR;
-			if(!isType(TOK_RIGHT_BRACE))
-				return throw("Expected '}'");	
-			hint("\tFunction '%s' declared.",decId);
-			break;
-
-		default:
-			return throw("Expected ';','=' or '(' in declaration");
-			
-	}	
-
-	return body();
-		
-}
-
-// <class-definition> -> class <id> <compound>
-int classdef() {
-	// on EOF apply start->eps
-
-	/* class-decl start */
-	// class-decl->class id { C-BODY } 
-	if(!isTypeOf(TOK_KEYWORD,KW_CLASS))
-		return throw("Expected 'class'");
-
-	if(getToken() != TOK_ID)
-		return throw("Expected 'indentifier'");	
-
-	char* className = g_lastToken.data.string;
-	
-	if(!getType(TOK_LEFT_BRACE))
-		return throw("Expected '{'");	
-	
-	hint("Parsing class '%s' body ",className);
-	// simulate the body of class
-	// C-BODY
-	if(body() == SYN_ERR)
-		return SYN_ERR;	
-
-	if(!isType(TOK_RIGHT_BRACE))
-		return throw("Expected '}'");	
-
-	/* class-decl end*/
-
-	// class has been parsed correctly	
-	hint("Class '%s' parsed.",className);
+	if(getToken() != TOK_RIGHT_BRACE)
+		return throw("Expected {");
 	return SYN_OK;
 }
 
-// <class-definition-list> -> <class-definition> <class-definition-list>
-// <class-definition-list> -> eps
-int classdeflist()
+
+//<block-item>                   -> <definition>
+//<block-item>                   -> <statement>
+int block_item()
 {
-	// choose <class-definition-list> -> eps on token eps
-	if(getToken() == TOK_EOF)
+	getToken();
+	if(isTokenKeyword(KW_STATIC) || isTokenTypeSpecifier())
+	{	
+		ungetToken(); 
+		return definition();
+	} else {
+		ungetToken();
+		incIdent();
+		int res = statement();
+		decIdent();
+		return res;
+			
+	}
+	return SYN_ERR;
+}
+
+//<block-items-list>             -> <block-item> <block-items-list>
+//<block-items-list>             -> eps
+int block_items_list()
+{
+	int type = getToken();
+	if(type == TOK_EOF)
+		return throw("Missing }");
+	if(type == TOK_RIGHT_BRACE)
+	{
+		ungetToken();
 		return SYN_OK;
+	}
+	ungetToken();
 	
-	// else continue with: 
-	// <class-definition-list> -> <class-definition> <class-definition-list>
-	if(classdef() == SYN_ERR)
+	if(block_item() == SYN_ERR)	
 		return SYN_ERR;
 
-	return classdeflist();
-}
-// <source-program> -> <class-definition-list> <end>
-int parse()
-{
-	return classdeflist();
+	return block_items_list();
 }
 
+//<statement>                    -> <jump-statement>
+//<statement>                    -> <iteration-statement>
+//<statement>                   -> <selection-statement>
+//<statement>                   -> <assign-statement>
+//<statement>                    -> <compound-statement>
 
-int main(int argc, char* argv[])
+int statement()
 {
-	char name[256] = "source.java";
-	if(argc >= 2)
-		snprintf(name,255,"%s",argv[1]);
-
-	// try to open the file with source code
-	int result = scanner_openFile(name);
-	// if the source code has been loaded correctly
-	if(result)
+	int type = getToken();
+	int val = getTokInt();
+	ungetToken();
+	switch(type)
 	{
-		// parse the code
-		int result = parse();
-		if(result == SYN_ERR)
-			printf("ERROR - source code is syntactically incorrect.\n");
-		else
-			printf("SUCCESS\n");
-		return result;
-	} else {
-		printf("Error has occured while opening the file %s.\n",name);	
+		case TOK_KEYWORD:
+		{
+			switch(val)
+			{
+				case KW_RETURN:
+					return jump_statement();
+				case KW_IF:
+					return selection_statement();
+				case KW_WHILE:
+					return iteration_statement();
+				default:
+					return throw("Got keyword, Expected if, while or return");
+			}
+		}
+		case TOK_ID:
+		case TOK_SPECIAL_ID:
+			return assign_statement();	
+		case TOK_LEFT_BRACE:
+			return compound_statement();
+		default:
+			break;
 	}
+	return throw("Expected a statement");
+}
+
+//<static-type>                  -> static
+//<static-type>                 -> eps
+
+int static_type()
+{
+	getToken();
+	if(isTokenKeyword(KW_STATIC))
+		return 1;
+	else
+		ungetToken();
 	return 0;
 }
+
+
+//<more-function-parameters>     -> eps
+//<more-function-parameters>     -> , <parameter-declaration> <more-function-parameters> 
+
+int more_function_parameters()
+{
+	switch(getToken())
+	{
+		case TOK_LIST_DELIM:
+				if(parameter_definition() == SYN_ERR)
+					return SYN_ERR;
+				return more_function_parameters();
+		default:
+			hint("more_function_parameters is strange");
+		case TOK_RIGHT_PAR:
+			ungetToken();
+			return SYN_OK;
+	}
+	return SYN_ERR;
+			
+}
+
+//<function-parameters-list>     -> eps
+//<function-parameters-list>     -> <parameter-definition> <more-function-parameters>
+
+int function_parameters_list()
+{
+	if(getToken() == TOK_RIGHT_PAR)
+	{
+		ungetToken();
+		return SYN_OK;
+	} else {
+		ungetToken();
+
+		if(parameter_definition() == SYN_ERR)
+			return SYN_ERR;
+		return more_function_parameters();
+	}
+}
+
+//<variable-initialization>        -> eps
+//<variable-initialization>        -> = <more-next>
+
+int variable_initialization()
+{
+	int res = getToken();
+	ungetToken();
+	if(res == TOK_DELIM)
+		return SYN_OK;
+	if(getToken() != TOK_ASSIGN)
+		return throw("Expected = in inicialization");
+	return more_next();
+}
+
+
+//<more-definition>             -> <variable-initialization> ;
+//<more-definition>             -> ( <function-parameters-list> ) <compound-statement>
+
+int more_definition()
+{
+	if(getToken() == TOK_LEFT_PAR)
+	{
+		if(!inFunction)
+			setInFunction(1);
+		else
+			return throw("Err - declaration of function in function");
+
+		
+		setInCall(0);
+		if(function_parameters_list() == SYN_ERR)
+			return SYN_ERR;
+		if(getToken() != TOK_RIGHT_PAR)
+			return throw("Expected ')'");		
+			
+		if(compound_statement() == SYN_ERR)
+			return SYN_ERR;
+		
+		setInFunction(0);
+		return SYN_OK;
+	} else {
+		ungetToken();
+		if(variable_initialization() == SYN_ERR)
+			return SYN_ERR;
+		
+		if(getToken() != TOK_DELIM)
+			return throw("Missing ';' in definition");
+
+		return SYN_OK;
+	
+	}
+	
+}
+//<parameter-definition>                  -> <type-specifier-opt> <identifier> 
+
+int parameter_definition()
+{
+	hint("Parameter definition - isCall: %d",inCall);
+	// if we define a formal parameter, we require a type specifier
+	if(inCall == 0)
+		if(type_specifier() == SYN_ERR)
+			return throw("Expected type-specifier (void,int,double,String)\n");
+	// otherwise no type is taken
+
+	switch(getToken())
+	{
+		case TOK_DOUBLECONST:
+		case TOK_CONST:
+		case TOK_LITERAL:
+		case TOK_SPECIAL_ID:
+			// full indentifier and constants are only allowed in function call
+			if(!inCall)
+				return throw("Expected simple indentifier");
+		case TOK_ID:
+			break;
+		default:
+			if(inCall)
+				return throw("Expected any identifier/constant");
+			else
+				return throw("Expected single identifier");
+			
+		
+	}
+
+	return SYN_OK;
+}
+
+
+
+//<definition>                  -> <static-type> <type-specifier> <identifier> <more-definition>
+
+int definition()
+{
+	if(ident != 0)
+		return throw("Declaration in blocks are forbidden.");
+	int isStatic = static_type();
+	if(inFunction && isStatic)
+		return throw("Expected non-static definition in function");
+	else if(inFunction == 0 && isStatic == 0)
+		return throw("Expected static keyword for symbol defined in class");
+	hint("IsStatic ? %d",isStatic);
+	
+	if(type_specifier() == SYN_ERR)
+		return throw("Expected type-specifier (void,int,double,String)\n");
+	
+	if(getToken() != TOK_ID)
+		return throw("Expected simple-id");
+
+	return more_definition();
+}
+
+
+//<class-definition>            -> class <identifier> <compound-statement>
+
+int class_definition()
+{
+	getToken();
+	if(!isTokenKeyword(KW_CLASS))
+		return throw("Expected keyword 'class'\n");	
+	if(getToken() != TOK_ID)
+		return throw("Expected identifier\n");
+
+	return compound_statement();
+
+
+}
+
+//<class-definition-list>       -> <class-definition> <class-definition-list>
+//<class-definition-list>       -> eps
+int class_definition_list()
+{
+	int result = getToken();
+	if(result == TOK_EOF || result == TOK_ERROR)
+	{
+		ungetToken();
+		return SYN_OK;
+	}
+	ungetToken();
+	hint("Result is: %d",result);
+
+	if(class_definition() == SYN_ERR)
+		return SYN_ERR;
+	return class_definition_list();
+}
+
+
+
+//<source-program>              -> <class-definition-list>
+int source_program()
+{
+	return class_definition_list();
+}
+
+
+int main(int argc, char ** argv)
+{
+	if(argc < 2)
+	{
+		return throw("USAGE: filename");
+	}
+	if(scanner_openFile(argv[1]))
+	{
+		int result = source_program();
+		scanner_closeFile();
+		fprintf(stderr,"Result: %d\n",result);
+		return 0;
+	}
+	return throw("Failed to open %s",argv[1]);
+	return 1;
+}
+
+
+

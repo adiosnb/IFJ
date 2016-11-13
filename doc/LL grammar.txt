@@ -11,7 +11,7 @@
 
 <parameter-definition>			-> <type-specifier-optional> <identifier>
 
-<variable-initialization>        -> = expression
+<variable-initialization>        -> = more-next 									// zmena 
 <variable-initialization>        -> epsilon
 
 <function-parameters-list>     -> <parameter-definition> <more-function-parameters>				// zmena <definition> -> <parameter-definition>
