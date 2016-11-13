@@ -104,4 +104,15 @@ int	getToken();
 // Return token
 int	ungetToken();
 
+// Returns the type of last token
+int	getLastToken();
+//
+// Returns integer value of last token
+int	getTokInt();
+
+// Returns double value of last token
+double	getTokDouble();
+
+// Returns string value of last token
+char* 	getTokString();
 #endif

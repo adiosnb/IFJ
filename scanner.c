@@ -88,6 +88,42 @@ int	ungetToken()
 	return 0;
 }
 
+// Returns the type of last token
+int	getLastToken()
+{
+	if(currentToken)
+		return currentToken->token.type;
+	else
+		return TOK_ERROR;
+}
+//
+// Returns integer value of last token
+int	getTokInt()
+{
+	if(currentToken)
+		return currentToken->token.data.integer;
+	else
+		return 0;
+	
+}
+
+// Returns double value of last token
+double	getTokDouble()
+{
+	if(currentToken)
+		return currentToken->token.data.real;
+	else
+		return 0.0;
+}
+// Returns string value of last token
+char* 	getTokString()
+{
+	if(currentToken)
+		return currentToken->token.data.string;
+	else
+		return NULL;
+}
+
 
 char*	createString(const char* str)
 {

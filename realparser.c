@@ -11,22 +11,22 @@ enum syntaxCorrectness {SYN_OK,SYN_ERR};
 
 int	isTokenKeyword(int kw)
 {
-	return (g_lastToken.type == TOK_KEYWORD && g_lastToken.data.integer == kw);
+	return (getLastToken() == TOK_KEYWORD && getTokInt() == kw);
 }
 
 int	isIdentifier()
 {
-	return (g_lastToken.type == TOK_ID
-		||  g_lastToken.type == TOK_SPECIAL_ID);
+	return (getLastToken() == TOK_ID
+		||  getLastToken() == TOK_SPECIAL_ID);
 }
 
 int	isTokenTypeSpecifier()
 {
-	return (g_lastToken.type == TOK_KEYWORD && (
-		g_lastToken.data.integer == KW_VOID ||
-		g_lastToken.data.integer == KW_INT ||
-		g_lastToken.data.integer == KW_DOUBLE||
-		g_lastToken.data.integer == KW_STRING));
+	return (getLastToken() == TOK_KEYWORD && (
+		getTokInt() == KW_VOID ||
+		getTokInt() == KW_INT ||
+		getTokInt() == KW_DOUBLE||
+		getTokInt() == KW_STRING));
 }
 
 
@@ -70,7 +70,7 @@ int parameter_definition();
 int type_specifier()
 {
 	getToken();
-	switch(g_lastToken.data.integer)
+	switch(getTokInt())
 	{
 		case KW_INT:
 		case KW_DOUBLE:
