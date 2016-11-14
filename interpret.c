@@ -325,11 +325,18 @@ void store() {
     if (arg2->arg_type == STACK_EBP) {
         arg2 = stack_ebp_relative_ptr(glob_stack,arg1->data.i);
     } else {
-        arg2 = stack_top_ptr(glob_stack);
+        if (arg2->arg_type == ON_TOP) {
+            arg2 = stack_top_ptr(glob_stack);
+        }
     }
 
     //ulozenie hodnoty do ciela
-    *arg1 = *arg2;
+    if (arg1->arg_type == STRING) {
+        str_reinit(&arg1->data.s);
+        str_append_str(&arg1->data.s, &arg2->data.s);
+    } else {
+        *arg1 = *arg2;
+    }
 }
 
 void add(){
@@ -827,10 +834,17 @@ void interpret_str_cmp() {
 void call_print() {
     argument_var_t *num_of_str = glob_ins_list->active->instruction.addr1;
     argument_var_t str_to_print;
+
+    if (num_of_str->arg_type == STACK_EBP) {
+        num_of_str = stack_ebp_relative_ptr(glob_stack, num_of_str->data.i);
+    }
+
     for (int i = num_of_str->data.i - 1; i >= 0; i--) {
         str_to_print = stack_from_top(glob_stack, i);
         //printf("%s",str_to_print.data.s.str);
         switch (str_to_print.arg_type) {
+            case STACK_EBP:
+                str_to_print = stack_ebp_relative(glob_stack, str_to_print.data.i);
             case INTEGER:
                 printf("%d", str_to_print.data.i);
                 break;
@@ -851,6 +865,16 @@ void call_str_cmp() {
     str1 = stack_from_top(glob_stack, 1);
     str2 = stack_top(glob_stack);
     ret = glob_ins_list->active->instruction.addr1;
+
+    if (str1.arg_type == STACK_EBP) {
+        str1 = stack_ebp_relative(glob_stack, str1.data.i);
+    }
+    if (str2.arg_type == STACK_EBP) {
+        str2 = stack_ebp_relative(glob_stack, str2.data.i);
+    }
+    if (ret->arg_type == STACK_EBP) {
+        ret = stack_ebp_relative_ptr(glob_stack, ret->data.i);
+    }
 
     ret->data.i = str_cmp(str1.data.s, str2.data.s);
 }
