@@ -34,11 +34,11 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_JNEQ,          //ddr to jump       value           value
     INST_JZ,            //addr to jump      value for equation  ---
     INST_CALL,          //addr of func      where to save return value or nothing     ---
-    INST_CALL_PRINT,     //TODO
-    INST_CALL_CMP,       //TODO
-    INST_CALL_FIND,      //TODO
-    INST_CALL_SORT,      //TODO
-    INST_CALL_SUBSTR,    //TODO
+    INST_CALL_PRINT,    //num_of_strings    ---             ---
+    INST_CALL_CMP,      //return_value      ---             ---
+    INST_CALL_FIND,     //TODO
+    INST_CALL_SORT,     //TODO
+    INST_CALL_SUBSTR,   //TODO
     INST_RET,           //value for return  ---             ---
     INST_WRITE,         //source            ---             ---
     INST_READ_INT,      //destination       ---             ---

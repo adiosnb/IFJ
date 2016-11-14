@@ -98,6 +98,9 @@ void print_stack(stack_t *stack) {
             case DOUBLE:
                 printf("%d : %g\n", i, stack->data[i].data.d);
                 break;
+            case STRING:
+                printf("%d : %s\n", i, stack->data[i].data.s.str);
+                break;
         }
     }
     switch (stack->data[stack->used - 1].arg_type) {
@@ -106,6 +109,9 @@ void print_stack(stack_t *stack) {
             break;
         case DOUBLE:
             printf("%d : %g\n", stack->used - 1, stack->data[stack->used - 1].data.d);
+            break;
+        case STRING:
+            printf("%d : %s\n", stack->used - 1, stack->data[stack->used - 1].data.s.str);
             break;
     }
 

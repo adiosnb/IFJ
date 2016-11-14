@@ -64,6 +64,21 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_CALL:
                 call();
                 break;
+            case INST_CALL_PRINT:
+                call_print();
+                break;
+            case INST_CALL_CMP:
+                call_str_cmp();
+                break;
+            case INST_CALL_FIND:
+                call_str_find();
+                break;
+            case INST_CALL_SORT:
+                call_str_sort();
+                break;
+            case INST_CALL_SUBSTR:
+                call_str_substr();
+                break;
             case INST_RET:
                 ret();
                 break;
@@ -114,8 +129,8 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
                 break;
         }
 
-        /*print_stack(glob_stack);
-        stable_print(stable);*/
+        //print_stack(glob_stack);
+        //stable_print(stable);
         glob_ins_list->active = glob_ins_list->active->next;
     }
 
@@ -268,6 +283,13 @@ void push() {
                     tmp_var = stack_ebp_relative(glob_stack, tmp_ptr->data.i);
                 } else {
                     tmp_var = *tmp_ptr;
+                }
+                if (tmp_var.arg_type == STRING) {
+                    argument_var_t local_var;
+                    local_var.arg_type = STRING;
+                    local_var.data.s = str_init();
+                    str_append_str(&local_var.data.s, &tmp_var.data.s);
+                    tmp_var = local_var;
                 }
             }
             break;
@@ -800,4 +822,50 @@ void interpret_str_cmp() {
     }
 
     arg1->data.i = str_cmp(arg2->data.s, arg3->data.s);
+}
+
+void call_print() {
+    argument_var_t *num_of_str = glob_ins_list->active->instruction.addr1;
+    argument_var_t str_to_print;
+    for (int i = num_of_str->data.i - 1; i >= 0; i--) {
+        str_to_print = stack_from_top(glob_stack, i);
+        //printf("%s",str_to_print.data.s.str);
+        switch (str_to_print.arg_type) {
+            case INTEGER:
+                printf("%d", str_to_print.data.i);
+                break;
+            case DOUBLE:
+                printf("%g", str_to_print.data.d);
+                break;
+            case STRING:
+                printf("%s", str_to_print.data.s.str);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void call_str_cmp() {
+    argument_var_t *ret, str1, str2;
+    str1 = stack_from_top(glob_stack, 1);
+    str2 = stack_top(glob_stack);
+    ret = glob_ins_list->active->instruction.addr1;
+
+    ret->data.i = str_cmp(str1.data.s, str2.data.s);
+}
+
+void call_str_find() {
+    return;
+
+}
+
+void call_str_sort() {
+    return;
+
+}
+
+void call_str_substr() {
+    return;
+
 }
