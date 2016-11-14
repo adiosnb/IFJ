@@ -36,6 +36,7 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_CALL,          //addr of func      where to save return value or nothing     ---
     INST_RET,           //value for return  ---             ---
     INST_WRITE,         //source            ---             ---
+    INST_WRITE_STACK,   //num_of_arg_on_stack ---           --- //TODO
     INST_READ_INT,      //destination       ---             ---
     INST_READ_DOUBLE,   //destination       ---             ---
     INST_READ_STRING,   //destination       ---             ---
