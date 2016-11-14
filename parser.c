@@ -3,6 +3,14 @@
 #include <string.h>
 #include "scanner.h"
 
+#include "stable.h"
+
+
+stab_t	*staticSym = NULL;
+
+char*	parser_class = NULL;
+char*	parser_fun = NULL;
+
 int	isTokenKeyword(int kw)
 {
 	return (getLastToken() == TOK_KEYWORD && getTokInt() == kw);
@@ -23,7 +31,9 @@ int	isTokenTypeSpecifier()
 		getTokInt() == KW_STRING));
 }
 
-enum types {INTEGER, DOUBLE, STRING,FUN_INTEGER,FUN_DOUBLE,FUN_STRING,FUN_VOID,TYPELESS};
+//enum types {INTEGER, DOUBLE, STRING,FUN_INTEGER,FUN_DOUBLE,FUN_STRING,FUN_VOID,TYPELESS};
+
+enum types {FUN_INTEGER = 4, FUN_DOUBLE, FUN_STRING, FUN_VOID, TYPELESS};
 
 char* type2str(int type)
 {
@@ -561,11 +571,11 @@ int parameter_definition()
 
 int definition()
 {
-	// is declaration if { } of some statement
+	// is declaration in { } of some statement
 	if(ident != 0)
 		return throw("Declaration in blocks are forbidden.");
 
-	// if not, continue a determine if declaration is static
+	// if not, continue and determine if declaration is static
 	int isStatic = static_type();
 	if(inFunction && isStatic)
 		return throw("Expected non-static definition in function");
@@ -576,12 +586,20 @@ int definition()
 	if(type_specifier(&type) == SYN_ERR)
 		return throw("Expected type-specifier (void,int,double,String)\n");
 
-	
 	if(getToken() != TOK_ID)
 		return throw("Expected simple-id");
 
 	if(inFunction == 0)
-		GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
+	{
+		if(!isSecondPass)
+		{
+			GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
+			data_t data;
+			data.type = type; 
+			stable_add_concatenate(staticSym,parser_class, getTokString(),NULL,data);
+		}
+		parser_fun = getTokString();
+	}
 	else
 		GEN("Create a new local symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
 
@@ -600,7 +618,20 @@ int class_definition()
 	if(getToken() != TOK_ID)
 		return throw("Expected identifier\n");
 
-	GEN("Verify if class '%s' was not declared before. If not, add a new symbol into table", getTokString());
+	// if it's the first pass
+	if(!isSecondPass)
+	{
+		GEN("Verify if class '%s' was not declared before. If not, add a new symbol into table", getTokString());
+		if(stable_get_var(staticSym, getTokString()) != NULL)
+		{
+			// semantic error, class redefinition	
+			return throw("SEMANTIC - class redefinition");
+		} else {
+			data_t data;
+			stable_add_var(staticSym, getTokString(),data);
+		}
+	}
+	parser_class = getTokString();
 
 	return compound_statement();
 
@@ -629,7 +660,10 @@ int class_definition_list()
 //<source-program>              -> <class-definition-list>
 int source_program()
 {
-	return class_definition_list();
+	int res = class_definition_list();
+	// after first pass, turn into second pass
+	isSecondPass = 1;
+	return res;
 }
 
 
@@ -641,7 +675,17 @@ int main(int argc, char ** argv)
 	}
 	if(scanner_openFile(argv[1]))
 	{
+		staticSym = stable_init(1024);
 		int result = source_program();
+		if(result != SYN_ERR)
+		{
+			scanner_rewind();
+			// second pass
+			source_program();
+		}
+		stable_print(staticSym);
+		stable_destroy(&staticSym);
+
 		scanner_closeFile();
 		fprintf(stderr,"Result: %d\n",result);
 		return 0;

@@ -1,6 +1,8 @@
 //-----------------------------------------------------------------------------
 //	Private variables
 //-----------------------------------------------------------------------------
+int isSecondPass = 0;
+
 // Parser state flag: are we parsing inside of a function ?
 // NOTE: used to treat declaration of function in function as an error
 int inFunction = 0;
