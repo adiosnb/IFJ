@@ -45,15 +45,14 @@ char* type2str(int type)
 	return str[type];
 }
 
-#define DEBUG 1
 
-#ifdef DEBUG
-#define gen(format,...) fprintf(stderr,"[Generate:%d:%d]: "format"\n", getTokLine(), getTokTabs(),##__VA_ARGS__)
+#if DEBUG > 0
+#define GEN(format,...) fprintf(stderr,"[Generate:%d:%d]: "format"\n", getTokLine(), getTokTabs(),##__VA_ARGS__)
 #else
-#define gen(format,...)  
+#define GEN(format,...)  
 #endif
 
-#ifdef DEBUG
+#if DEBUG > 1
 #define hint(format,...) fprintf(stderr,"[Hint:%d:%d]: "format"\n", getTokLine(), getTokTabs(),##__VA_ARGS__)
 #else
 #define hint(format,...)  
@@ -151,10 +150,15 @@ int more_next()
 	if(getToken() == TOK_SPECIAL_ID)
 		isPrint = !strcmp(getTokString(),"ifj16.print");
 	if(getToken() == TOK_LEFT_PAR)
-	{	
+	{
+		if(inFunction == 0)
+			return throw("Initialization of static variable with function call.");	
+		GEN("Verify functioncall-variable type compatibility");
 		// is it a ID = ifj16.print() case ?
 		if(isPrint)
 		{
+			builtin_print();
+			// NOTE: it's a semantic error in any case, just check syntax
 			return throw("Semantic error");
 		}
 		else {
@@ -173,6 +177,7 @@ int more_next()
 		ungetToken();
 		if(expression() == SYN_ERR)
 			return SYN_ERR;
+		GEN("Verify if result of expr can be assigned. If do, generate assign");
 	}	
 	return SYN_OK;
 }
@@ -231,10 +236,12 @@ int next()
 			{
 				return builtin_print();
 			} else {
-				hint("Function call of '%s'",getTokString());
+				GEN("Check if symbol '%s' is defined", getTokString());
+
 				setInCall(1);
 				if(function_parameters_list() == SYN_ERR)
 					return SYN_ERR;	
+				GEN("Generate a function call INSTR");
 				setInCall(0);
 				if(getToken() != TOK_RIGHT_PAR)
 					return throw("Expected )");
@@ -257,6 +264,9 @@ int jump_statement()
 		return SYN_ERR;
 	if(getToken() != TOK_DELIM)
 		return throw("Expected ; at the end of return statement.");
+
+	GEN("Generate RETURN instruction and expression");
+
 	return SYN_OK;
 
 }
@@ -269,6 +279,7 @@ int iteration_statement()
 	if(!isTokenKeyword(KW_WHILE))
 		return throw("Expected return");
 
+	GEN("Generate WHILE.test label"); 
 	if(getToken() != TOK_LEFT_PAR)
 		return throw("Expected (");
 
@@ -278,7 +289,13 @@ int iteration_statement()
 	if(getToken() != TOK_RIGHT_PAR)
 		return throw("Expected )");
 
-	return compound_statement();
+	GEN("Generate COMPARE and JUMP test"); 
+
+	if(compound_statement() == SYN_ERR)
+		return SYN_ERR;
+	GEN("Generate WHILE_SKIP label and altern CMP jmp addres");
+
+	return SYN_OK;
 }
 
 //<selection-statement>          -> if ( expression ) <compound-statement> else <compound-statement>
@@ -293,6 +310,8 @@ int selection_statement()
 		if(expression() == SYN_ERR)
 			return SYN_ERR;
 
+		GEN("Generate a CMP and JUMP.");
+
 		if(getToken() != TOK_RIGHT_PAR)
 			return throw("Expected )");
 	
@@ -300,14 +319,17 @@ int selection_statement()
 		if(compound_statement() == SYN_ERR)
 			return SYN_ERR;		
 
-		getToken();
+		GEN("Generate a JMP.");
+		GEN("Generate a IF_ELSE label and altern JMP");
 
+		getToken();
 		if(!isTokenKeyword(KW_ELSE))
 			return throw("Expected else");
 
 		if(compound_statement() == SYN_ERR)
 			return SYN_ERR;		
 		
+		GEN("Generate a IF_SKIP label and altern JMP.");
 		return SYN_OK;	
 		
 	}	
@@ -320,6 +342,7 @@ int assign_statement()
 	getToken();
 	if(isIdentifier())
 	{
+		GEN("Check if variable '%s'  is defined", getTokString());
 		return next();
 	} else
 		return throw("Expected identifier or full-identifier.");
@@ -503,11 +526,12 @@ int more_definition()
 		if(getToken() != TOK_RIGHT_PAR)
 			return throw("Expected ')'");		
 			
-		gen("Generate and save function label in instruction list.");
+		GEN("Generate and save function label in instruction list.");
 		if(compound_statement() == SYN_ERR)
 			return SYN_ERR;
 		
 		setInFunction(0);
+		GEN("Verify if RETURN was generated somewhere and clear LOCAL VARS");
 		return SYN_OK;
 	} else {
 		// TODO: semantic: check if variable is not declared with void
@@ -544,7 +568,7 @@ int parameter_definition()
 			case TOK_LITERAL:
 			case TOK_SPECIAL_ID:
 			case TOK_ID:
-				gen("Compare the type of argument with formal param and generate a PUSH.");
+				GEN("Compare the type of argument with formal param and generate a PUSH.");
 				break;
 			default:
 					return throw("Expected any identifier/constant");
@@ -555,7 +579,7 @@ int parameter_definition()
 		// otherwise we are parsing a function definition
 		if(getToken() != TOK_ID)
 			return throw("Expected simple indentifier");
-		gen("Add a new formal parameter '%s' of type '%s' into function's list of params",getTokString(), type);
+		GEN("Add a new formal parameter '%s' of type '%s' into function's list of params",getTokString(), type2str(type));
 	}
 
 	return SYN_OK;
@@ -587,9 +611,9 @@ int definition()
 		return throw("Expected simple-id");
 
 	if(inFunction == 0)
-		gen("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
+		GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
 	else
-		gen("Create a new local symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
+		GEN("Create a new local symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
 
 	return more_definition();
 }
@@ -606,7 +630,7 @@ int class_definition()
 	if(getToken() != TOK_ID)
 		return throw("Expected identifier\n");
 
-	gen("Verify if class '%s' was not declared before. If not, add a new symbol into table", getTokString());
+	GEN("Verify if class '%s' was not declared before. If not, add a new symbol into table", getTokString());
 
 	return compound_statement();
 
