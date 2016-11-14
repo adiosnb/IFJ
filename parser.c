@@ -1,19 +1,7 @@
+#include "parser.h"
 #include <stdio.h>
 #include <string.h>
-
 #include "scanner.h"
-
-int inFunction = 0;
-#define setInFunction(st) inFunction = st
-
-int inCall = 0;
-#define setInCall(st) inCall= st
-
-int ident= 0;
-#define incIdent() ident++;
-#define decIdent() ident--;
-
-enum syntaxCorrectness {SYN_OK,SYN_ERR};
 
 int	isTokenKeyword(int kw)
 {
@@ -44,24 +32,6 @@ char* type2str(int type)
 		type = TYPELESS;
 	return str[type];
 }
-
-
-#if DEBUG > 0
-#define GEN(format,...) fprintf(stderr,"[Generate:%d:%d]: "format"\n", getTokLine(), getTokTabs(),##__VA_ARGS__)
-#else
-#define GEN(format,...)  
-#endif
-
-#if DEBUG > 1
-#define hint(format,...) fprintf(stderr,"[Hint:%d:%d]: "format"\n", getTokLine(), getTokTabs(),##__VA_ARGS__)
-#else
-#define hint(format,...)  
-#endif
-
-//#define throw(format,...) fprintf(stderr,"[%s:%d]: "format"\n", __FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
-#define throw(format,...) fprintf(stderr,"[input:%d:%d] [%s:%d] "format"\n", getTokLine(),getTokTabs(),__FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
-
-
 
 int class_definition_list();
 int type_specifier(int* type);
