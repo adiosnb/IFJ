@@ -126,8 +126,9 @@ int expression()
 //<more-next>                    -> <identifier> ( <function-parameters-list> ) 
 int more_next()
 {
-	getToken();
-	int isPrint = !strcmp(getTokString(),"ifj16.print");
+	int isPrint = 0;
+	if(getToken() == TOK_SPECIAL_ID)
+		isPrint = !strcmp(getTokString(),"ifj16.print");
 	if(getToken() == TOK_LEFT_PAR)
 	{	
 		// is it a ID = ifj16.print() case ?
@@ -585,7 +586,6 @@ int class_definition_list()
 		return SYN_OK;
 	}
 	ungetToken();
-	hint("Result is: %d",result);
 
 	if(class_definition() == SYN_ERR)
 		return SYN_ERR;
