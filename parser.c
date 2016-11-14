@@ -35,18 +35,29 @@ int	isTokenTypeSpecifier()
 		getTokInt() == KW_STRING));
 }
 
+enum types {INTEGER, DOUBLE, STRING,FUN_INTEGER,FUN_DOUBLE,FUN_STRING,FUN_VOID,TYPELESS};
 
-/*int 	throw(char* error)
+char* type2str(int type)
 {
-	static int hasThrown = 0;
-	if(!hasThrown)
-		fprintf(stderr,error);	
-	hasThrown = 1;
-	return SYN_ERR;
+	static char* str[] = {"INTEGER","DOUBLE","STRING","FUN_INTEGER","FUN_DOUBLE","FUN_STRING", "FUN_VOID", "TYPELESS"};
+	if(type > TYPELESS)
+		type = TYPELESS;
+	return str[type];
 }
-*/
 
+#define DEBUG 1
+
+#ifdef DEBUG
+#define gen(format,...) fprintf(stderr,"[Generate:%d:%d]: "format"\n", getTokLine(), getTokTabs(),##__VA_ARGS__)
+#else
+#define gen(format,...)  
+#endif
+
+#ifdef DEBUG
 #define hint(format,...) fprintf(stderr,"[Hint:%d:%d]: "format"\n", getTokLine(), getTokTabs(),##__VA_ARGS__)
+#else
+#define hint(format,...)  
+#endif
 
 //#define throw(format,...) fprintf(stderr,"[%s:%d]: "format"\n", __FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
 #define throw(format,...) fprintf(stderr,"[input:%d:%d] [%s:%d] "format"\n", getTokLine(),getTokTabs(),__FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
@@ -54,7 +65,7 @@ int	isTokenTypeSpecifier()
 
 
 int class_definition_list();
-int type_specifier();
+int type_specifier(int* type);
 int iteration_statement();
 int jump_statement();
 int definition();
@@ -73,28 +84,38 @@ int parameter_definition();
 <type-specifier>               -> double
 <type-specifier>               -> void
 */
-int type_specifier()
+int type_specifier(int* out_type)
 {
 	getToken();
 	switch(getTokInt())
 	{
-		case KW_INT:
-		case KW_DOUBLE:
-		case KW_VOID:
-		case KW_STRING:
-			return SYN_OK;	
 		default:
 			return SYN_ERR;
+		case KW_INT:
+			*out_type = INTEGER;
+			break;
+		case KW_DOUBLE:
+			*out_type = DOUBLE;
+			break;
+		case KW_VOID:
+			*out_type = FUN_VOID;
+			break;
+		case KW_STRING:
+			*out_type = STRING;
+			break;
 	}
 	return SYN_OK;	
 }
 
 //<type-specifier-opt>               ->type-specifier 
 //<type-specifier-opt>               ->eps
-int type_specifier_opt()
+int type_specifier_opt(int* out_type)
 {
-	if(type_specifier() == SYN_ERR)
+	if(type_specifier(out_type) == SYN_ERR)
+	{
 		ungetToken();
+		*out_type = TYPELESS;
+	}
 	return SYN_OK;
 }
 
@@ -471,11 +492,10 @@ int more_definition()
 {
 	if(getToken() == TOK_LEFT_PAR)
 	{
-		if(!inFunction)
-			setInFunction(1);
-		else
-			return throw("Err - declaration of function in function");
+		if(inFunction)
+			return throw("Declaration of function in function");
 
+		setInFunction(1);
 		
 		setInCall(0);
 		if(function_parameters_list() == SYN_ERR)
@@ -483,12 +503,14 @@ int more_definition()
 		if(getToken() != TOK_RIGHT_PAR)
 			return throw("Expected ')'");		
 			
+		gen("Generate and save function label in instruction list.");
 		if(compound_statement() == SYN_ERR)
 			return SYN_ERR;
 		
 		setInFunction(0);
 		return SYN_OK;
 	} else {
+		// TODO: semantic: check if variable is not declared with void
 		ungetToken();
 		if(variable_initialization() == SYN_ERR)
 			return SYN_ERR;
@@ -507,29 +529,33 @@ int parameter_definition()
 {
 	hint("Parameter definition - isCall: %d",inCall);
 	// if we define a formal parameter, we require a type specifier
-	if(inCall == 0)
-		if(type_specifier() == SYN_ERR)
-			return throw("Expected type-specifier (void,int,double,String)\n");
-	// otherwise no type is taken
-
-	switch(getToken())
+	int type;
+	type_specifier_opt(&type);
+	if(inCall == 0 && type == TYPELESS || type == FUN_VOID) 
+		return throw("Expected type-specifier (void,int,double,String)\n");
+	
+	// if we are parsing a function call e.g. add(10,20);
+	if(inCall)
 	{
-		case TOK_DOUBLECONST:
-		case TOK_CONST:
-		case TOK_LITERAL:
-		case TOK_SPECIAL_ID:
-			// full indentifier and constants are only allowed in function call
-			if(!inCall)
-				return throw("Expected simple indentifier");
-		case TOK_ID:
-			break;
-		default:
-			if(inCall)
-				return throw("Expected any identifier/constant");
-			else
-				return throw("Expected single identifier");
+		switch(getToken())
+		{
+			case TOK_DOUBLECONST:
+			case TOK_CONST:
+			case TOK_LITERAL:
+			case TOK_SPECIAL_ID:
+			case TOK_ID:
+				gen("Compare the type of argument with formal param and generate a PUSH.");
+				break;
+			default:
+					return throw("Expected any identifier/constant");
+				
 			
-		
+		}
+	} else {
+		// otherwise we are parsing a function definition
+		if(getToken() != TOK_ID)
+			return throw("Expected simple indentifier");
+		gen("Add a new formal parameter '%s' of type '%s' into function's list of params",getTokString(), type);
 	}
 
 	return SYN_OK;
@@ -541,20 +567,29 @@ int parameter_definition()
 
 int definition()
 {
+	// is declaration if { } of some statement
 	if(ident != 0)
 		return throw("Declaration in blocks are forbidden.");
+
+	// if not, continue a determine if declaration is static
 	int isStatic = static_type();
 	if(inFunction && isStatic)
 		return throw("Expected non-static definition in function");
 	else if(inFunction == 0 && isStatic == 0)
 		return throw("Expected static keyword for symbol defined in class");
-	hint("IsStatic ? %d",isStatic);
-	
-	if(type_specifier() == SYN_ERR)
+
+	int type;	
+	if(type_specifier(&type) == SYN_ERR)
 		return throw("Expected type-specifier (void,int,double,String)\n");
+
 	
 	if(getToken() != TOK_ID)
 		return throw("Expected simple-id");
+
+	if(inFunction == 0)
+		gen("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
+	else
+		gen("Create a new local symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
 
 	return more_definition();
 }
@@ -567,8 +602,11 @@ int class_definition()
 	getToken();
 	if(!isTokenKeyword(KW_CLASS))
 		return throw("Expected keyword 'class'\n");	
+
 	if(getToken() != TOK_ID)
 		return throw("Expected identifier\n");
+
+	gen("Verify if class '%s' was not declared before. If not, add a new symbol into table", getTokString());
 
 	return compound_statement();
 
