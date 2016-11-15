@@ -15,7 +15,7 @@ void swap(char *arg1, char *arg2){
     return;
 }
 
-void qsort(char *arr, int left, int right){
+void ial_qsort(char *arr, int left, int right){
 
     if (left < right) {
         int pom = left;
