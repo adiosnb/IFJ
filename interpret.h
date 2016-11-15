@@ -29,6 +29,11 @@ void read_int();//dst
 void read_double();//dst
 void read_string();//dst
 void call();    //instruction_item_ptr
+void call_print();
+void call_str_cmp();
+void call_str_find();
+void call_str_sort();
+void call_str_substr();
 void ret();     //
 void push();     //src
 void pop();     //
@@ -43,11 +48,8 @@ void str_len();//dst  src
 void concatenate();
 
 void interpret_str_cmp();
-
 void interpret_str_find();
-
 void interpret_str_sort();
-
 void interpret_str_substr();
 
 
