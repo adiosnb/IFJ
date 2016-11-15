@@ -15,7 +15,7 @@ void swap(char *arg1, char *arg2){
     return;
 }
 
-void qsort(char *arr, int left, int, right){
+void qsort(char *arr, int left, int right){
 
     if (left < right) {
         int pom = left;
@@ -66,7 +66,7 @@ int KMP_hladaj(char *retazec, char *podretazec){
             Podretazec_index ++;
         }
         else
-            Podretazec_index = Table[podretazec_index];
+            Podretazec_index = Table[Podretazec_index];
     }
 
     return (Podretazec_index > strlen(podretazec)) ? (Retazec_index - strlen(podretazec)) : (Retazec_index);
