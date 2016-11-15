@@ -8,7 +8,7 @@ int main() {
     str1 = str_init();
     str2 = str_init();
     str3 = str_init();
-
+/*
     printf("\n###################TEST1####################\n");
 
     for (int i=0; i< 3000 ; i++){
@@ -92,6 +92,47 @@ int main() {
     str_concatenate(&str1, &str1, &str1);
     printf("<after> str1 = ");
     str_print(str1);
+
+
+
+    printf("\n################## TEST9 ###################\n"
+                   "test funkcie substr\n"
+                   "ocakavany vystup:"
+                   "cdefg\n"
+                   "abcdefg\n");
+
+    str_reinit(&str1);
+    str_destroy(str2);
+    str_destroy(str3);
+
+
+    str_append_chars(&str1,"abcdefgh");
+
+    str2 = str_sub_str(str1,2,6);
+    str3 = str_sub_str(str1,0,8);
+
+    str_print(str1);
+    str_print(str2);
+    str_print(str3);
+*/
+    printf("\n################## TEST10 ###################\n"
+    printf("pokus o volanie str searach\n"
+                   "str1 = qwertyuiop\n"
+                   "str2 = rty\n"
+                   "str3 = vbn\n"
+                   "strsearch str1 str2\n"
+                   "strsearch str1 str3\n");
+
+    str_reinit(&str1);
+    str_reinit(&str2);
+    str_reinit(&str3);
+
+    str_append_chars(&str1,"qwertyuiop");
+    str_append_chars(&str2,"rty");
+    str_append_chars(&str3,"vbn");
+
+    int ret_search = str_find(&str1,&str2);
+    printf("%d/n",ret_search);
 
 
 
