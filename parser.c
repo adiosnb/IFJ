@@ -1,3 +1,4 @@
+#define DEBUG 1
 #include "parser.h"
 #include <stdio.h>
 #include <string.h>
@@ -131,8 +132,6 @@ int more_next()
 		isPrint = !strcmp(getTokString(),"ifj16.print");
 	if(getToken() == TOK_LEFT_PAR)
 	{
-		if(inFunction == 0)
-			return throw("Initialization of static variable with function call.");	
 		GEN("Verify functioncall-variable type compatibility");
 		// is it a ID = ifj16.print() case ?
 		if(isPrint)
@@ -144,7 +143,7 @@ int more_next()
 		else {
 			hint("MORE-Function call of '%s'",getTokString());
 			setInCall(1);
-			if(function_parameters_list() == SYN_ERR)
+			if(function_arguments_list() == SYN_ERR)
 				return SYN_ERR;
 			setInCall(0);
 
@@ -219,7 +218,7 @@ int next()
 				GEN("Check if symbol '%s' is defined", getTokString());
 
 				setInCall(1);
-				if(function_parameters_list() == SYN_ERR)
+				if(function_arguments_list() == SYN_ERR)
 					return SYN_ERR;	
 				GEN("Generate a function call INSTR");
 				setInCall(0);
@@ -234,7 +233,7 @@ int next()
 }
 
 
-//<jump-statement>               -> return <expr> ;
+//<jump-statement>               -> return <expression> ;
 int jump_statement()
 {
 	getToken();
@@ -420,19 +419,57 @@ int statement()
 	return throw("Expected a statement");
 }
 
-//<static-type>                  -> static
-//<static-type>                 -> eps
-
-int static_type()
+int argument_definition()
 {
-	getToken();
-	if(isTokenKeyword(KW_STATIC))
-		return 1;
-	else
-		ungetToken();
-	return 0;
+	switch(getToken())
+	{
+		case TOK_ID:
+		case TOK_SPECIAL_ID:
+		case TOK_LITERAL:
+		case TOK_CONST:
+		case TOK_DOUBLECONST:
+			return SYN_OK;
+	}
+	return throw("Expected a term in function call");
+}
+//<more-function-arguments>     -> eps
+//<more-function-arguments>     -> , <argument-declaration> <more-function-arguments> 
+
+int more_function_arguments()
+{
+	switch(getToken())
+	{
+		case TOK_LIST_DELIM:
+				if(argument_definition() == SYN_ERR)
+					return SYN_ERR;
+				return more_function_arguments();
+		case TOK_RIGHT_PAR:
+			ungetToken();
+			return SYN_OK;
+		default:
+			return throw("Expected ,");
+	}
+	return SYN_ERR;
+			
 }
 
+//<function-arguments-list>     -> eps
+//<function-arguments-list>     -> <argument-definition> <more-function-arguments>
+
+int function_arguments_list()
+{
+	if(getToken() == TOK_RIGHT_PAR)
+	{
+		ungetToken();
+		return SYN_OK;
+	} else {
+		ungetToken();
+
+		if(argument_definition() == SYN_ERR)
+			return SYN_ERR;
+		return more_function_arguments();
+	}
+}
 
 //<more-function-parameters>     -> eps
 //<more-function-parameters>     -> , <parameter-declaration> <more-function-parameters> 
@@ -445,11 +482,11 @@ int more_function_parameters()
 				if(parameter_definition() == SYN_ERR)
 					return SYN_ERR;
 				return more_function_parameters();
-		default:
-			hint("more_function_parameters is strange");
 		case TOK_RIGHT_PAR:
 			ungetToken();
 			return SYN_OK;
+		default:
+			return throw("Expected ,");
 	}
 	return SYN_ERR;
 			
@@ -475,7 +512,6 @@ int function_parameters_list()
 
 //<variable-initialization>        -> eps
 //<variable-initialization>        -> = <more-next>
-
 int variable_initialization()
 {
 	int res = getToken();
@@ -487,101 +523,120 @@ int variable_initialization()
 	return more_next();
 }
 
+//<local-definition>            -> <type-specifier> simple-identifier <variable-initialization> ;
+int local_definition()
+{
+	int type;	
+	if(type_specifier(&type) == SYN_ERR)
+		return throw("Expected type-specifier (void,int,double,String)\n");
 
-//<more-definition>             -> <variable-initialization> ;
-//<more-definition>             -> ( <function-parameters-list> ) <compound-statement>
+	if(getToken() != TOK_ID)
+		return throw("Expected simple-id in local definition");
+	char* var = getTokString();
+	if(variable_initialization() == SYN_ERR)
+		return SYN_ERR;
+	if(getToken() != TOK_DELIM)
+		return throw("Expected ; in local definition");
+
+	GEN("Local variable '%s' with type: %s",var,type2str(type));
+	return SYN_OK;
+}
+
+//<function-body>               -> <statement> <function-body>
+//<function-body>               -> <local-definition> <function-body>
+//<function-body>               -> eps
+int function_body()
+{
+	// on epsilon-case
+	if(getToken() == TOK_RIGHT_BRACE)
+	{
+		ungetToken();
+		return SYN_OK;
+	}
+
+	// declaration
+	if(isTokenTypeSpecifier())
+	{
+		ungetToken();
+		if(local_definition() == SYN_ERR)
+			return SYN_ERR;
+		return function_body();
+	}
+	ungetToken();	
+	// statement
+	if(statement() == SYN_ERR)
+		return SYN_ERR;
+	return function_body();
+}
+
+
+//<more-definition>             -> ( <function-parameters-list> ) { <function-body> }
+//<more-definition>             -> ;
+//<more-definition>             -> = <expr> ;
 
 int more_definition()
 {
-	if(getToken() == TOK_LEFT_PAR)
+	switch(getToken())
 	{
-		if(inFunction)
-			return throw("Declaration of function in function");
-
-		setInFunction(1);
-		
-		setInCall(0);
-		if(function_parameters_list() == SYN_ERR)
-			return SYN_ERR;
-		if(getToken() != TOK_RIGHT_PAR)
-			return throw("Expected ')'");		
+		case TOK_LEFT_PAR:
+			if(function_parameters_list() == SYN_ERR)
+				return SYN_ERR;
+			if(getToken() != TOK_RIGHT_PAR)
+				return throw("Expected ')'");		
+				
+			if(getToken() != TOK_LEFT_BRACE)
+				return throw("Expected '{'");		
+			GEN("Generate and save function label in instruction list.");
+			if(function_body() == SYN_ERR)
+				return SYN_ERR;
+			if(getToken() != TOK_RIGHT_BRACE)
+				return throw("Expected '}'");		
 			
-		GEN("Generate and save function label in instruction list.");
-		if(compound_statement() == SYN_ERR)
-			return SYN_ERR;
-		
-		setInFunction(0);
-		GEN("Verify if RETURN was generated somewhere and clear LOCAL VARS");
-		return SYN_OK;
-	} else {
-		// TODO: semantic: check if variable is not declared with void
-		ungetToken();
-		if(variable_initialization() == SYN_ERR)
-			return SYN_ERR;
-		
-		if(getToken() != TOK_DELIM)
-			return throw("Missing ';' in definition");
+			GEN("Verify if RETURN was generated somewhere and clear LOCAL VARS");
+			return SYN_OK;
+		break;
+		case TOK_ASSIGN:
+			GEN("Assign value");
+			// TODO: semantic: check if variable is not declared with void
+			if(expression() == SYN_ERR)
+				return SYN_ERR;
+			
+			// TODO: assign const value to symbol table
 
-		return SYN_OK;
-	
+			if(getToken() != TOK_DELIM)
+				return throw("Missing ';' in definition");
+		case TOK_DELIM:
+			return SYN_OK;
+		default:
+			return throw("Expected ';','=' or '(' in static definition.");
 	}
+	return SYN_ERR;
 	
 }
-//<parameter-definition>                  -> <type-specifier-opt> <identifier> 
+//<parameter-definition>        -> <type-specifier> simple-identifier
 
 int parameter_definition()
 {
-	hint("Parameter definition - isCall: %d",inCall);
-	// if we define a formal parameter, we require a type specifier
 	int type;
-	type_specifier_opt(&type);
-	if(inCall == 0 && type == TYPELESS || type == FUN_VOID) 
+	type_specifier(&type);
+	if(type == TYPELESS || type == FUN_VOID) 
 		return throw("Expected type-specifier (void,int,double,String)\n");
-	
-	// if we are parsing a function call e.g. add(10,20);
-	if(inCall)
-	{
-		switch(getToken())
-		{
-			case TOK_DOUBLECONST:
-			case TOK_CONST:
-			case TOK_LITERAL:
-			case TOK_SPECIAL_ID:
-			case TOK_ID:
-				GEN("Compare the type of argument with formal param and generate a PUSH.");
-				break;
-			default:
-					return throw("Expected any identifier/constant");
-				
-			
-		}
-	} else {
-		// otherwise we are parsing a function definition
-		if(getToken() != TOK_ID)
-			return throw("Expected simple indentifier");
-		GEN("Add a new formal parameter '%s' of type '%s' into function's list of params",getTokString(), type2str(type));
-	}
+
+	if(getToken() != TOK_ID)
+		return throw("Expected a simple-identifier for formal parameter.");
 
 	return SYN_OK;
 }
 
 
 
-//<definition>                  -> <static-type> <type-specifier> <identifier> <more-definition>
+//<definition>                  -> static <type-specifier> simple-identifier <more-definition>
 
 int definition()
 {
-	// is declaration in { } of some statement
-	if(ident != 0)
-		return throw("Declaration in blocks are forbidden.");
-
-	// if not, continue and determine if declaration is static
-	int isStatic = static_type();
-	if(inFunction && isStatic)
-		return throw("Expected non-static definition in function");
-	else if(inFunction == 0 && isStatic == 0)
-		return throw("Expected static keyword for symbol defined in class");
-
+	getToken();
+	if(!isTokenKeyword(KW_STATIC))
+		return throw("Expected keyword 'static'");
 	int type;	
 	if(type_specifier(&type) == SYN_ERR)
 		return throw("Expected type-specifier (void,int,double,String)\n");
@@ -606,8 +661,24 @@ int definition()
 	return more_definition();
 }
 
+//<class-body>                  -> epsilon
+//<class-body>                  -> <definition> <class-body> 
+int class_body()
+{
+	if(getToken() == TOK_RIGHT_BRACE)
+	{
+		ungetToken();
+		return SYN_OK;
+	}
+	ungetToken();
+	if(definition() == SYN_ERR || class_body() == SYN_ERR)
+		return SYN_ERR;
 
-//<class-definition>            -> class <identifier> <compound-statement>
+	return SYN_OK;
+}
+
+
+//<class-definition>            -> class <identifier> { <class-body> } 
 
 int class_definition()
 {
@@ -633,9 +704,13 @@ int class_definition()
 	}
 	parser_class = getTokString();
 
-	return compound_statement();
-
-
+	if(getToken() != TOK_LEFT_BRACE)
+		return throw("Expected { in class definition\n");
+	if(class_body() == SYN_ERR)
+		return SYN_ERR;
+	if(getToken() != TOK_RIGHT_BRACE)
+		return throw("Expected } in class definition\n");
+	return SYN_OK;
 }
 
 //<class-definition-list>       -> <class-definition> <class-definition-list>
@@ -679,9 +754,9 @@ int main(int argc, char ** argv)
 		int result = source_program();
 		if(result != SYN_ERR)
 		{
-			scanner_rewind();
+			//scanner_rewind();
 			// second pass
-			source_program();
+			//source_program();
 		}
 		stable_print(staticSym);
 		stable_destroy(&staticSym);
