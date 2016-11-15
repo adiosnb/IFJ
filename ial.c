@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "ial.h"
 
 void swap(char *arg1, char *arg2){
@@ -25,9 +26,9 @@ void ial_qsort(char *arr, int left, int right){
                 swap(&arr[++pom], &arr[i]);
         swap(&arr[left], &arr[pom]);
         //volanie qsortu pre ľavú časť
-        qsort(arr, left, pom - 1);
+        ial_qsort(arr, left, pom - 1);
         //volanie qsortu pre pravú časť
-        qsort(arr, pom + 1, right);
+        ial_qsort(arr, pom + 1, right);
     }
     return;
 }

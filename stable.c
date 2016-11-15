@@ -8,6 +8,8 @@
 #include "instruction_list.h"
 #include "str.h"
 
+#include <stdarg.h>
+
 unsigned hash_fun_ptr(char *id, unsigned stab_size){
     int i = 0, pom = 0;
 
@@ -250,4 +252,35 @@ void stable_print(stab_t *stable) {
         }
     }
     printf("********** STABLE END ****************\n");
+}
+
+// Searching a key of format 1.2.3......count
+bool stable_search_variadic(stab_t *p_stable, int count, ...)
+{
+	if(count == 0)
+		return false;
+	int result = false;
+	string_t str = str_init();
+
+	va_list args;
+	va_start(args, count);
+	char* ptr = va_arg(args,char*);
+	if(ptr != NULL)
+	{
+		// for (count-1): append strings at the end of str
+		str_append_chars(&str, ptr);
+		while(--count)
+		{
+			ptr = va_arg(args,char*);
+			if(ptr == NULL)	
+				break;
+			str_add_char(&str,'.');
+			str_append_chars(&str, ptr);
+		}
+		// now search
+		result = stable_search(p_stable, str.str);
+	}
+	va_end(args);
+	str_destroy(str);
+	return result;	
 }

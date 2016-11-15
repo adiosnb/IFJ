@@ -626,6 +626,9 @@ int definition()
 
 	if(!isSecondPass)
 	{
+		if(stable_search_variadic(staticSym, 2,parser_class,getTokString()))
+			return throw("SEMANTIC ERROR - Static symbol %s.%s already declared",
+				parser_class, getTokString());
 		GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
 		data_t data;
 		data.type = type; 
@@ -661,7 +664,7 @@ int class_definition()
 		return throw("Expected keyword 'class'\n");	
 
 	if(getToken() != TOK_ID)
-		return throw("Expected identifier\n");
+		return throw("Expected simple-identifier\n");
 
 	// if it's the first pass
 	if(!isSecondPass)
@@ -673,6 +676,7 @@ int class_definition()
 			return throw("SEMANTIC - class redefinition");
 		} else {
 			data_t data;
+			data.type = INTEGER;
 			stable_add_var(staticSym, getTokString(),data);
 		}
 	}
