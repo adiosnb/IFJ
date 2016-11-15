@@ -1,4 +1,3 @@
-#define DEBUG 1
 #include "parser.h"
 #include <stdio.h>
 #include <string.h>
@@ -34,13 +33,13 @@ int	isTokenTypeSpecifier()
 
 //enum types {INTEGER, DOUBLE, STRING,FUN_INTEGER,FUN_DOUBLE,FUN_STRING,FUN_VOID,TYPELESS};
 
-enum types {FUN_INTEGER = 4, FUN_DOUBLE, FUN_STRING, FUN_VOID, TYPELESS};
+enum types {FUN_INTEGER = 3, FUN_DOUBLE, FUN_STRING, FUN_VOID};
 
 char* type2str(int type)
 {
-	static char* str[] = {"INTEGER","DOUBLE","STRING","FUN_INTEGER","FUN_DOUBLE","FUN_STRING", "FUN_VOID", "TYPELESS"};
-	if(type > TYPELESS)
-		type = TYPELESS;
+	static char* str[] = {"INTEGER","DOUBLE","STRING","FUN_INTEGER","FUN_DOUBLE","FUN_STRING", "FUN_VOID","ERR_TYPE"};
+	if(type > FUN_VOID)
+		return str[FUN_VOID+1];
 	return str[type];
 }
 
@@ -87,18 +86,6 @@ int type_specifier(int* out_type)
 	return SYN_OK;	
 }
 
-//<type-specifier-opt>               ->type-specifier 
-//<type-specifier-opt>               ->eps
-int type_specifier_opt(int* out_type)
-{
-	if(type_specifier(out_type) == SYN_ERR)
-	{
-		ungetToken();
-		*out_type = TYPELESS;
-	}
-	return SYN_OK;
-}
-
 /*
 <identifier>                   -> floating-point-constant
 <identifier>                   -> decimal-constant
@@ -142,11 +129,8 @@ int more_next()
 		}
 		else {
 			hint("MORE-Function call of '%s'",getTokString());
-			setInCall(1);
 			if(function_arguments_list() == SYN_ERR)
 				return SYN_ERR;
-			setInCall(0);
-
 			if(getToken() != TOK_RIGHT_PAR)
 				return throw("Expected )");
 		}
@@ -217,11 +201,9 @@ int next()
 			} else {
 				GEN("Check if symbol '%s' is defined", getTokString());
 
-				setInCall(1);
 				if(function_arguments_list() == SYN_ERR)
 					return SYN_ERR;	
 				GEN("Generate a function call INSTR");
-				setInCall(0);
 				if(getToken() != TOK_RIGHT_PAR)
 					return throw("Expected )");
 				if(getToken() != TOK_DELIM)
@@ -352,9 +334,7 @@ int block_item()
 		return definition();
 	} else {
 		ungetToken();
-		incIdent();
 		int res = statement();
-		decIdent();
 		return res;
 			
 	}
@@ -619,7 +599,7 @@ int parameter_definition()
 {
 	int type;
 	type_specifier(&type);
-	if(type == TYPELESS || type == FUN_VOID) 
+	if(type == FUN_VOID) 
 		return throw("Expected type-specifier (void,int,double,String)\n");
 
 	if(getToken() != TOK_ID)
@@ -644,20 +624,14 @@ int definition()
 	if(getToken() != TOK_ID)
 		return throw("Expected simple-id");
 
-	if(inFunction == 0)
+	if(!isSecondPass)
 	{
-		if(!isSecondPass)
-		{
-			GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
-			data_t data;
-			data.type = type; 
-			stable_add_concatenate(staticSym,parser_class, getTokString(),NULL,data);
-		}
-		parser_fun = getTokString();
+		GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
+		data_t data;
+		data.type = type; 
+		stable_add_concatenate(staticSym,parser_class, getTokString(),NULL,data);
 	}
-	else
-		GEN("Create a new local symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
-
+	parser_fun = getTokString();
 	return more_definition();
 }
 

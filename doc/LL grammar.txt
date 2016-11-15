@@ -23,6 +23,7 @@
 
 <function-body>               -> <statement> <function-body>
 <function-body>               -> <local-definition> <function-body>
+<function-body>               -> epsilon 
 
 <local-definition>            -> <type-specifier> simple-identifier <variable-initialization> ;
 <variable-initialization>     -> = <more-next>
