@@ -890,6 +890,25 @@ void call_str_sort() {
 }
 
 void call_str_substr() {
-    return;
+    argument_var_t *ret, *str, *i,*n;
+    str = stack_from_top_ptr(glob_stack, 2);
+    i = stack_from_top_ptr(glob_stack, 1);
+    n = stack_top_ptr(glob_stack);
 
+    if (str->arg_type == STACK_EBP) {
+        str = stack_ebp_relative_ptr(glob_stack, str->data.i);
+    }
+    if (i->arg_type == STACK_EBP) {
+        i = stack_ebp_relative_ptr(glob_stack, i->data.i);
+    }
+    if (n->arg_type == STACK_EBP) {
+        n = stack_ebp_relative_ptr(glob_stack, n->data.i);
+    }
+    if (ret->arg_type == STACK_EBP) {
+        ret = stack_ebp_relative_ptr(glob_stack, ret->data.i);
+    }
+
+    //vycistenie stringu a ulozenie vysledku
+    str_destroy(ret->data.s);
+    ret->data.s = str_sub_str(str->data.s,i->data.i,n->data.i);
 }
