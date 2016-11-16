@@ -284,3 +284,33 @@ bool stable_search_variadic(stab_t *p_stable, int count, ...)
 	str_destroy(str);
 	return result;	
 }
+
+int stable_add_variadic(stab_t *p_stable,data_t data, int count, ...)
+{
+	if(count == 0)
+		return 0;
+	int result = 0;
+	string_t str = str_init();
+
+	va_list args;
+	va_start(args, count);
+	char* ptr = va_arg(args,char*);
+	if(ptr != NULL)
+	{
+		// for (count-1): append strings at the end of str
+		str_append_chars(&str, ptr);
+		while(--count)
+		{
+			ptr = va_arg(args,char*);
+			if(ptr == NULL)	
+				break;
+			str_add_char(&str,'.');
+			str_append_chars(&str, ptr);
+		}
+		// now add
+		result = stable_add_var(p_stable, str.str, data);
+	}
+	va_end(args);
+	str_destroy(str);
+	return result;	
+}

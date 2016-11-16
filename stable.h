@@ -9,7 +9,8 @@
 #include "instruction_list.h"
 #include "instruction_list.h"
 
-typedef struct {
+typedef struct dt{
+    struct dt* next_param;	// used in function
     int type;
     int inter_table;
     argument_var_t data;
@@ -51,6 +52,8 @@ bool stable_search(stab_t *p_stable, char *srch_el);
 
 // Searching a key of format 1.2.3......count
 bool stable_search_variadic(stab_t *p_stable, int count, ...);
+// Variadic form of adding a key into table
+int stable_add_variadic(stab_t *p_stable,data_t data, int count, ...);
 
 void stable_print(stab_t *stable);
 

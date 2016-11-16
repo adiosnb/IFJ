@@ -1,3 +1,4 @@
+#define	DEBUG 1 
 #include "parser.h"
 #include <stdio.h>
 #include <string.h>
@@ -451,6 +452,9 @@ int function_arguments_list()
 	}
 }
 
+data_t** last_param;
+int	param_count;
+
 //<more-function-parameters>     -> eps
 //<more-function-parameters>     -> , <parameter-declaration> <more-function-parameters> 
 
@@ -475,8 +479,12 @@ int more_function_parameters()
 //<function-parameters-list>     -> eps
 //<function-parameters-list>     -> <parameter-definition> <more-function-parameters>
 
-int function_parameters_list()
+int function_parameters_list(data_t* sym)
 {
+	// init
+	last_param = &sym->next_param;
+	param_count = 1000;
+	
 	if(getToken() == TOK_RIGHT_PAR)
 	{
 		ungetToken();
@@ -488,6 +496,32 @@ int function_parameters_list()
 			return SYN_ERR;
 		return more_function_parameters();
 	}
+}
+
+//<parameter-definition>        -> <type-specifier> simple-identifier
+
+int parameter_definition()
+{
+	int type;
+	type_specifier(&type);
+	if(type == FUN_VOID) 
+		return throw("Expected type-specifier (void,int,double,String)\n");
+
+	if(getToken() != TOK_ID)
+		return throw("Expected a simple-identifier for formal parameter.");
+
+	if(isSecondPass)
+	{
+		GEN(">>> Add parameter '%s':'%s'",getTokString(),type2str(type));
+		/*// create a new symbol	
+		data_t data;
+		data.type = type;
+		int id = stable_add_variadic(staticSym, data, 3, parser_class,parser_fun,geTokString());
+		(*last_param) = stable_get_var(staticSym,  		
+		*/
+	}
+
+	return SYN_OK;
 }
 
 //<variable-initialization>        -> eps
@@ -518,6 +552,17 @@ int local_definition()
 	if(getToken() != TOK_DELIM)
 		return throw("Expected ; in local definition");
 
+	// generate locale vars in the second run
+	if(isSecondPass)
+	{
+		if(stable_search_variadic(staticSym, 3,parser_class, parser_fun,var))
+			return throw("SEMANTIC - Local symbol '%s' of function '%s.%s'"
+			" already defined.", var, parser_class,parser_fun);	
+		
+		data_t data;
+		data.type = type;
+		stable_add_concatenate(staticSym, parser_class,parser_fun,var,data);
+	}
 	GEN("Local variable '%s' with type: %s",var,type2str(type));
 	return SYN_OK;
 }
@@ -554,12 +599,12 @@ int function_body()
 //<more-definition>             -> ;
 //<more-definition>             -> = <expr> ;
 
-int more_definition()
+int more_definition(data_t* sym)
 {
 	switch(getToken())
 	{
 		case TOK_LEFT_PAR:
-			if(function_parameters_list() == SYN_ERR)
+			if(function_parameters_list(&sym->next_param) == SYN_ERR)
 				return SYN_ERR;
 			if(getToken() != TOK_RIGHT_PAR)
 				return throw("Expected ')'");		
@@ -593,20 +638,7 @@ int more_definition()
 	return SYN_ERR;
 	
 }
-//<parameter-definition>        -> <type-specifier> simple-identifier
 
-int parameter_definition()
-{
-	int type;
-	type_specifier(&type);
-	if(type == FUN_VOID) 
-		return throw("Expected type-specifier (void,int,double,String)\n");
-
-	if(getToken() != TOK_ID)
-		return throw("Expected a simple-identifier for formal parameter.");
-
-	return SYN_OK;
-}
 
 
 
@@ -624,6 +656,7 @@ int definition()
 	if(getToken() != TOK_ID)
 		return throw("Expected simple-id");
 
+	data_t* pData = NULL;
 	if(!isSecondPass)
 	{
 		if(stable_search_variadic(staticSym, 2,parser_class,getTokString()))
@@ -632,10 +665,10 @@ int definition()
 		GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
 		data_t data;
 		data.type = type; 
-		stable_add_concatenate(staticSym,parser_class, getTokString(),NULL,data);
+		pData = stable_add_variadic(staticSym,data,2,parser_class, getTokString());
 	}
 	parser_fun = getTokString();
-	return more_definition();
+	return more_definition(pData);
 }
 
 //<class-body>                  -> epsilon
@@ -732,11 +765,12 @@ int main(int argc, char ** argv)
 		int result = source_program();
 		if(result != SYN_ERR)
 		{
-			//scanner_rewind();
+			scanner_rewind();
 			// second pass
-			//source_program();
+			GEN("--------------- SECOND PASS ---------------");
+			source_program();
 		}
-		stable_print(staticSym);
+	//	stable_print(staticSym);
 		stable_destroy(&staticSym);
 
 		scanner_closeFile();
