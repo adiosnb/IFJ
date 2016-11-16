@@ -146,9 +146,22 @@ int main() {
     printf("%d\n",ret_search);
 
 
-    str_destroy(str1);
-    str_destroy(str2);
-    str_destroy(str3);
+    str_destroy(&str1);
+    str_destroy(&str2);
+    str_destroy(&str3);
+
+    str_reinit(&str1);
+    str_append_chars(&str1,"qwertyulkajhfjf;ldsjf;fj;ljiop");
+    str_print(str1);
+    str_sort(str1);
+    str_print(str1);
+
+
+
+
+    str_destroy(&str1);
+    str_destroy(&str2);
+    str_destroy(&str3);
 
     return 0;
 }
