@@ -629,7 +629,7 @@ void pop(){
     argument_var_t tmp;
     tmp = stack_pop(glob_stack);
     if (tmp.arg_type == STRING) {
-        str_destroy(tmp.data.s);
+        str_destroy(&tmp.data.s);
     }
 }
 
@@ -909,6 +909,6 @@ void call_str_substr() {
     }
 
     //vycistenie stringu a ulozenie vysledku
-    str_destroy(ret->data.s);
+    str_destroy(&ret->data.s);
     ret->data.s = str_sub_str(str->data.s,i->data.i,n->data.i);
 }

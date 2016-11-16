@@ -56,7 +56,7 @@ void stable_destroy(stab_t **p_table) {
                 next = current->stab_next;
                 free(current->stab_key);
                 if (current->stab_content.data.arg_type == STRING) {
-                    str_destroy(current->stab_content.data.data.s);
+                    str_destroy(&current->stab_content.data.data.s);
                 }
                 free(current);
                 current = next;
@@ -255,7 +255,7 @@ bool stable_search_variadic(stab_t *p_stable, int count, ...)
 		result = stable_search(p_stable, str.str);
 	}
 	va_end(args);
-	str_destroy(str);
+	str_destroy(&str);
 	return result;	
 }
 
@@ -285,6 +285,6 @@ data_t* stable_add_variadic(stab_t *p_stable,data_t data, int count, ...)
 		result = stable_add_var(p_stable, str.str, data);
 	}
 	va_end(args);
-	str_destroy(str);
+	str_destroy(&str);
 	return result;	
 }
