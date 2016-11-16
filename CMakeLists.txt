@@ -9,9 +9,9 @@ set(str_test str.c str.h str_test.c ial.c)
 
 set(my_scanner scanner_alt.c scanner-unit_alt.c str.c )
 set(scanner scanner.c scanner-unit.c str.c)
-set(interpret-expr-test interpret.c interpret-expr-test.c str.c instruction_list.c stack.c stable.c)
+set(interpret-expr-test interpret.c interpret-expr-test.c str.c instruction_list.c stack.c stable.c ial.c)
 set(stable_test stable-test.c stable.c stack.h str.c ial.c)
-set(interpret-str-test interpret-str-test.c str.c interpret.c stack.c stable.c instruction_list.c instructions.h)
+set(interpret-str-test interpret-str-test.c str.c interpret.c stack.c stable.c instruction_list.c instructions.h ial.c)
 
 add_executable(str_test ${str_test})
 add_executable(my_scanner ${my_scanner})
