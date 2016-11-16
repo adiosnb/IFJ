@@ -1,7 +1,13 @@
 
+#ifndef SCANNER_ALT
+#define SCANNER_ALT
+
 #include <stdio.h>
+#include "str.h"
 
 enum returnCodes { ERROR, OK};
+
+extern string_t first, second, literal;
 
 // As different classes require different data, tokens carry an union
 // allowing all neccessary kinds of data
@@ -16,6 +22,8 @@ typedef struct {
 	// the lexical type of token (identifier, keyword, etc)	
 	unsigned int 	type;
 	t_tokenData	data;	
+	int		line;
+	int		character;
 } t_token;
 
 
@@ -97,3 +105,21 @@ int	scanner_rewind();
 int	getToken();
 // Return token
 int	ungetToken();
+
+// Returns the type of last token
+int	getLastToken();
+//
+// Returns integer value of last token
+int	getTokInt();
+
+// Returns double value of last token
+double	getTokDouble();
+
+// Returns string value of last token
+char* 	getTokString();
+
+// Returns last token line
+int	getTokLine();
+// Returns last token line
+int	getTokTabs();
+#endif

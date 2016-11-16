@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "ial.h"
 
 void swap(char *arg1, char *arg2){
@@ -15,7 +16,7 @@ void swap(char *arg1, char *arg2){
     return;
 }
 
-void qsort(char *arr, int left, int, right){
+void ial_qsort(char *arr, int left, int right){
 
     if (left < right) {
         int pom = left;
@@ -25,9 +26,9 @@ void qsort(char *arr, int left, int, right){
                 swap(&arr[++pom], &arr[i]);
         swap(&arr[left], &arr[pom]);
         //volanie qsortu pre ľavú časť
-        qsort(arr, left, pom - 1);
+        ial_qsort(arr, left, pom - 1);
         //volanie qsortu pre pravú časť
-        qsort(arr, pom + 1, right);
+        ial_qsort(arr, pom + 1, right);
     }
     return;
 }
@@ -66,9 +67,9 @@ int KMP_hladaj(char *retazec, char *podretazec){
             Podretazec_index ++;
         }
         else
-            Podretazec_index = Table[podretazec_index];
+            Podretazec_index = Table[Podretazec_index];
     }
-
+    free(Table);
     return (Podretazec_index > strlen(podretazec)) ? (Retazec_index - strlen(podretazec)) : (Retazec_index);
 
 }

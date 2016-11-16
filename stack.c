@@ -61,6 +61,9 @@ argument_var_t stack_top(stack_t *stack){
     return stack->data[stack->used - 1];    //-1 je tam preto ze nepouzivam premennu stack.top ale stack.used
 }
 
+argument_var_t *stack_top_ptr(stack_t *stack) {
+    return &stack->data[stack->used - 1];
+}
 
 argument_var_t stack_ebp_relative(stack_t *stack, int position){
     return stack->data[stack->base + position - 1];
@@ -76,16 +79,46 @@ int stack_actualize_from_ebp(stack_t *stack, argument_var_t arg, int position){
     return 0;
 }
 
-
-void print_stack(stack_t *stack) {
-    printf("\n---------------------------------\n");
-    for (int i = 0; i < stack->used; i ++){
-        printf("%d : %d\n",i,stack->data[i].data.i);
-    }
-    printf("\n---------------------------------\n");
+argument_var_t stack_from_top(stack_t *stack, int position){
+    return stack->data[stack->used - 1 - position];
 }
 
-int resize(stack_t **stack) {
+argument_var_t *stack_from_top_ptr(stack_t *stack, int position) {
+    return &stack->data[stack->used - 1 - position];
+}
+
+
+void print_stack(stack_t *stack) {
+    printf("\n--------------- STACK ------------------\n");
+    for (int i = 0; i < stack->used - 1; i++) {
+        switch (stack->data[i].arg_type) {
+            case INTEGER:
+                printf("%d : %d\n", i, stack->data[i].data.i);
+                break;
+            case DOUBLE:
+                printf("%d : %g\n", i, stack->data[i].data.d);
+                break;
+            case STRING:
+                printf("%d : %s\n", i, stack->data[i].data.s.str);
+                break;
+        }
+    }
+    switch (stack->data[stack->used - 1].arg_type) {
+        case INTEGER:
+            printf("%d : %d\n", stack->used - 1, stack->data[stack->used - 1].data.i);
+            break;
+        case DOUBLE:
+            printf("%d : %g\n", stack->used - 1, stack->data[stack->used - 1].data.d);
+            break;
+        case STRING:
+            printf("%d : %s\n", stack->used - 1, stack->data[stack->used - 1].data.s.str);
+            break;
+    }
+
+    printf("\n---------------- STACK END ---------------\n");
+}
+
+void resize(stack_t **stack) {
     *stack = realloc(*stack,sizeof(stack_t) + sizeof(argument_var_t)*(stack[0]->used + MINIMAL_MALLOC_SIZE));
     stack[0]->size += MINIMAL_MALLOC_SIZE;
 }

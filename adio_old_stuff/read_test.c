@@ -52,10 +52,10 @@ int main() {
     create_and_add_instruction(i_list, INST_PUSH, 0, 0, 0);//push cisla 5
     create_and_add_instruction(i_list, INST_PUSH, 25, 0, 0);//push cisla 5
 
-    create_and_add_instruction(i_list,INST_READ_INT,LOCAL_C,0,0);
+    create_and_add_instruction(i_list, INST_READ_INT, LOCAL_C, 0, 0);
     create_and_add_instruction(i_list, INST_WRITE, LOCAL_C, 0, 0);
 
-    create_and_add_instruction(i_list,INST_READ_DOUBLE,LOCAL_D,0,0);
+    create_and_add_instruction(i_list, INST_READ_DOUBLE, LOCAL_D, 0, 0);
     create_and_add_instruction(i_list, INST_WRITE, LOCAL_D, 0, 0);
 
 

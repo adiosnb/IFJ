@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "scanner.h"
+#include "str.h"
+#include "error.h"
 
 FILE*	fHandle = NULL;
+string_t first, second, literal;
 
 /* Single-linked list of tokens, used only by scanner module*/
 typedef struct listTokenElement 
@@ -23,6 +26,10 @@ t_tokenElem*	currentToken = NULL;
 // global structure to get the data returned by last getToken 
 t_token	g_lastToken;
 
+// the count of lines & chars
+int lines = 0, chars = -1;
+
+
 // Utility func
 
 void freeToken(t_token* tok)
@@ -31,7 +38,30 @@ void freeToken(t_token* tok)
 	if(tok->type == TOK_ID  
 		|| tok->type == TOK_LITERAL
 		|| tok->type == TOK_SPECIAL_ID)
+	{
 		free(tok->data.string);
+	}
+}
+
+// scanner get char
+int sgetc(FILE* f)
+{
+	int result = fgetc(f);
+	chars++;
+	if(result == '\n')
+	{
+		lines++;
+		chars = -1;
+	}
+	return result;	
+}
+
+// scanner sungetc
+int sungetc(int c, FILE* f)
+{
+	ungetc(c,f);
+	chars--;
+	return 0;
 }
 
 /* Public functions */
@@ -46,22 +76,28 @@ int	scanner_openFile(char* fileName)
 
 int	scanner_closeFile()
 {
+	// destroy local strings
+	str_destroy(first);
+	str_destroy(second);
+	str_destroy(literal);
+
+	// if file is opened
 	if(fHandle)
 	{
 		fclose(fHandle);
 		fHandle = NULL;
-		
-		// clean single linked list
-		t_tokenElem *ptr = tokenList,*helpptr = tokenList;
-		while(ptr)
-		{
-			helpptr = ptr;
-			ptr = ptr->next;
-			freeToken(&helpptr->token);
-			free(helpptr);
-		}
-		tokenList = NULL;
-	} 
+	}	
+	// clean single linked list
+	t_tokenElem *ptr = tokenList,*helpptr = tokenList;
+	while(ptr)
+	{
+		helpptr = ptr;
+		ptr = ptr->next;
+		freeToken(&helpptr->token);
+		free(helpptr);
+	}
+	tokenList = NULL;
+
 	return 0;
 }
 
@@ -80,7 +116,60 @@ int	ungetToken()
 	return 0;
 }
 
+// Returns the type of last token
+int	getLastToken()
+{
+	if(currentToken)
+		return currentToken->token.type;
+	else
+		return TOK_ERROR;
+}
+//
+// Returns integer value of last token
+int	getTokInt()
+{
+	if(currentToken)
+		return currentToken->token.data.integer;
+	else
+		return 0;
+	
+}
 
+// Returns double value of last token
+double	getTokDouble()
+{
+	if(currentToken)
+		return currentToken->token.data.real;
+	else
+		return 0.0;
+}
+// Returns string value of last token
+char* 	getTokString()
+{
+	if(currentToken)
+		return currentToken->token.data.string;
+	else
+		return NULL;
+}
+
+// Returns last token line
+int	getTokLine()
+{
+	if(currentToken)
+		return currentToken->token.line;
+	else
+		return 0;
+}
+// Returns last token line
+int	getTokTabs()
+{
+	if(currentToken)
+		return currentToken->token.character;
+	else
+		return 0;
+}
+
+/* Utility */
 char*	createString(const char* str)
 {
 	char* nstr = malloc(strlen(str)+1);
@@ -107,19 +196,16 @@ char*	createString2(const char* str, const char* second)
 // processes text literals such as "text" or "tex\t"
 int	process_literal()
 {
-	fgetc(fHandle);
+    str_reinit(&literal);
+	sgetc(fHandle);
 	// a normal state is used when awaiting regular ASCII input
 	// SPECIAL state is reached after receiving '\' 
 	enum States {NORMAL, SPECIAL,OCTAL};
 	int c, state = NORMAL;
 
-	// TODO: provide a better string datatype which would allow 'unlimited' strings
-	char tempString[1001] = "\0";
-	int i = 0;
-
 	int octBase= 64;
 	char sum = 0;
-	while((c = fgetc(fHandle)) != EOF)
+	while((c = sgetc(fHandle)) != EOF)
 	{
 		switch(state)
 		{
@@ -128,7 +214,7 @@ int	process_literal()
 				{
 					// when the end of terminal is reached
 					g_lastToken.type = TOK_LITERAL;
-					g_lastToken.data.string = createString(tempString);
+					g_lastToken.data.string = createString(literal.str);
 					// TODO: add pointer to symbol
 					return TOK_LITERAL;
 
@@ -137,7 +223,7 @@ int	process_literal()
 					state = SPECIAL;
 					break;
 				} else {
-					tempString[i++] = c;
+					ADD_CHAR(literal,c);
 				}
 				break;
 			// process escape sequences (e.g. \n) or report invalid ones
@@ -145,26 +231,25 @@ int	process_literal()
 				switch(c)
 				{
 					case '0': case '1': case '2': case '3': 
-						ungetc(c,fHandle);
+						sungetc(c,fHandle);
 						state = OCTAL;
 						break;
 					case '\\':
 					case '\"':
-						tempString[i++] = c;
+                        ADD_CHAR(literal,c);
 						state = NORMAL;
 						break;
 					case 'n':
-						tempString[i++] = '\n';
+                        ADD_CHAR(literal,'\n');
 						state = NORMAL;
 						break;
 					case 't':
-						tempString[i++] = '\t';
+                        ADD_CHAR(literal,'\t');
 						state = NORMAL;
 						break;
 					default:
-
-						// TODO: report an error - invalid escape sequence
 						fprintf(stderr, "Error while reading literal\n");
+						errorLeave(LEXICAL_ERROR);
 						return TOK_ERROR;
 						break;
 				}
@@ -185,8 +270,7 @@ int	process_literal()
 					if(octBase == 0)
 					{
 						//concatenate a new char
-						tempString[i++] = sum;
-						// reload default values 
+                        ADD_CHAR(literal,sum);
 						octBase= 64;
 						sum = 0;
 						// and continue reading the rest of literal
@@ -225,18 +309,17 @@ int	isKeyword(const char* str,int* typeOfKeyword)
 
 int	process_identifier()
 {
-	//TODO: unlimited length of ID
-	char first[256] = {0,};
-	char second[256] = {0,};
+	str_reinit(&first);
+	str_reinit(&second);
 
-	int i = 0,c;
+	int c;
 	// nonAlpha is toggled to 1 if at least one character is non-alphanumerical
 	// -> useful for skipping keyword comparing 
 	int isNonAlpha = 0;
 
 	enum states {FIRST,SECOND};
 	int state = FIRST;
-	while((c = fgetc(fHandle)) != EOF)
+	while((c = sgetc(fHandle)) != EOF)
 	{
 		int res = isalnum(c);
 	
@@ -246,10 +329,13 @@ int	process_identifier()
 			isNonAlpha |= (res == 0);
 		
 			// store the incoming char into either first or second part of ID
-			if(state == FIRST)
-				first[i++] = c;
-			else
-				second[i++] = c;
+			if(state == FIRST) {
+				//ADD_CHAR(first, c);
+				str_add_char(&first,c);
+			}else {
+				//ADD_CHAR(second,c);}
+				str_add_char(&second, c);
+			}
 		} else {
 			// if it is a ID splitter (FIRST.SECOND)
 			if(c == '.')
@@ -261,14 +347,14 @@ int	process_identifier()
 					// already processing the second part of ID
 					// > lex. error
 					fprintf(stderr,"Error: Multiple '.' in identifier.\n");
+					errorLeave(LEXICAL_ERROR);
 					return TOK_ERROR;
 				}
-				i = 0;
 				continue;
 			}
 			
 			// the last character is probably a part of another token->return back
-			ungetc(c,fHandle);
+			sungetc(c,fHandle);
 
 			// if we captured only a single word, it migh be a keyword
 			if(state != SECOND)
@@ -278,7 +364,7 @@ int	process_identifier()
 				{
 					int typeOfKeyword;
 					// if ID is in set of keywords
-					if(isKeyword(first,&typeOfKeyword))
+					if(isKeyword(first.str,&typeOfKeyword))
 					{
 						g_lastToken.type = TOK_KEYWORD;
 						g_lastToken.data.integer = typeOfKeyword; 
@@ -294,20 +380,47 @@ int	process_identifier()
 			if(state == SECOND)
 			{
 				// if the second part of ID fullfills requirements
-				if(i > 0 && isdigit(second[0]) == 0)
+				if((first.len && second.len))
 				{
-					g_lastToken.data.string = createString2(first,second);
+					g_lastToken.data.string = createString2(first.str,second.str);
 					g_lastToken.type = TOK_SPECIAL_ID;
 				}
 				else {
 					// error in the second part of ID
+					fprintf(stderr,"Error: the second part doesn't full fill requirements\n");  
+					errorLeave(LEXICAL_ERROR);
 					return TOK_ERROR;
 				}
 			} else 
-				g_lastToken.data.string = createString(first);
+				g_lastToken.data.string = createString(first.str);
 				return g_lastToken.type;
 		}
 	}
+
+	if (first.len) {
+		if (state == FIRST){
+			int typeOfKeyword;
+			if(isKeyword(first.str,&typeOfKeyword))
+			{
+				g_lastToken.type = TOK_KEYWORD;
+				g_lastToken.data.integer = typeOfKeyword;
+				return TOK_KEYWORD;
+			} else {
+				g_lastToken.type = TOK_ID;
+				g_lastToken.data.string = createString(first.str);
+				return TOK_ID;
+			}
+		} else {
+			if (second.len){
+				g_lastToken.type = TOK_ID;
+				g_lastToken.data.string = createString(second.str);
+				return TOK_ID;
+			} else {
+				return TOK_ERROR;
+			}
+		}
+	}
+
 	return TOK_ERROR;
 	
 }
@@ -321,7 +434,7 @@ int	process_number()
 
 	enum numberType {INT, DOT,DOUBLE,EXP,EXP_SIGN,EXP_RADIX};
 	int state = INT;
-	while((c = fgetc(fHandle)) != EOF)
+	while((c = sgetc(fHandle)) != EOF)
 	{
 		switch(state)
 		{
@@ -334,7 +447,7 @@ int	process_number()
 					else if(tolower(c) == 'e')
 						state = EXP;
 				} else {
-					ungetc(c,fHandle);
+					sungetc(c,fHandle);
 					g_lastToken.type = TOK_CONST;
 					g_lastToken.data.integer = atoi(buff);
 					return TOK_CONST;
@@ -347,6 +460,7 @@ int	process_number()
 					state = DOUBLE;
 				} else {
 					// emit error, number ends with '.' without any following digit
+					errorLeave(LEXICAL_ERROR);	
 					return TOK_ERROR;
 				}
 				break;
@@ -354,7 +468,7 @@ int	process_number()
 				if(!isdigit(c) && tolower(c) != 'e')
 				{
 					// new float
-					ungetc(c,fHandle);
+					sungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
 					g_lastToken.data.real= atof(buff);
 					return TOK_DOUBLECONST;
@@ -392,7 +506,7 @@ int	process_number()
 				else 
 				{
 					//new float
-					ungetc(c,fHandle);
+					sungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
 					g_lastToken.data.real= atof(buff);
 					return TOK_DOUBLECONST;
@@ -401,6 +515,28 @@ int	process_number()
 				
 		}
 	}
+
+	if (i) {
+		switch (state){
+			case INT:
+				g_lastToken.type = TOK_CONST;
+				g_lastToken.data.integer = atoi(buff);
+				return TOK_CONST;
+				break;
+			case DOUBLE:
+				g_lastToken.type = TOK_DOUBLECONST;
+				g_lastToken.data.real= atof(buff);
+				return TOK_DOUBLECONST;
+				break;
+
+			case EXP_RADIX:
+				g_lastToken.type = TOK_DOUBLECONST;
+				g_lastToken.data.real= atof(buff);
+				return TOK_DOUBLECONST;
+				break;
+		}
+	}
+
 	return TOK_ERROR;
 }
 
@@ -430,7 +566,7 @@ int	process_operator(char op)
 
 int	process_relation(char c)
 {
-	int nextc = fgetc(fHandle);
+	int nextc = sgetc(fHandle);
 	// TODO: what exactly should we do upon receiving an EOF ?
 	if(nextc == EOF)
 		return TOK_ERROR;
@@ -442,7 +578,7 @@ int	process_relation(char c)
 				g_lastToken.type = TOK_EQ;
 			} else {
 				// assigment
-				ungetc(nextc,fHandle);
+				sungetc(nextc,fHandle);
 				g_lastToken.type = TOK_ASSIGN;
 			}
 			return g_lastToken.type;
@@ -458,7 +594,7 @@ int	process_relation(char c)
 			if(nextc == '=')
 				g_lastToken.type = TOK_LE;
 			else {
-				ungetc(nextc,fHandle);
+				sungetc(nextc,fHandle);
 				g_lastToken.type = TOK_LESS;
 			}
 			return g_lastToken.type;
@@ -467,7 +603,7 @@ int	process_relation(char c)
 			if(nextc == '=')
 				g_lastToken.type = TOK_GE;
 			else {
-				ungetc(nextc,fHandle);
+				sungetc(nextc,fHandle);
 				g_lastToken.type = TOK_GREATER;
 			}
 			return g_lastToken.type;
@@ -516,7 +652,7 @@ int	process_comments(int isBlock)
 	enum waitingState {FOR_END, NORMAL};
 	enum commentaryType {LINE,BLOCK};
 	int c,state = NORMAL;
-	while((c = fgetc(fHandle)) != EOF)
+	while((c = sgetc(fHandle)) != EOF)
 	{
 		switch(isBlock)
 		{
@@ -552,8 +688,10 @@ int	intern_getToken()
 {
 	// let's get a character from source code's stream
 	int c;
-	while((c = fgetc(fHandle)) != EOF)
+	while((c = sgetc(fHandle)) != EOF)
 	{
+		g_lastToken.line = lines;
+		g_lastToken.character = chars;
 		// if the stream is at its end, either return EOF token
 		// or report error (multiple EOF tokens reached)
 		if(c == EOF)
@@ -562,7 +700,7 @@ int	intern_getToken()
 		{
 			// literals start with "
 			case '\"':
-				ungetc(c,fHandle);
+				sungetc(c,fHandle);
 				return  process_literal();
 				break;
 			// skip these chars
@@ -572,7 +710,7 @@ int	intern_getToken()
 				break;
 			// start of commentaries or / operator
 			case '/':
-				c = fgetc(fHandle);
+				c = sgetc(fHandle);
 				switch(c)
 				{
 					case EOF:
@@ -583,7 +721,7 @@ int	intern_getToken()
 						break;
 					default:
 						// it was an operator /
-						ungetc(c,fHandle);
+						sungetc(c,fHandle);
 						return process_operator('/');
 				}
 				break;
@@ -607,11 +745,11 @@ int	intern_getToken()
 			default:
 				if(isalpha(c) || c == '_' || c == '$')
 				{
-					ungetc(c,fHandle);
+					sungetc(c,fHandle);
 					return process_identifier();
 				} else if(isdigit(c))
 				{
-					ungetc(c,fHandle);
+					sungetc(c,fHandle);
 					return process_number();
 				} else {
 					fprintf(stderr,"Error: No token defined for 0x%X character\n",c);
@@ -647,10 +785,11 @@ int getToken()
 	if(currentToken == NULL || currentToken->next == NULL)
 	{
 		// then process new from file
+		int ret = intern_getToken();	
+		// get results and store them in double-linked-list
 		t_tokenElem* newel = malloc(sizeof(t_tokenElem));
 		if(newel)
 		{
-			int ret = intern_getToken();	
 			newel->prev = currentToken;
 			newel->next = NULL;
 			newel->token = g_lastToken;
@@ -663,6 +802,9 @@ int getToken()
 		}
 		// malloc error
 		// TODO: global error module
+		fprintf(stderr,"Internal eror - malloc failure");
+		errorLeave(INTERNAL_ERROR);
+		
 		
 	} 
 	// otherwise move to the next in linked list

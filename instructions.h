@@ -19,7 +19,14 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_SUB,           // destination      operand1        operand2
     INST_MUL,           // destination      operand1        operand2
     INST_DIV,           // destination      operand1        operand2
+    INST_EXPR_ADD,      //take last 2 operands from stack
+    INST_EXPR_SUB,      //take last 2 operands from stack
+    INST_EXPR_MUL,      //take last 2 operands from stack
+    INST_EXPR_DIV,      //take last 2 operands from stack
     INST_PUSH,          //var to push       ---             ---
+    INST_PUSH_INT,      //---               ---             ---
+    INST_PUSH_DOUBLE,   //---               ---             ---
+    INST_PUSH_STRING,   //---               ---             ---
     INST_POP,           //no inputs
     INST_STORE,         //destination       source          ---
     INST_JMP,           //addr to jump      ---             ---
@@ -27,13 +34,21 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_JNEQ,          //ddr to jump       value           value
     INST_JZ,            //addr to jump      value for equation  ---
     INST_CALL,          //addr of func      where to save return value or nothing     ---
+    INST_CALL_PRINT,    //num_of_strings    ---             ---
+    INST_CALL_CMP,      //return_value      ---             ---
+    INST_CALL_FIND,     //return value      ---             ---
+    INST_CALL_SORT,     //TODO
+    INST_CALL_SUBSTR,   //TODO
     INST_RET,           //value for return  ---             ---
     INST_WRITE,         //source            ---             ---
     INST_READ_INT,      //destination       ---             ---
     INST_READ_DOUBLE,   //destination       ---             ---
-    INST_READ_STRING,       //TODO
-    INST_STR_LEN,       //TODO
-    INST_STR_CMP,       //TODO
+    INST_READ_STRING,   //destination       ---             ---
+    INST_STR_INIT,      //str to init       ---             ---
+    INST_STR_REINIT,    //str to reinit     ---             ---
+    INST_STR_LEN,       //destination       source          ---
+    INST_STR_CONCATENATE,//destination      str1            str2
+    INST_STR_CMP,       //destination       str1            str2
     INST_STR_FIND,      //TODO
     INST_STR_SORT,      //TODO
     INST_STR_SUBSTR,    //TODO

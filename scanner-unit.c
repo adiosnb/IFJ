@@ -9,26 +9,26 @@ char* debug_keyword(int type)
 
 void printToken()
 {
-	int typeOfToken = g_lastToken.type;	
+	int typeOfToken = getLastToken();
 	switch(typeOfToken)
 	{
 		case TOK_ID:
-			printf("ID %s\n",g_lastToken.data.string);
+			printf("ID %s\n",getTokString());
 			break;
 		case TOK_SPECIAL_ID:
-			printf("SPECIALID %s\n",g_lastToken.data.string);
+			printf("SPECIALID %s\n",getTokString());
 			break;
 		case TOK_KEYWORD:
-			printf("KEYWORD %s\n", debug_keyword(g_lastToken.data.integer));
+			printf("KEYWORD %s\n", debug_keyword(getTokInt()));
 			break;
 		case TOK_CONST:
-			printf("NUM %d\n",g_lastToken.data.integer);
+			printf("NUM %d\n",getTokInt());
 			break;
 		case TOK_DOUBLECONST:
-			printf("DOUBLE %f\n",g_lastToken.data.real);
+			printf("DOUBLE %f\n",getTokDouble());
 			break;
 		case TOK_LITERAL:
-			printf("LITERAL '%s' \n",g_lastToken.data.string);
+			printf("LITERAL '%s' \n",getTokString());
 			break;
 		case TOK_RIGHT_BRACE:
 			printf("}\n");
@@ -85,7 +85,7 @@ void printToken()
 			printf("-\n");
 			break;
 		default:
-			printf("Unk token with type %d\n",g_lastToken.type);
+			printf("Unk token with type %d\n",getLastToken());
 			break;
 	}
 }
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 				printf("%3d. ",count);
 				printToken(typeOfToken);
 			} 
-			if(g_lastToken.type != TOK_EOF)
+			if(getLastToken() != TOK_EOF)
 			{
 				printf("Lexical error has occured.\n");
 				return 1;
