@@ -72,62 +72,44 @@ void stable_destroy(stab_t **p_table) {
 data_t* stable_add_var(stab_t *p_stable, char *id, data_t p_var){
 
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
-    stab_element_t *pom = p_stable->arr[index];
+    stab_element_t *ptr = p_stable->arr[index];
+    stab_element_t **pom = &p_stable->arr[index];
 
-    if (p_stable->arr[index] != NULL) {
-        //nastavy pom na posledny prvok
-        while (pom->stab_next != NULL) {
-            if (!strcmp(pom->stab_key, id)) {
-                return NULL; 
-            }
-            pom = pom->stab_next;
-        }
-        if (!strcmp(pom->stab_key, id)) {
-            return NULL; 
-        }
-        //za posledny prvok sa naalokuje miesto na dalsi
-        if ((pom->stab_next = malloc(sizeof(stab_element_t))) == NULL){
-            return NULL; 
-        }
-        pom = pom->stab_next;
-    } else {
-        if ((p_stable->arr[index] = malloc(sizeof(stab_element_t))) == NULL) {
+    while ((*pom) != NULL){
+        if (!strcmp((*pom)->stab_key,id))
             return NULL;
-        }
-
-        pom = p_stable->arr[index];
+        pom = &((*pom)->stab_next);
     }
 
-    pom->stab_content = p_var;
+    if (((*pom) = malloc(sizeof(stab_element_t))) == NULL){
+        return NULL;
+    }
+    (*pom)->stab_content = p_var;
 
     char *new_key = NULL;
     if ((new_key = malloc(sizeof(char) * strlen(id) + 1)) == NULL)
         return NULL;
 
     strcpy(new_key, id);
-    pom->stab_key = new_key;
+    (*pom)->stab_key = new_key;
+    (*pom)->stab_next = NULL;
 
-    pom->stab_next = NULL;
-
-    return &pom->stab_content;
+    return &(*pom)->stab_content;
 }
 
 //vrati polozku zo zoznamu
 data_t *stable_get_var(stab_t *p_stable, char *id){
-    unsigned index = hash_fun_ptr(id, p_stable->stab_size);
-    stab_element_t *pom = p_stable->arr[index];
+    if (p_stable != NULL) {
+        unsigned index = hash_fun_ptr(id, p_stable->stab_size);
+        stab_element_t *pom = p_stable->arr[index];
 
-    if (pom == NULL)
-        return NULL;
-
-    //najde polozku s id ( x == y tak strcmp == 0)
-    while (pom != NULL){
-        if (!strcmp(pom->stab_key,id)){
-            return &pom->stab_content;
+        while (pom != NULL) {
+            if (!strcmp(pom->stab_key,id)){
+                return &pom->stab_content;
+            }
+            pom = pom->stab_next;
         }
-        pom = pom->stab_next;
     }
-
     return NULL;
 }
 
@@ -161,18 +143,11 @@ bool stable_remove_var(stab_t *p_stable, char *id){
 }
 
 bool stable_search(stab_t *p_stable, char *srch_el){
-    unsigned index = hash_fun_ptr(srch_el, p_stable->stab_size);
-    stab_element_t *pom = p_stable->arr[index];
-
-    if (pom == NULL)
+    if (stable_get_var(p_stable,srch_el) == NULL){
         return false;
-
-    //najde polozku s id
-    while (strcmp(pom->stab_key, srch_el))
-        if ((pom = pom->stab_next) == NULL)
-            return false;
-
-    return true;
+    } else {
+        return true;
+    }
 }
 
 bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, data_t data){
