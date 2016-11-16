@@ -69,7 +69,7 @@ void stable_destroy(stab_t **p_table) {
 }
 
 //pridava polozku do zoznamu
-int stable_add_var(stab_t *p_stable, char *id, data_t p_var){
+data_t* stable_add_var(stab_t *p_stable, char *id, data_t p_var){
 
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
@@ -78,21 +78,21 @@ int stable_add_var(stab_t *p_stable, char *id, data_t p_var){
         //nastavy pom na posledny prvok
         while (pom->stab_next != NULL) {
             if (!strcmp(pom->stab_key, id)) {
-                return 1; //TODO netusim aku hodnotu vratit
+                return NULL; 
             }
             pom = pom->stab_next;
         }
         if (!strcmp(pom->stab_key, id)) {
-            return 1; //TODO netusim aku hodnotu vratit
+            return NULL; 
         }
         //za posledny prvok sa naalokuje miesto na dalsi
         if ((pom->stab_next = malloc(sizeof(stab_element_t))) == NULL){
-            return 1; //todo dohodnut sa na error hlaske
+            return NULL; 
         }
         pom = pom->stab_next;
     } else {
         if ((p_stable->arr[index] = malloc(sizeof(stab_element_t))) == NULL) {
-            return 1;
+            return NULL;
         }
 
         pom = p_stable->arr[index];
@@ -102,15 +102,14 @@ int stable_add_var(stab_t *p_stable, char *id, data_t p_var){
 
     char *new_key = NULL;
     if ((new_key = malloc(sizeof(char) * strlen(id) + 1)) == NULL)
-        return 1;
+        return NULL;
 
     strcpy(new_key, id);
     pom->stab_key = new_key;
 
     pom->stab_next = NULL;
 
-
-    return 0;
+    return &pom->stab_content;
 }
 
 //vrati polozku zo zoznamu
@@ -213,7 +212,7 @@ bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *loca
 
     pom[j] = '\0';
 
-    if(stable_add_var(p_stable, pom, data)) {
+    if(stable_add_var(p_stable, pom, data) == NULL) {
         free(pom);
         return false;
     }
@@ -285,11 +284,11 @@ bool stable_search_variadic(stab_t *p_stable, int count, ...)
 	return result;	
 }
 
-int stable_add_variadic(stab_t *p_stable,data_t data, int count, ...)
+data_t* stable_add_variadic(stab_t *p_stable,data_t data, int count, ...)
 {
 	if(count == 0)
-		return 0;
-	int result = 0;
+		return NULL;
+	data_t* result = NULL;
 	string_t str = str_init();
 
 	va_list args;
