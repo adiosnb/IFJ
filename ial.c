@@ -69,7 +69,7 @@ int KMP_hladaj(char *retazec, char *podretazec){
         else
             Podretazec_index = Table[Podretazec_index];
     }
-
+    free(Table);
     return (Podretazec_index > strlen(podretazec)) ? (Retazec_index - strlen(podretazec)) : (Retazec_index);
 
 }

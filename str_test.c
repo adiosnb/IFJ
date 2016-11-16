@@ -135,6 +135,8 @@ int main() {
     printf("%d\n",ret_search);
     ret_search = str_find(&str1,&str3);
     printf("%d\n",ret_search);
+
+/*
     str_reinit(&str3);
     str_append_chars(&str3,"iop[");
     ret_search = str_find(&str1,&str3);
@@ -144,7 +146,7 @@ int main() {
     str_append_chars(&str3,"qwer");
     ret_search = str_find(&str1,&str3);
     printf("%d\n",ret_search);
-
+*/
 
     str_destroy(&str1);
     str_destroy(&str2);

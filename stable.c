@@ -72,7 +72,6 @@ void stable_destroy(stab_t **p_table) {
 data_t* stable_add_var(stab_t *p_stable, char *id, data_t p_var){
 
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
-    stab_element_t *ptr = p_stable->arr[index];
     stab_element_t **pom = &p_stable->arr[index];
 
     while ((*pom) != NULL){
