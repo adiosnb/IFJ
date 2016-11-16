@@ -1,0 +1,3 @@
+function strreplace(str, pos, new_str)
+function implementing string
+add table for rules

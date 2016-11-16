@@ -6,4 +6,4 @@ main
 .idea/
 *.o
 *.swp
-stack/parser
+op_prec_parser/parser
