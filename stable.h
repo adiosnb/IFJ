@@ -9,7 +9,8 @@
 #include "instruction_list.h"
 #include "instruction_list.h"
 
-typedef struct {
+typedef struct dt{
+    struct dt* next_param;	// used in function
     int type;
     int inter_table;
     argument_var_t data;
@@ -37,8 +38,8 @@ void stable_destroy(stab_t **p_table);
 //odstrani jeden prvok z tabulky
 bool stable_remove_var(stab_t *p_stable, char *id);
 
-//prida prvok do tabulky
-int stable_add_var(stab_t *p_stable, char *id, data_t p_var);
+//prida prvok do tabulky a vrati odkaz na data. V pripade zlyhania vrati NULL
+data_t* stable_add_var(stab_t *p_stable, char *id, data_t p_var);
 
 //vrati ukazatel na dotazovany prvok
 data_t *stable_get_var(stab_t *p_stable, char *id);
@@ -51,6 +52,8 @@ bool stable_search(stab_t *p_stable, char *srch_el);
 
 // Searching a key of format 1.2.3......count
 bool stable_search_variadic(stab_t *p_stable, int count, ...);
+// Variadic form of adding a key into table
+data_t* stable_add_variadic(stab_t *p_stable,data_t data, int count, ...);
 
 void stable_print(stab_t *stable);
 

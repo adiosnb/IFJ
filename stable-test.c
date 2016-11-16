@@ -22,7 +22,6 @@ int main(){
     char string_concat2[] = "string1.string2.";
     char string_blank[] = "";
 
-    char *str; //TODO tests with this piece of shit
 
     printf("\n################### TEST_INIT ####################\n");
     stab_t *sym_table = stable_init(1024);
@@ -36,7 +35,7 @@ int main(){
 
     printf("\n################### TEST_ADD_VAR ##################\n");
     printf("\nAdding: %s", string1);
-    if(stable_add_var(sym_table, string1, cont1) == 1)
+    if(stable_add_var(sym_table, string1, cont1) == NULL)
         printf("\nstable_add_var FAILED (malloc)!\n");
     else {
         printf("\nAdding: %s\n", string2);
