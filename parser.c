@@ -7,6 +7,8 @@
 #include "stable.h"
 
 
+
+
 stab_t	*staticSym = NULL;
 
 char*	parser_class = NULL;
@@ -32,6 +34,37 @@ int	isTokenTypeSpecifier()
 		getTokInt() == KW_STRING));
 }
 
+/******************************************************************************
+ 			SEMANTIC UTILS
+******************************************************************************/
+
+void fillClassData(data_t* data)
+{
+	data->type = INTEGER;
+	data->data.arg_type = INTEGER;	
+	data->data.data.i = PLACEHOLDER_CLASS;
+}
+
+void fillFunctionData(data_t* data)
+{
+	data->type = INTEGER;
+	data->data.arg_type = INTEGER;	
+	data->data.data.i = PLACEHOLDER_STATIC;
+}
+void fillStaticVarData(data_t* data,int type)
+{
+	data->type = type;
+	data->data.arg_type = type;	
+	data->data.data.i = UNINITIALIZED;
+}
+
+void fillLocalVarData(data_t* data,int type, int stackPos)
+{
+	data->type = type;
+	data->data.arg_type = STACK_EBP;	
+	data->data.data.i = stackPos;
+	data->next_param = NULL;
+}
 //enum types {INTEGER, DOUBLE, STRING,FUN_INTEGER,FUN_DOUBLE,FUN_STRING,FUN_VOID,TYPELESS};
 
 enum types {FUN_INTEGER = 3, FUN_DOUBLE, FUN_STRING, FUN_VOID};
@@ -39,9 +72,30 @@ enum types {FUN_INTEGER = 3, FUN_DOUBLE, FUN_STRING, FUN_VOID};
 char* type2str(int type)
 {
 	static char* str[] = {"INTEGER","DOUBLE","STRING","FUN_INTEGER","FUN_DOUBLE","FUN_STRING", "FUN_VOID","ERR_TYPE"};
-	if(type > FUN_VOID)
+	if(type > 5)
 		return str[FUN_VOID+1];
 	return str[type];
+}
+
+int util_corretParamList(data_t* func)
+{
+	data_t* ptr = func->next_param;
+	if(!ptr)
+		return;
+	int offset = 0;
+	while(ptr)
+	{
+		if(ptr->next_param == NULL)
+			offset = ptr->data.data.i + 2;	
+		ptr = ptr->next_param;
+	}
+	
+	ptr = func->next_param;
+	while(ptr)
+	{
+		ptr->data.data.i -= offset;
+		ptr = ptr->next_param;
+	}
 }
 
 int class_definition_list();
@@ -483,7 +537,7 @@ int function_parameters_list(data_t* sym)
 {
 	// init
 	last_param = &sym->next_param;
-	param_count = 1000;
+	param_count = -1000;
 	
 	if(getToken() == TOK_RIGHT_PAR)
 	{
@@ -512,13 +566,16 @@ int parameter_definition()
 
 	if(isSecondPass)
 	{
+		if(stable_search_variadic(staticSym, 3, parser_class, parser_fun, getTokString()))
+			return throw("SEMANTIC - Formal parameter '%s' already declared.", getTokString());
 		GEN(">>> Add parameter '%s':'%s'",getTokString(),type2str(type));
-		/*// create a new symbol	
+		// create a new symbol	
 		data_t data;
-		data.type = type;
-		int id = stable_add_variadic(staticSym, data, 3, parser_class,parser_fun,geTokString());
-		(*last_param) = stable_get_var(staticSym,  		
-		*/
+		fillLocalVarData(&data,type, ++param_count);
+		data_t* dt = stable_add_variadic(staticSym, data, 3, parser_class,parser_fun,getTokString());
+		// move to next param
+		(*last_param) = dt;
+		last_param = &dt->next_param;
 	}
 
 	return SYN_OK;
@@ -560,7 +617,7 @@ int local_definition()
 			" already defined.", var, parser_class,parser_fun);	
 		
 		data_t data;
-		data.type = type;
+		fillLocalVarData(&data, type, 1);
 		stable_add_concatenate(staticSym, parser_class,parser_fun,var,data);
 	}
 	GEN("Local variable '%s' with type: %s",var,type2str(type));
@@ -604,8 +661,12 @@ int more_definition(data_t* sym)
 	switch(getToken())
 	{
 		case TOK_LEFT_PAR:
-			if(function_parameters_list(&sym->next_param) == SYN_ERR)
+			if(function_parameters_list(sym) == SYN_ERR)
 				return SYN_ERR;
+			if(isSecondPass)
+			{
+				util_corretParamList(sym);
+			}
 			if(getToken() != TOK_RIGHT_PAR)
 				return throw("Expected ')'");		
 				
@@ -664,8 +725,10 @@ int definition()
 				parser_class, getTokString());
 		GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
 		data_t data;
-		data.type = type; 
+		fillStaticVarData(&data,type);
 		pData = stable_add_variadic(staticSym,data,2,parser_class, getTokString());
+	} else {
+		pData = stable_search_variadic(staticSym,2,parser_class,getTokString());		
 	}
 	parser_fun = getTokString();
 	return more_definition(pData);
@@ -709,7 +772,7 @@ int class_definition()
 			return throw("SEMANTIC - class redefinition");
 		} else {
 			data_t data;
-			data.type = INTEGER;
+			fillClassData(&data);
 			stable_add_var(staticSym, getTokString(),data);
 		}
 	}
@@ -768,9 +831,9 @@ int main(int argc, char ** argv)
 			scanner_rewind();
 			// second pass
 			GEN("--------------- SECOND PASS ---------------");
-			source_program();
+			result = source_program();
 		}
-	//	stable_print(staticSym);
+		stable_print(staticSym);
 		stable_destroy(&staticSym);
 
 		scanner_closeFile();
