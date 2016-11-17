@@ -254,11 +254,11 @@ void stable_print(stab_t *stable) {
 }
 
 // Searching a key of format 1.2.3......count
-bool stable_search_variadic(stab_t *p_stable, int count, ...)
+data_t* stable_search_variadic(stab_t *p_stable, int count, ...)
 {
 	if(count == 0)
-		return false;
-	int result = false;
+		return NULL;
+	data_t* result = NULL;
 	string_t str = str_init();
 
 	va_list args;
@@ -277,7 +277,7 @@ bool stable_search_variadic(stab_t *p_stable, int count, ...)
 			str_append_chars(&str, ptr);
 		}
 		// now search
-		result = stable_search(p_stable, str.str);
+		result = stable_get_var(p_stable, str.str);
 	}
 	va_end(args);
 	str_destroy(str);
