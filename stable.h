@@ -9,9 +9,10 @@
 #include "instruction_list.h"
 #include "instruction_list.h"
 
-typedef struct dt{
+
+typedef struct dt{ 
+    int type;			// void, int, ...
     struct dt* next_param;	// used in function
-    int type;
     int inter_table;
     argument_var_t data;
 }data_t;

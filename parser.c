@@ -1,4 +1,4 @@
-#define	DEBUG 1 
+//#define	DEBUG 1 
 #include "parser.h"
 #include <stdio.h>
 #include <string.h>
@@ -45,9 +45,9 @@ void fillClassData(data_t* data)
 	data->data.data.i = PLACEHOLDER_CLASS;
 }
 
-void fillFunctionData(data_t* data)
+void fillFunctionData(data_t* data,int type)
 {
-	data->type = INTEGER;
+	data->type = type;
 	data->data.arg_type = INTEGER;	
 	data->data.data.i = PLACEHOLDER_STATIC;
 }
@@ -58,6 +58,14 @@ void fillStaticVarData(data_t* data,int type)
 	data->data.data.i = UNINITIALIZED;
 }
 
+void inicializeData(data_t* data)
+{
+	if(data->type == STRING)
+	{	
+		data->data.data.s = str_init();
+	}
+}
+
 void fillLocalVarData(data_t* data,int type, int stackPos)
 {
 	data->type = type;
@@ -65,15 +73,11 @@ void fillLocalVarData(data_t* data,int type, int stackPos)
 	data->data.data.i = stackPos;
 	data->next_param = NULL;
 }
-//enum types {INTEGER, DOUBLE, STRING,FUN_INTEGER,FUN_DOUBLE,FUN_STRING,FUN_VOID,TYPELESS};
 
-enum types {FUN_INTEGER = 3, FUN_DOUBLE, FUN_STRING, FUN_VOID};
 
 char* type2str(int type)
 {
-	static char* str[] = {"INTEGER","DOUBLE","STRING","FUN_INTEGER","FUN_DOUBLE","FUN_STRING", "FUN_VOID","ERR_TYPE"};
-	if(type > 5)
-		return str[FUN_VOID+1];
+	static char* str[] = {"INTEGER","DOUBLE","STRING",NULL,NULL,NULL,"VOID"};
 	return str[type];
 }
 
@@ -132,7 +136,7 @@ int type_specifier(int* out_type)
 			*out_type = DOUBLE;
 			break;
 		case KW_VOID:
-			*out_type = FUN_VOID;
+			*out_type = VOID;
 			break;
 		case KW_STRING:
 			*out_type = STRING;
@@ -558,7 +562,7 @@ int parameter_definition()
 {
 	int type;
 	type_specifier(&type);
-	if(type == FUN_VOID) 
+	if(type == VOID) 
 		return throw("Expected type-specifier (void,int,double,String)\n");
 
 	if(getToken() != TOK_ID)
@@ -599,7 +603,9 @@ int local_definition()
 {
 	int type;	
 	if(type_specifier(&type) == SYN_ERR)
-		return throw("Expected type-specifier (void,int,double,String)\n");
+		return throw("Expected type-specifier (int,double,String)\n");
+	if(type == VOID)
+		return throw("SEMANTIC error -> void definition of local symbol.");
 
 	if(getToken() != TOK_ID)
 		return throw("Expected simple-id in local definition");
@@ -661,6 +667,9 @@ int more_definition(data_t* sym)
 	switch(getToken())
 	{
 		case TOK_LEFT_PAR:
+			if(!isSecondPass)
+				fillFunctionData(sym,sym->type);
+
 			if(function_parameters_list(sym) == SYN_ERR)
 				return SYN_ERR;
 			if(isSecondPass)
@@ -683,7 +692,6 @@ int more_definition(data_t* sym)
 		break;
 		case TOK_ASSIGN:
 			GEN("Assign value");
-			// TODO: semantic: check if variable is not declared with void
 			if(expression() == SYN_ERR)
 				return SYN_ERR;
 			
@@ -692,6 +700,12 @@ int more_definition(data_t* sym)
 			if(getToken() != TOK_DELIM)
 				return throw("Missing ';' in definition");
 		case TOK_DELIM:
+			if(!isSecondPass)
+			{
+				inicializeData(sym);	
+				if(sym->type == VOID)
+					return throw("SEMANTIC ERROR - Void variable definition");
+			}
 			return SYN_OK;
 		default:
 			return throw("Expected ';','=' or '(' in static definition.");

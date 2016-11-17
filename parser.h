@@ -8,7 +8,7 @@ int isSecondPass = 0;
 enum syntaxCorrectness {SYN_OK,SYN_ERR};
 
 //#define throw(format,...) fprintf(stderr,"[%s:%d]: "format"\n", __FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
-#define throw(format,...) fprintf(stderr,"[input:%d:%d] [%s:%d] "format"\n", getTokLine(),getTokTabs(),__FILE__,__LINE__,##__VA_ARGS__),SYN_ERR
+#define throw(format,...) fprintf(stderr,"[input:%d:%d] [%s:%d] "format"\n", getTokLine(),getTokTabs(),__FILE__,__LINE__,##__VA_ARGS__),errorLeave(3),SYN_ERR
 
 #define PLACEHOLDER_CLASS	1337
 #define PLACEHOLDER_STATIC	123
