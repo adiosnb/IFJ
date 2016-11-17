@@ -86,19 +86,57 @@ void addBuiltInToTable(stab_t* table)
 	stable_add_variadic(table,data,2,"ifj16","readInt");
 	// readDouble
 	fillFunctionData(&data,DOUBLE);
-	stable_add_variadic(table,data,2,"ifj16","readString");
+	stable_add_variadic(table,data,2,"ifj16","readDouble");
 	// readString
 	fillFunctionData(&data,STRING);
-	stable_add_variadic(table,data,2,"ifj16","readInt");
-	// string funcs
+	stable_add_variadic(table,data,2,"ifj16","readString");
+	 
+	// length 
 	fillLocalVarData(&data,INTEGER, -2);
-	ptr =  stable_add_variadic(table,data,3,"ifj16","readInt","s");
+	ptr =  stable_add_variadic(table,data,3,"ifj16","length","s");
 
 	fillFunctionData(&data,INTEGER);
 	data.next_param = ptr;
 	stable_add_variadic(table,data,2,"ifj16","length");
 
 	// TODO: substr, compare, find
+	// substr
+	fillLocalVarData(&data,INTEGER, -2);
+	ptr =  stable_add_variadic(table,data,3,"ifj16","substr","n");
+	fillLocalVarData(&data,INTEGER, -3);
+	ptr =  stable_add_variadic(table,data,3,"ifj16","substr","i");
+	fillLocalVarData(&data,STRING, -4);
+	ptr =  stable_add_variadic(table,data,3,"ifj16","substr","s");
+	fillFunctionData(&data,STRING);
+	data.next_param = ptr;
+	stable_add_variadic(table,data,2,"ifj16","substr");
+
+	//compare 
+	fillLocalVarData(&data,STRING, -2);
+	ptr =  stable_add_variadic(table,data,3,"ifj16","compare","s2");
+	fillLocalVarData(&data,STRING, -3);
+	ptr =  stable_add_variadic(table,data,3,"ifj16","compare","s1");
+	fillFunctionData(&data,INTEGER);
+	data.next_param = ptr;
+	stable_add_variadic(table,data,2,"ifj16","compare");
+	// find
+	fillLocalVarData(&data,STRING, -2);
+	ptr =  stable_add_variadic(table,data,3,"ifj16","find","s");
+	fillLocalVarData(&data,STRING, -3);
+	ptr =  stable_add_variadic(table,data,3,"ifj16","find","search");
+	fillFunctionData(&data,INTEGER);
+	data.next_param = ptr;
+	stable_add_variadic(table,data,2,"ifj16","find");
+
+	//sort 
+	fillLocalVarData(&data,STRING, -2);
+	ptr =  stable_add_variadic(table,data,3,"ifj16","sort","s");
+	fillFunctionData(&data,STRING);
+	data.next_param = ptr;
+	stable_add_variadic(table,data,2,"ifj16","sort");
+
+
+
 }
 
 char* type2str(int type)
@@ -223,14 +261,20 @@ int more_next(data_t* var)
 					func = stable_search_variadic(staticSym, 1, getTokString());
 				if(!func)
 					return throw("SEMANTIC - function '%s' not found.",getTokString());
+				if(func->data.arg_type != INSTRUCTION)
+					return throw("SEMANTIC - expecting '%s' to be function", getTokString());
 				if(func->type != var->type)
 					return throw("SEMANTIC - function call type dismatch");
-				data_t* data = func->next_param;
+				data = func->next_param;
 			}
 			getToken();
 
-			if(function_arguments_list(data) == SYN_ERR)
+			if(function_arguments_list(&data) == SYN_ERR)
 				return SYN_ERR;
+
+			if(data != NULL)
+				return throw("SEMANTIC - too few arguments in funciton call");
+
 			if(getToken() != TOK_RIGHT_PAR)
 				return throw("Expected )");
 		}
@@ -510,18 +554,58 @@ int statement()
 	return throw("Expected a statement");
 }
 
+//<argument-definition>	-> <term>
 int argument_definition(data_t** fun)
 {
-	switch(getToken())
+	int arg_type = VOID;
+	data_t*	var;
+	if(isSecondPass)
 	{
-		case TOK_ID:
-		case TOK_SPECIAL_ID:
-		case TOK_LITERAL:
-		case TOK_CONST:
-		case TOK_DOUBLECONST:
-			break;
-		default:
-			return throw("Expected a term in function call");
+		if(!(*fun))
+			return throw("Semantic error: too many arguments");
+		switch(getToken())
+		{
+			case TOK_ID:
+				var = stable_search_variadic(staticSym, 3, parser_class, parser_fun,getTokString());
+				if(!var)
+					var = stable_search_variadic(staticSym,2, parser_class,getTokString());
+				if(!var)
+					return throw("SEMANTIC error - '%s' is not a valid symbol.", getTokString());
+				arg_type = var->type;
+				break;
+			case TOK_SPECIAL_ID:
+				var = stable_search_variadic(staticSym, 2, parser_class ,getTokString());
+				if(!var)
+					return throw("SEMANTIC error - '%s' is not a valid symbol.", getTokString());
+				arg_type = var->type;
+				break;
+			case TOK_LITERAL:
+				arg_type = STRING;
+				break;
+			case TOK_CONST:
+				arg_type = INTEGER;
+				break;
+			case TOK_DOUBLECONST:
+				arg_type = DOUBLE;
+				break;
+			default:
+				return throw("Expected a term in function call");
+		}
+		if(arg_type != (*fun)->type)
+			return throw("SEM - argument type dismatch.");
+		*fun = (*fun)->next_param;
+	} else {
+		switch(getToken())
+		{
+			case TOK_ID:
+			case TOK_SPECIAL_ID:
+			case TOK_LITERAL:
+			case TOK_CONST:
+			case TOK_DOUBLECONST:
+				break;
+			default:
+				return throw("Expected a term in function call");
+		}
 	}
 	return SYN_OK;
 }
