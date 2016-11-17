@@ -4,7 +4,6 @@
 
 #include "dynamic_stack.h"
 #include "../scanner/scanner_alt.h"
-#include "../op-parser/op-parser.h"
 
 const size_t INIT_SIZE = 512;
 const double RESIZE_FACTOR = 0.7;
@@ -137,25 +136,5 @@ bool stack_add_handle_symbol(stack_t *stack, unsigned symbol)
     
     }
     return false;
-}
-
-
-             
-t_token *get_top_terminal(stack_t *stack)
-{
-    if (stack == NULL)
-        return NULL;
-
-    long top = stack->top;
-    obj_t cur_token;
-
-    for (; top != -1; top--)
-    {
-        cur_token = stack->elem[top];
-
-        if ((int)cur_token.type >= TOK_EQ && cur_token.type <= BOTTOM)
-            return &stack->elem[top];
-    }
-    return NULL;
 }
 

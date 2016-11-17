@@ -7,85 +7,43 @@
 
 //#define NDEBUG
 
-const char op_table[][MAX_TERMINALS] =
-{
-    //        ==   !=    <    >   <=   >=    +    -    *    /   ID    (    )    $
-    /* == */{'>', '>', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '>', '>' },
-    /* != */{'>', '>', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '>', '>' },
-    /* <  */{'>', '>', '>', '>', '>', '>', '<', '<', '<', '<', '<', '<', '>', '>' },
-    /* >  */{'>', '>', '>', '>', '>', '>', '<', '<', '<', '<', '<', '<', '>', '>' },
-    /* <= */{'>', '>', '>', '>', '>', '>', '<', '<', '<', '<', '<', '<', '>', '>' },
-    /* >= */{'>', '>', '>', '>', '>', '>', '<', '<', '<', '<', '<', '<', '>', '>' },
-    /* +  */{'>', '>', '>', '>', '>', '>', '>', '>', '<', '<', '<', '<', '>', '>' },
-    /* -  */{'>', '>', '>', '>', '>', '>', '>', '>', '<', '<', '<', '<', '>', '>' },
-    /* *  */{'>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '<', '<', '>', '>' },
-    /* /  */{'>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '<', '<', '>', '>' },
-    /* ID */{'>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '_', '_', '>', '>' },
-    /* (  */{'<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '=', '_' },
-    /* )  */{'>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '_', '_', '>', '>' },
-    /* $  */{'<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '_', '=' },
-};
+extern const char op_table[][MAX_TERMINALS];
+extern const int rule_table[][MAX_RULES];
+extern const int rule_len[MAX_RULES];
 
-int rule_table[][MAX_RULES] =
+static inline t_token validate_ins(t_token s)
 {
-    {C, C, TOK_EQ, C, UNDEF},
-    {C, C, TOK_NOTEQ, C, UNDEF},
-    {C, C, TOK_LESS, C, UNDEF},
-    {C, C, TOK_GREATER, C, UNDEF},
-    {C, C, TOK_LE, C, UNDEF},
-    {C, C, TOK_GE, C, UNDEF},
-    {C, C, TOK_PLUS, C, UNDEF},
-    {C, C, TOK_MINUS, C, UNDEF},
-    {C, C, TOK_MUL, C, UNDEF},
-    {C, C, TOK_DIV, C, UNDEF},
-    {C, TOK_ID, UNDEF, UNDEF, UNDEF},
-    {C, TOK_LEFT_PAR, C, TOK_RIGHT_PAR, UNDEF}
-};
+    // just for now to see where is end of input tokens string
+    if (s.type == TOK_EOF)
+    {
+        s.data.op = '$';
+        s.type = BOTTOM;
+    }
 
-const int rule_len[] =
-{
-    4,
-    4,
-    4,
-    4,
-    4,
-    4,
-    4,
-    4,
-    4,
-    4,
-    2,
-    4
-};
-
-static inline int validate_ins(int a)
-{
-   
-    switch (a)
+    switch (s.type)
     {
         case TOK_SPECIAL_ID:
         case TOK_LITERAL:
         case TOK_CONST:
-        case TOK_DOUBLECONST: a = TOK_ID;
+        case TOK_DOUBLECONST: if (s.data.op != '$') s.type = TOK_ID;
     }
 
-    if (a == TOK_EOF)
-        a = BOTTOM;
-
+    
+    if (!(((int)s.type >= TOK_EQ && s.type <= BOTTOM) || s.type == C))
     // TODO: validate input symbol and print its string....how? scanner is not capable of doing that
-    if (a >= TOK_EQ && a <= BOTTOM)
-        return a;
-    else
-        error_and_die(ERR_SYNTAX, "Expression: invalid input symbol %s", g_lastToken.data.string);
-    return -1;    
+        error_and_die(ERR_SYNTAX, "Expression: invalid input symbol %i", s.type);
+    return s;
 }
 
 // top is top terminal of pushdown automaton and ins is input symbol
-void generate_syntax_error(int top, int ins)
+static void generate_syntax_error(t_token topt, t_token inst)
 {
-    top = validate_ins(top);
-    ins = validate_ins(ins);
+    topt = validate_ins(topt);
+    inst = validate_ins(inst);
     
+    int top = topt.type;
+    int ins = inst.type; 
+
     if (top == TOK_ID && ins == TOK_ID)
         error_and_die(ERR_SYNTAX, "Expression: missing operator between two identifiers");
     if (top == TOK_ID && ins == TOK_LEFT_PAR)
@@ -96,35 +54,32 @@ void generate_syntax_error(int top, int ins)
         error_and_die(ERR_SYNTAX, "Expression: missing operator between ')' and identifier"); 
     if (top == TOK_RIGHT_PAR && ins == TOK_LEFT_PAR)
         error_and_die(ERR_SYNTAX, "Expression: missing operator between ')' and '('"); 
-    if (top == BOTTOM && ins == TOK_RIGHT_PAR)
-        error_and_die(ERR_SYNTAX, "Expression: unbalanced ')'");
 }
 
 #define IS_OPERATOR(op)    (op == TOK_NOTEQ || op == TOK_LESS || op == TOK_GREATER || op == TOK_LE || op == TOK_GE || op == TOK_PLUS || op == TOK_MINUS || op == TOK_MUL || op == TOK_DIV)    
 
 
-static void generate_reduction_error(int top, int ins)
+static void generate_reduction_error(t_token topt, t_token inst)
 {
-    top = validate_ins(top);
-    ins = validate_ins(ins);
+    topt = validate_ins(topt);
+    inst = validate_ins(inst);
     
+    int top = topt.type;
+    int ins = inst.type; 
+
+    if (top == TOK_LEFT_PAR && ins == TOK_RIGHT_PAR)
+        error_and_die(ERR_SYNTAX, "Expression: no expression between parentheses"); 
     if (IS_OPERATOR(top) && (ins != TOK_ID || ins != TOK_LEFT_PAR))
-        error_and_die(ERR_SYNTAX, "Expression: missing operator between two identifiers");
-    if (top == TOK_RIGHT_PAR && ins == TOK_LEFT_PAR)
-        error_and_die(ERR_SYNTAX, "Expression: no epxression between parentheses"); 
+        error_and_die(ERR_SYNTAX, "Expression: missing right operand");
+    if (top == C && !IS_OPERATOR(ins))
+        error_and_die(ERR_SYNTAX, "Expression: missing left operand");
 }
-
-
 
 static char compare_token(int pda_symbol, int input_symbol)
 {
     
     return op_table[pda_symbol][input_symbol];
 }
-
-int a,b;
-int result;
-int temp = 40;
 
 const char *tokens[] = 
 {
@@ -141,9 +96,15 @@ void print_stack(stack_t *stack)
 
 void print_input(int a, int b)
 {
-    printf("pd = '%s'\nins = '%s'\n", tokens[b], tokens[a]);
+    printf("pd = '%s' and ins = '%s'\n", tokens[b], tokens[a]);
 }
 // TODO: symbol table checking data types
+
+static inline t_token get_next_token(void)
+{
+    getToken();
+    return validate_ins(g_lastToken);
+}
 
 void parse_expression(void)
 {
@@ -152,39 +113,53 @@ void parse_expression(void)
         fprintf(stderr, "Cannot open file!\n");
         return;
     }
-    stack_t handle = stack_ctor();
-    stack_t pda = stack_ctor();
-    int c =  validate_ins(getToken());
-    t_token *top_terminal;
-    t_token *top_terminal_tmp;
 
-    t_token bottom = {.type = BOTTOM};
+    stack_t     handle = stack_ctor(); // dynamic allocation
+    stack_t     pda = stack_ctor();    // dynamic allocation
+
+    t_token     ins = get_next_token();
+    t_token     top_terminal;
+    t_token     top_terminal_tmp;
+
+    // HACK HACK: BOTTOM equals to TOK_SPECIAL_ID, adding dollar to find out BOTTOM
+    t_token     bottom = {.type = BOTTOM, .data.op = '$'};
+
     stack_push(&pda, bottom);
     do
     {
         top_terminal = get_top_terminal(&pda);
         
-        int result = compare_token(top_terminal->type, c);     
+        int result = compare_token(top_terminal.type, ins.type);     
 
         switch(result)
         {
                 case '=':
+                        handle = stack_clear(&handle);
+                        handle = get_reduce_symbols(&pda, &handle);
+
+                        if (!stack_empty(&handle))
+                        {
+                               if (find_right_side(&handle) == -1)
+                                   generate_reduction_error(*stack_top(&pda), ins);
+                        }
                         // push input symbol 
                         stack_push(&pda, g_lastToken);
+
                         // read next token
-                        c =  validate_ins(getToken());
+                        ins = get_next_token();
                         break;
                 case '<':
                         // replacement of top terminal with top terminal and '<' (beginning of handle)
-                        stack_add_handle_symbol(&pda, top_terminal->type);
+                        stack_add_handle_symbol(&pda, top_terminal.type);
 
                         // push input symbol
                         stack_push(&pda, g_lastToken);
 
                         // read next token
-                        c =  validate_ins(getToken());
+                        ins = get_next_token();
                         break;
                 case '>':
+                        handle = stack_clear(&handle);
                         handle = get_reduce_symbols(&pda, &handle);
 
                         if (!stack_empty(&handle))
@@ -193,7 +168,7 @@ void parse_expression(void)
 
                             if (res != -1)
                             {
-                                int *left_side = get_rule(res);
+                                const int *left_side = get_rule(res);
 
                                 // switch topmost pda rule string with left side
                                 stack_reduce_rule(&pda, *left_side); 
@@ -202,21 +177,23 @@ void parse_expression(void)
                                     printf("%s ", tokens[res]);
                             }
                             else
-                            {
-                                error_and_die(ERR_SYNTAX, "Cannot find right side rule!\n");
-                            }
+                               generate_reduction_error(*stack_top(&pda), ins);
                         }
                         else    
                             error_and_die(ERR_SYNTAX, "Handle does not exist!\n");
 
                         break; 
-                case '_':
-                        generate_syntax_error(top_terminal->type, c); 
+                case '_': 
+                        if (top_terminal.type == TOK_LEFT_PAR && ins.type == BOTTOM) 
+                            error_and_die(ERR_SYNTAX, "Missing right parenthesis!");
+                        if (top_terminal.type == BOTTOM && ins.type == TOK_RIGHT_PAR) 
+                            error_and_die(ERR_SYNTAX, "Unbalanced '('");
+                        generate_syntax_error(*stack_top(&pda), ins); 
                         return;
             }
             top_terminal_tmp = get_top_terminal(&pda);
     }
-    while (c != BOTTOM || (int)top_terminal_tmp->type != BOTTOM);
+    while (ins.type != BOTTOM || (int)top_terminal_tmp.type != BOTTOM);
 
     putchar('\n');
     handle = stack_dtor(&handle);
@@ -232,19 +209,16 @@ static inline bool is_stack_bottom(const stack_t *const stack)
 
 stack_t get_reduce_symbols(const stack_t *const stack, stack_t *const handle)
 {
-    *handle = stack_clear(handle);
     stack_t string = *handle; 
 
     if (stack == NULL )
         return string;
 
-    long end = stack->top;
-
-    for (; !is_stack_bottom(stack); end--)
+    for (long end = stack->top; !is_stack_bottom(stack); end--)
     {
         if (stack->elem[end].type != '<')
         {
-            stack_push(&string, stack->elem[end]);
+            stack_push(&string, validate_ins(stack->elem[end]));
         }
         else
         {
@@ -290,13 +264,14 @@ int find_right_side(const stack_t *const handle)
     if (handle == NULL)
         return -1;
 
-    int     *rule;
-    t_token *top_terminal;
-    int     left_side_len;
-    bool    is_rule;
+    const int   *rule;
+    t_token     *top_terminal;
+    int          left_side_len;
+    bool         is_rule;
 
     for (int i = 0; i != MAX_RULES; i++)
     {
+        // rule len without left side
         left_side_len = rule_len[i]-1;
 
         if (stack_elem_count(handle) != left_side_len) 
@@ -307,28 +282,48 @@ int find_right_side(const stack_t *const handle)
         top_terminal = &handle->elem[0];
         is_rule = true;
 
-        //for (; (*rule != UNDEF) && ((int)top_terminal->type != BOTTOM) && ((int)top_terminal->type == *rule); top_terminal--, rule++)  
+        // walking through the rule and checking if rule symbols equal to handle
         for (int j = 0; j != left_side_len; j++, rule++, top_terminal++)
+        {
             if (*rule != (int)top_terminal->type)
             {
                 is_rule = false;
                 break;
             }
+        }
 
         if (is_rule)
             return i;
+
     }
 
     return -1;
 }
 
-int *get_rule(int rule_idx)
+const int *get_rule(int rule_idx)
 {
     if (rule_idx < 0 || rule_idx >= MAX_RULES)
         return NULL;
 
     return &rule_table[rule_idx][0];
 }
+
+t_token get_top_terminal(stack_t *stack) 
+{ 
+
+    long top = stack->top;
+    obj_t cur_token;
+
+    for (; top != -1; top--)
+    {
+        cur_token = validate_ins(stack->elem[top]);
+
+        if ((int)cur_token.type >= TOK_EQ && cur_token.type <= BOTTOM)
+            return cur_token;
+    }
+    return cur_token;
+}
+
 
 int main(void)
 {
