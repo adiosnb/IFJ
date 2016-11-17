@@ -81,7 +81,7 @@ int util_corretParamList(data_t* func)
 {
 	data_t* ptr = func->next_param;
 	if(!ptr)
-		return;
+		return 0;
 	int offset = 0;
 	while(ptr)
 	{

@@ -77,9 +77,9 @@ int	scanner_openFile(char* fileName)
 int	scanner_closeFile()
 {
 	// destroy local strings
-	str_destroy(first);
-	str_destroy(second);
-	str_destroy(literal);
+	str_destroy(&first);
+	str_destroy(&second);
+	str_destroy(&literal);
 
 	// if file is opened
 	if(fHandle)
