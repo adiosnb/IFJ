@@ -3,10 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "scanner.h"
-
 #include "stable.h"
-
-
+#include "error.h"
 
 
 stab_t	*staticSym = NULL;
@@ -48,8 +46,8 @@ void fillClassData(data_t* data)
 void fillFunctionData(data_t* data,int type)
 {
 	data->type = type;
-	data->data.arg_type = INTEGER;	
-	data->data.data.i = PLACEHOLDER_STATIC;
+	data->data.arg_type = INSTRUCTION;	
+	data->data.data.instruction = NULL; 
 }
 void fillStaticVarData(data_t* data,int type)
 {
@@ -74,6 +72,34 @@ void fillLocalVarData(data_t* data,int type, int stackPos)
 	data->next_param = NULL;
 }
 
+void addBuiltInToTable(stab_t* table)
+{
+	data_t data, *ptr;
+	// class IFJ16
+	fillClassData(&data);
+	stable_add_var(table, "ifj16",data);
+	// print 
+	fillFunctionData(&data,VOID);
+	stable_add_variadic(table,data,2,"ifj16","print");
+	// readInt 
+	fillFunctionData(&data,INTEGER);
+	stable_add_variadic(table,data,2,"ifj16","readInt");
+	// readDouble
+	fillFunctionData(&data,DOUBLE);
+	stable_add_variadic(table,data,2,"ifj16","readString");
+	// readString
+	fillFunctionData(&data,STRING);
+	stable_add_variadic(table,data,2,"ifj16","readInt");
+	// string funcs
+	fillLocalVarData(&data,INTEGER, -2);
+	ptr =  stable_add_variadic(table,data,3,"ifj16","readInt","s");
+
+	fillFunctionData(&data,INTEGER);
+	data.next_param = ptr;
+	stable_add_variadic(table,data,2,"ifj16","length");
+
+	// TODO: substr, compare, find
+}
 
 char* type2str(int type)
 {
@@ -171,24 +197,39 @@ int expression()
 }
 //<more-next>                    -> expression 
 //<more-next>                    -> <identifier> ( <function-parameters-list> ) 
-int more_next()
+int more_next(data_t* var)
 {
-	int isPrint = 0;
-	if(getToken() == TOK_SPECIAL_ID)
-		isPrint = !strcmp(getTokString(),"ifj16.print");
-	if(getToken() == TOK_LEFT_PAR)
+
+	getToken();
+	if(isIdentifier() && getToken() == TOK_LEFT_PAR)
 	{
-		GEN("Verify functioncall-variable type compatibility");
+		ungetToken();
+		int isPrint = !strcmp(getTokString(),"ifj16.print");
 		// is it a ID = ifj16.print() case ?
 		if(isPrint)
 		{
+			getToken();
 			builtin_print();
 			// NOTE: it's a semantic error in any case, just check syntax
 			return throw("Semantic error");
-		}
-		else {
-			hint("MORE-Function call of '%s'",getTokString());
-			if(function_arguments_list() == SYN_ERR)
+		} else 
+		{
+			data_t*	func = NULL, *data = NULL;
+			if(isSecondPass)
+			{
+				if(getLastToken() == TOK_ID)
+					func = stable_search_variadic(staticSym, 2, parser_class, getTokString());
+				else
+					func = stable_search_variadic(staticSym, 1, getTokString());
+				if(!func)
+					return throw("SEMANTIC - function '%s' not found.",getTokString());
+				if(func->type != var->type)
+					return throw("SEMANTIC - function call type dismatch");
+				data_t* data = func->next_param;
+			}
+			getToken();
+
+			if(function_arguments_list(data) == SYN_ERR)
 				return SYN_ERR;
 			if(getToken() != TOK_RIGHT_PAR)
 				return throw("Expected )");
@@ -242,13 +283,13 @@ int builtin_print()
 //<next>                         -> = <more-next>
 //<next>                         -> ( <function-parameters-list> ) 
 
-int next()
+int next(data_t* symbol)
 {	
 	int isPrint = !strcmp(getTokString(),"ifj16.print");
 	switch(getToken())
 	{
 		case TOK_ASSIGN:
-			if(more_next() == SYN_ERR)
+			if(more_next(symbol) == SYN_ERR)
 				return SYN_ERR;
 			if(getToken() != TOK_DELIM)
 				return throw("Expected ;");
@@ -361,9 +402,20 @@ int assign_statement()
 {
 	getToken();
 	if(isIdentifier())
-	{
+	{	
+		data_t* symbol = NULL;
 		GEN("Check if variable '%s'  is defined", getTokString());
-		return next();
+
+		if(isSecondPass)
+		{
+			if(getLastToken() == TOK_ID)
+				symbol = stable_search_variadic(staticSym,2,parser_class,getTokString());
+			else
+				symbol = stable_search_variadic(staticSym,1,getTokString());
+			if(!symbol)
+				return throw("SEMANTIC error - symbol %s is missin",getTokString());
+		}
+		return next(symbol);
 	} else
 		return throw("Expected identifier or full-identifier.");
 }
@@ -458,7 +510,7 @@ int statement()
 	return throw("Expected a statement");
 }
 
-int argument_definition()
+int argument_definition(data_t** fun)
 {
 	switch(getToken())
 	{
@@ -467,21 +519,23 @@ int argument_definition()
 		case TOK_LITERAL:
 		case TOK_CONST:
 		case TOK_DOUBLECONST:
-			return SYN_OK;
+			break;
+		default:
+			return throw("Expected a term in function call");
 	}
-	return throw("Expected a term in function call");
+	return SYN_OK;
 }
 //<more-function-arguments>     -> eps
 //<more-function-arguments>     -> , <argument-declaration> <more-function-arguments> 
 
-int more_function_arguments()
+int more_function_arguments(data_t** fun)
 {
 	switch(getToken())
 	{
 		case TOK_LIST_DELIM:
-				if(argument_definition() == SYN_ERR)
+				if(argument_definition(fun) == SYN_ERR)
 					return SYN_ERR;
-				return more_function_arguments();
+				return more_function_arguments(fun);
 		case TOK_RIGHT_PAR:
 			ungetToken();
 			return SYN_OK;
@@ -495,7 +549,7 @@ int more_function_arguments()
 //<function-arguments-list>     -> eps
 //<function-arguments-list>     -> <argument-definition> <more-function-arguments>
 
-int function_arguments_list()
+int function_arguments_list(data_t** fun)
 {
 	if(getToken() == TOK_RIGHT_PAR)
 	{
@@ -504,9 +558,9 @@ int function_arguments_list()
 	} else {
 		ungetToken();
 
-		if(argument_definition() == SYN_ERR)
+		if(argument_definition(fun) == SYN_ERR)
 			return SYN_ERR;
-		return more_function_arguments();
+		return more_function_arguments(fun);
 	}
 }
 
@@ -587,7 +641,7 @@ int parameter_definition()
 
 //<variable-initialization>        -> eps
 //<variable-initialization>        -> = <more-next>
-int variable_initialization()
+int variable_initialization(data_t* variable)
 {
 	int res = getToken();
 	ungetToken();
@@ -595,12 +649,13 @@ int variable_initialization()
 		return SYN_OK;
 	if(getToken() != TOK_ASSIGN)
 		return throw("Expected = in inicialization");
-	return more_next();
+	return more_next(variable);
 }
 
 //<local-definition>            -> <type-specifier> simple-identifier <variable-initialization> ;
 int local_definition()
 {
+	data_t* def = NULL;
 	int type;	
 	if(type_specifier(&type) == SYN_ERR)
 		return throw("Expected type-specifier (int,double,String)\n");
@@ -610,11 +665,6 @@ int local_definition()
 	if(getToken() != TOK_ID)
 		return throw("Expected simple-id in local definition");
 	char* var = getTokString();
-	if(variable_initialization() == SYN_ERR)
-		return SYN_ERR;
-	if(getToken() != TOK_DELIM)
-		return throw("Expected ; in local definition");
-
 	// generate locale vars in the second run
 	if(isSecondPass)
 	{
@@ -624,8 +674,15 @@ int local_definition()
 		
 		data_t data;
 		fillLocalVarData(&data, type, 1);
-		stable_add_concatenate(staticSym, parser_class,parser_fun,var,data);
+		def = stable_add_variadic(staticSym,data,3, parser_class,parser_fun,var);
 	}
+	
+	if(variable_initialization(def) == SYN_ERR)
+		return SYN_ERR;
+	if(getToken() != TOK_DELIM)
+		return throw("Expected ; in local definition");
+
+	
 	GEN("Local variable '%s' with type: %s",var,type2str(type));
 	return SYN_OK;
 }
@@ -839,6 +896,7 @@ int main(int argc, char ** argv)
 	if(scanner_openFile(argv[1]))
 	{
 		staticSym = stable_init(1024);
+		addBuiltInToTable(staticSym);
 		int result = source_program();
 		if(result != SYN_ERR)
 		{
