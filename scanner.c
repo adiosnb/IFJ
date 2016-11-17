@@ -248,13 +248,12 @@ int	process_literal()
 						state = NORMAL;
 						break;
 					default:
-						fprintf(stderr, "Error while reading literal\n");
+						fprintf(stderr, "LEXICAL Error while reading literal\n");
 						errorLeave(LEXICAL_ERROR);
 						return TOK_ERROR;
 						break;
 				}
 				break;
-			// special case for processing \ddd
 			case OCTAL:
 				if(isdigit(c))
 				{
@@ -270,18 +269,22 @@ int	process_literal()
 					if(octBase == 0)
 					{
 						//concatenate a new char
-                        ADD_CHAR(literal,sum);
+						ADD_CHAR(literal,sum);
 						octBase= 64;
 						sum = 0;
 						// and continue reading the rest of literal
 						state = NORMAL;
 					}
 				} else {
+					fprintf(stderr,"LEXICAL - Expected an octal digit\n");
+					errorLeave(LEXICAL_ERROR);
 					return TOK_ERROR;
 				}	
 				break;
 		}
 	}
+	fprintf(stderr,"LEXICAL - Missing the end of literal\n");
+	errorLeave(LEXICAL_ERROR);
 	return TOK_ERROR;
 }
 
@@ -416,11 +419,13 @@ int	process_identifier()
 				g_lastToken.data.string = createString(second.str);
 				return TOK_ID;
 			} else {
+				errorLeave(INTERNAL_ERROR);
 				return TOK_ERROR;
 			}
 		}
 	}
 
+	errorLeave(INTERNAL_ERROR);
 	return TOK_ERROR;
 	
 }
@@ -460,6 +465,7 @@ int	process_number()
 					state = DOUBLE;
 				} else {
 					// emit error, number ends with '.' without any following digit
+					fprintf(stderr,"LEX: Expected a digit after . \n");
 					errorLeave(LEXICAL_ERROR);	
 					return TOK_ERROR;
 				}
@@ -488,6 +494,8 @@ int	process_number()
 					buff[i++] = c;
 					state = EXP_RADIX;
 				} else {
+					fprintf(stderr,"LEX: Expected a digit after +- or digit after e \n");
+					errorLeave(LEXICAL_ERROR);	
 					return TOK_ERROR;
 				}
 				break;
@@ -497,6 +505,8 @@ int	process_number()
 					buff[i++] = c;
 					state = EXP_RADIX;
 				} else {
+					fprintf(stderr,"LEX: Expected a digit after +- \n");
+					errorLeave(LEXICAL_ERROR);	
 					return TOK_ERROR;
 				}
 				break;
@@ -536,7 +546,7 @@ int	process_number()
 				break;
 		}
 	}
-
+	errorLeave(SEMANTIC_ERROR);
 	return TOK_ERROR;
 }
 
@@ -557,7 +567,8 @@ int	process_operator(char op)
 			g_lastToken.type = TOK_MINUS;		
 			break;
 		default:
-			fprintf(stderr,"Unknown operator '%c'\n",op);
+			fprintf(stderr,"LEXICAL - Unknown operator '%c'\n",op);
+			errorLeave(LEXICAL_ERROR);
 			return TOK_ERROR;
 	}
 	g_lastToken.data.op= op;
@@ -568,49 +579,54 @@ int	process_relation(char c)
 {
 	int nextc = sgetc(fHandle);
 	// TODO: what exactly should we do upon receiving an EOF ?
-	if(nextc == EOF)
-		return TOK_ERROR;
-	switch(c)
+	if(nextc != EOF)
 	{
-		case '=':
-			if(nextc == '=')
-			{
-				g_lastToken.type = TOK_EQ;
-			} else {
-				// assigment
-				sungetc(nextc,fHandle);
-				g_lastToken.type = TOK_ASSIGN;
-			}
-			return g_lastToken.type;
-			break;
-		case '!':
-			if(nextc == '=')
-				g_lastToken.type = TOK_NOTEQ;
-			else
-				return TOK_ERROR;
-			return g_lastToken.type;
-			break;
-		case '<':
-			if(nextc == '=')
-				g_lastToken.type = TOK_LE;
-			else {
-				sungetc(nextc,fHandle);
-				g_lastToken.type = TOK_LESS;
-			}
-			return g_lastToken.type;
-			break;
-		case '>':
-			if(nextc == '=')
-				g_lastToken.type = TOK_GE;
-			else {
-				sungetc(nextc,fHandle);
-				g_lastToken.type = TOK_GREATER;
-			}
-			return g_lastToken.type;
-			break;
-		default:
-			break;	
+		switch(c)
+		{
+			case '=':
+				if(nextc == '=')
+				{
+					g_lastToken.type = TOK_EQ;
+				} else {
+					// assigment
+					sungetc(nextc,fHandle);
+					g_lastToken.type = TOK_ASSIGN;
+				}
+				return g_lastToken.type;
+				break;
+			case '!':
+				if(nextc == '=')
+					g_lastToken.type = TOK_NOTEQ;
+				else {
+					fprintf(stderr,"LEX: ! itself is not an operator, missing =");
+					errorLeave(SEMANTIC_ERROR);
+					return TOK_ERROR;
+				}
+				return g_lastToken.type;
+				break;
+			case '<':
+				if(nextc == '=')
+					g_lastToken.type = TOK_LE;
+				else {
+					sungetc(nextc,fHandle);
+					g_lastToken.type = TOK_LESS;
+				}
+				return g_lastToken.type;
+				break;
+			case '>':
+				if(nextc == '=')
+					g_lastToken.type = TOK_GE;
+				else {
+					sungetc(nextc,fHandle);
+					g_lastToken.type = TOK_GREATER;
+				}
+				return g_lastToken.type;
+				break;
+			default:
+				break;	
+		}
 	}
+	errorLeave(SEMANTIC_ERROR);
 	return TOK_ERROR;
 }
 // maps ASCII symbols to token types
@@ -638,6 +654,8 @@ int	process_symbol(char op)
 			type = TOK_LIST_DELIM;
 			break;
 		default:
+			fprintf(stderr,"LEX: Unknown symbol \n'%c'",op);
+			errorLeave(SEMANTIC_ERROR);
 			return TOK_ERROR;
 	}		
 	g_lastToken.type = type;
@@ -681,6 +699,11 @@ int	process_comments(int isBlock)
 				}
 		}
 	}
+	if(isBlock == LINE)
+		return g_lastToken.type;
+
+	fprintf(stderr,"LEXICAL - Missing */\n");
+	errorLeave(LEXICAL_ERROR);
 	return TOK_ERROR;	
 }
 
@@ -752,7 +775,8 @@ int	intern_getToken()
 					sungetc(c,fHandle);
 					return process_number();
 				} else {
-					fprintf(stderr,"Error: No token defined for 0x%X character\n",c);
+					fprintf(stderr,"lexical Error: No token defined for 0x%X character\n",c);
+					errorLeave(LEXICAL_ERROR);
 					return TOK_ERROR;
 				}
 				break;
@@ -802,7 +826,7 @@ int getToken()
 		}
 		// malloc error
 		// TODO: global error module
-		fprintf(stderr,"Internal eror - malloc failure");
+		fprintf(stderr,"Internal eror - malloc failure \n");
 		errorLeave(INTERNAL_ERROR);
 		
 		

@@ -1,4 +1,5 @@
 #include "scanner.h"
+#include "stable.h"
 
 char* debug_keyword(int type)
 {
@@ -6,6 +7,8 @@ char* debug_keyword(int type)
 	"else","false","for","if","int","return","String","static","true","void","while",NULL};
 	return keywords[type];
 }
+
+stab_t* staticSym = NULL;
 
 void printToken()
 {
