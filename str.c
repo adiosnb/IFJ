@@ -68,7 +68,9 @@ void str_append_str(string_t *str_dest,string_t *str_src){
 int str_find(string_t *str,string_t *search) {
     return KMP_hladaj(str->str,search->str);
 }
-string_t str_sort(string_t str);                //TODO
+string_t str_sort(string_t str){
+    ial_qsort(str.str,0,str.len);
+}
 
 string_t str_sub_str(string_t str, int i, int n) {
     int end = i + n;
@@ -90,7 +92,7 @@ void str_concatenate(string_t *str_dest, string_t *str_src1, string_t *str_src2)
         string_t tmp_str = str_init();          //pomocny string kde sa ulozi predosly vysledok
         str_append_str(&tmp_str, str_dest);
         str_concatenate(str_dest, &tmp_str, &tmp_str);    //rekurzivne volanie na konkatenaciu stringov
-        str_destroy(tmp_str);
+        str_destroy(&tmp_str);
     } else {
         int len = str_src1->len + str_src2->len;  //velkost vysledneho stringu
         int len_first = str_src1->len;
@@ -131,8 +133,8 @@ int str_cmp(string_t str1, string_t str2) {
         }
     }
 }
-void str_destroy(string_t str) {
-	if(str.str)
-	    free(str.str);
-	str.str = NULL;
+void str_destroy(string_t *str) {
+	if(str->str)
+	    free(str->str);
+	str->str = NULL;
 }

@@ -629,7 +629,7 @@ void pop(){
     argument_var_t tmp;
     tmp = stack_pop(glob_stack);
     if (tmp.arg_type == STRING) {
-        str_destroy(tmp.data.s);
+        str_destroy(&tmp.data.s);
     }
 }
 
@@ -880,12 +880,36 @@ void call_str_cmp() {
 }
 
 void call_str_find() {
-    return;
+    argument_var_t *ret, *str, *search;
+    str = stack_from_top_ptr(glob_stack, 1);
+    search = stack_top_ptr(glob_stack);
 
+    ret = glob_ins_list->active->instruction.addr1;
+
+    if (str->arg_type == STACK_EBP) {
+        str = stack_ebp_relative_ptr(glob_stack, str->data.i);
+    }
+    if (search->arg_type == STACK_EBP) {
+        search = stack_ebp_relative_ptr(glob_stack, search->data.i);
+    }
+    if (ret->arg_type == STACK_EBP) {
+        ret = stack_ebp_relative_ptr(glob_stack, ret->data.i);
+    }
+
+    if (!search->data.s.len){
+        ret->data.i = 0;
+    } else {
+        int tmp = str_find(&str->data.s, &search->data.s);
+        if (tmp == str->data.s.len){
+            ret->data.i = -1;
+        } else {
+            ret->data.i = tmp;
+        }
+    }
 }
 
 void call_str_sort() {
-    return;
+    return; //TODO
 
 }
 
@@ -894,6 +918,7 @@ void call_str_substr() {
     str = stack_from_top_ptr(glob_stack, 2);
     i = stack_from_top_ptr(glob_stack, 1);
     n = stack_top_ptr(glob_stack);
+    ret = glob_ins_list->active->instruction.addr1;
 
     if (str->arg_type == STACK_EBP) {
         str = stack_ebp_relative_ptr(glob_stack, str->data.i);
@@ -909,6 +934,6 @@ void call_str_substr() {
     }
 
     //vycistenie stringu a ulozenie vysledku
-    str_destroy(ret->data.s);
+    str_destroy(&ret->data.s);
     ret->data.s = str_sub_str(str->data.s,i->data.i,n->data.i);
 }

@@ -115,7 +115,7 @@ int main() {
     str_print(str2);
     str_print(str3);
 */
-    printf("\n################## TEST10 ###################\n"
+    printf("\n################## TEST10 ###################\n");
     printf("pokus o volanie str searach\n"
                    "str1 = qwertyuiop\n"
                    "str2 = rty\n"
@@ -132,13 +132,38 @@ int main() {
     str_append_chars(&str3,"vbn");
 
     int ret_search = str_find(&str1,&str2);
-    printf("%d/n",ret_search);
+    printf("%d\n",ret_search);
+    ret_search = str_find(&str1,&str3);
+    printf("%d\n",ret_search);
+
+/*
+    str_reinit(&str3);
+    str_append_chars(&str3,"iop[");
+    ret_search = str_find(&str1,&str3);
+    printf("%d\n",ret_search);
+
+    str_reinit(&str3);
+    str_append_chars(&str3,"qwer");
+    ret_search = str_find(&str1,&str3);
+    printf("%d\n",ret_search);
+*/
+
+    str_destroy(&str1);
+    str_destroy(&str2);
+    str_destroy(&str3);
+
+    str_reinit(&str1);
+    str_append_chars(&str1,"qwertyulkajhfjf;ldsjf;fj;ljiop");
+    str_print(str1);
+    str_sort(str1);
+    str_print(str1);
 
 
 
-    str_destroy(str1);
-    str_destroy(str2);
-    str_destroy(str3);
+
+    str_destroy(&str1);
+    str_destroy(&str2);
+    str_destroy(&str3);
 
     return 0;
 }
