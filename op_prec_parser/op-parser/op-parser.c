@@ -67,8 +67,6 @@ static void generate_reduction_error(t_token topt, t_token inst)
     int top = topt.type;
     int ins = inst.type; 
 
-    if (top == TOK_LEFT_PAR && ins == TOK_RIGHT_PAR)
-        error_and_die(ERR_SYNTAX, "Expression: no expression between parentheses"); 
     if (IS_OPERATOR(top) && (ins != TOK_ID || ins != TOK_LEFT_PAR))
         error_and_die(ERR_SYNTAX, "Expression: missing right operand");
     if (top == C && !IS_OPERATOR(ins))
@@ -140,7 +138,8 @@ void parse_expression(void)
                         if (!stack_empty(&handle))
                         {
                                if (find_right_side(&handle) == -1)
-                                   generate_reduction_error(*stack_top(&pda), ins);
+                                   if (stack_top(&pda)->type == TOK_LEFT_PAR && ins.type == TOK_RIGHT_PAR)
+                                       error_and_die(ERR_SYNTAX, "Expression: no expression between parentheses"); 
                         }
                         // push input symbol 
                         stack_push(&pda, g_lastToken);
