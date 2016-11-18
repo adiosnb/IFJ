@@ -79,6 +79,9 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_CALL_SUBSTR:
                 call_str_substr();
                 break;
+            case INST_CALL_LEN:
+                call_str_len();
+                break;
             case INST_RET:
                 ret();
                 break;
@@ -909,8 +912,21 @@ void call_str_find() {
 }
 
 void call_str_sort() {
-    return; //TODO
+    argument_var_t *source, *destination;
 
+    source = stack_top_ptr(glob_stack);
+    destination = glob_ins_list->active->instruction.addr1;
+
+    if (source->arg_type == STACK_EBP){
+        source = stack_ebp_relative_ptr(glob_stack,source->data.i);
+    }
+    if (destination->arg_type == STACK_EBP) {
+        destination = stack_ebp_relative_ptr(glob_stack, destination->data.i);
+    }
+
+    str_reinit(&destination->data.s);
+    str_append_str(&destination->data.s,&source->data.s);
+    str_sort(&destination->data.s);
 }
 
 void call_str_substr() {
@@ -936,4 +952,20 @@ void call_str_substr() {
     //vycistenie stringu a ulozenie vysledku
     str_destroy(&ret->data.s);
     ret->data.s = str_sub_str(str->data.s,i->data.i,n->data.i);
+}
+
+void call_str_len(){
+    argument_var_t *source, *destination;
+
+    source = stack_top_ptr(glob_stack);
+    destination = glob_ins_list->active->instruction.addr1;
+
+    if (source->arg_type == STACK_EBP){
+        source = stack_ebp_relative_ptr(glob_stack,source->data.i);
+    }
+    if (destination->arg_type == STACK_EBP) {
+        destination = stack_ebp_relative_ptr(glob_stack, destination->data.i);
+    }
+
+    destination->data.i = source->data.s.len;
 }

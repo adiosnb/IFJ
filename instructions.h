@@ -37,8 +37,9 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_CALL_PRINT,    //num_of_strings    ---             ---
     INST_CALL_CMP,      //return_value      ---             ---
     INST_CALL_FIND,     //return value      ---             ---
-    INST_CALL_SORT,     //TODO
-    INST_CALL_SUBSTR,   //TODO
+    INST_CALL_SORT,     //return_value      ---             ---
+    INST_CALL_SUBSTR,   //return_value      ---             ---
+    INST_CALL_LEN,      //return_value
     INST_RET,           //value for return  ---             ---
     INST_WRITE,         //source            ---             ---
     INST_READ_INT,      //destination       ---             ---
