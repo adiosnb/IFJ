@@ -1,5 +1,5 @@
 STACK=dynamic_stack
-LEX=scanner_alt
+LEX=scanner
 PARSER=op-parser
 PROGRAM=parser
 STRING=str

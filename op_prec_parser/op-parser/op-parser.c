@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "../scanner/scanner_alt.h"
+#include "../scanner/scanner.h"
 #include "../utils/dynamic_stack.h"
 #include "../error/error.h"
 #include "op-parser.h"

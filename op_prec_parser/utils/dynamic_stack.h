@@ -3,7 +3,7 @@
 
 #include <sys/types.h> 
 #include <stdbool.h>
-#include "../scanner/scanner_alt.h"
+#include "../scanner/scanner.h"
 
 typedef t_token obj_t;
 extern const size_t INIT_SIZE;  
