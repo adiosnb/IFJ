@@ -24,6 +24,7 @@ void expr_add();
 void expr_sub();
 void expr_mul();
 void expr_div();
+void compare();
 void write();    //src
 void read_int();//dst
 void read_double();//dst
@@ -41,6 +42,7 @@ void pop();     //
 void store();   //dst   src
 void inst_jump();//instruction_item_ptr
 void jump_zero();//instruction_item_ptr  num_fot_condition
+void jump_not_zero();//instruction_item_ptr  num_fot_condition
 void jump_equal();//instruction_item_ptr  num_for_condition num_for_condition
 void jump_not_equal();//instruction_item_ptr  num_for_condition num_for_condition
 void interpret_str_init();

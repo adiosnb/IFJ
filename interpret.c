@@ -45,6 +45,14 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_EXPR_DIV:
                 expr_div();
                 break;
+            case INST_EXPR_LOWER:
+            case INST_EXPR_HIGHER:
+            case INST_EXPR_LOW_EQ:
+            case INST_EXPR_HIG_EQ:
+            case INST_EXPR_EQUAL:
+            case INST_EXPR_NOT_EQ:
+                compare();
+                break;
             case INST_PUSH:
             case INST_PUSH_INT:
             case INST_PUSH_DOUBLE:
@@ -521,8 +529,8 @@ void divisoin(){
 void expr_add(){
     argument_var_t dest, op1, op2;
 
-    op1 = stack_pop(glob_stack);
     op2 = stack_pop(glob_stack);
+    op1 = stack_pop(glob_stack);
 
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER){
         dest.arg_type = INTEGER;
@@ -549,8 +557,8 @@ void expr_add(){
 void expr_sub() {
     argument_var_t dest, op1, op2;
 
-    op1 = stack_pop(glob_stack);
     op2 = stack_pop(glob_stack);
+    op1 = stack_pop(glob_stack);
 
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
@@ -576,8 +584,8 @@ void expr_sub() {
 void expr_mul() {
     argument_var_t dest, op1, op2;
 
-    op1 = stack_pop(glob_stack);
     op2 = stack_pop(glob_stack);
+    op1 = stack_pop(glob_stack);
 
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
@@ -603,13 +611,12 @@ void expr_mul() {
 void expr_div() {
     argument_var_t dest, op1, op2;
 
-    op1 = stack_pop(glob_stack);
     op2 = stack_pop(glob_stack);
+    op1 = stack_pop(glob_stack);
 
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
         dest.data.i = op1.data.i / op2.data.i;
-        //printf("op1 : %d ## op2 : %d ## op1 / op2 = %d \n",op1.data.i,op2.data.i,dest.data.i);  //debug vypis
     } else {
         if (op1.arg_type == DOUBLE && op2.arg_type == DOUBLE) {
             dest.arg_type = DOUBLE;
@@ -626,6 +633,111 @@ void expr_div() {
     }
 
     stack_push(&glob_stack, dest);
+}
+
+void compare(){
+    argument_var_t op1, op2, dest;
+
+    dest.arg_type = INTEGER;
+    op2 = stack_pop(glob_stack);
+    op1 = stack_pop(glob_stack);
+
+    switch (glob_ins_list->active->instruction.type){
+        case INST_EXPR_LOWER:
+            if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
+                dest.data.i = op1.data.i < op2.data.i;
+            } else {
+                if (op1.arg_type == DOUBLE && op2.arg_type == DOUBLE) {
+                    dest.data.i = op1.data.d < op2.data.d;
+                } else {
+                    if (op1.arg_type == DOUBLE && op2.arg_type == INTEGER) {
+                        dest.data.i = op1.data.d < op2.data.i;
+                    } else {
+                        dest.data.i = op1.data.i < op2.data.d;
+                    }
+                }
+            }
+            break;
+        case INST_EXPR_HIGHER:
+            if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
+                dest.data.i = op1.data.i > op2.data.i;
+            } else {
+                if (op1.arg_type == DOUBLE && op2.arg_type == DOUBLE) {
+                    dest.data.i = op1.data.d > op2.data.d;
+                } else {
+                    if (op1.arg_type == DOUBLE && op2.arg_type == INTEGER) {
+                        dest.data.i = op1.data.d > op2.data.i;
+                    } else {
+                        dest.data.i = op1.data.i > op2.data.d;
+                    }
+                }
+            }
+            break;
+        case INST_EXPR_LOW_EQ:
+            if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
+                dest.data.i = op1.data.i <= op2.data.i;
+            } else {
+                if (op1.arg_type == DOUBLE && op2.arg_type == DOUBLE) {
+                    dest.data.i = op1.data.d <= op2.data.d;
+                } else {
+                    if (op1.arg_type == DOUBLE && op2.arg_type == INTEGER) {
+                        dest.data.i = op1.data.d <= op2.data.i;
+                    } else {
+                        dest.data.i = op1.data.i <= op2.data.d;
+                    }
+                }
+            }
+            break;
+        case INST_EXPR_HIG_EQ:
+            if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
+                dest.data.i = op1.data.i >= op2.data.i;
+            } else {
+                if (op1.arg_type == DOUBLE && op2.arg_type == DOUBLE) {
+                    dest.data.i = op1.data.d >= op2.data.d;
+                } else {
+                    if (op1.arg_type == DOUBLE && op2.arg_type == INTEGER) {
+                        dest.data.i = op1.data.d >= op2.data.i;
+                    } else {
+                        dest.data.i = op1.data.i >= op2.data.d;
+                    }
+                }
+            }
+            break;
+        case INST_EXPR_EQUAL:
+            if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
+                dest.data.i = op1.data.i == op2.data.i;
+            } else {
+                if (op1.arg_type == DOUBLE && op2.arg_type == DOUBLE) {
+                    dest.data.i = op1.data.d == op2.data.d;
+                } else {
+                    if (op1.arg_type == DOUBLE && op2.arg_type == INTEGER) {
+                        dest.data.i = op1.data.d == op2.data.i;
+                    } else {
+                        dest.data.i = op1.data.i == op2.data.d;
+                    }
+                }
+            }
+            break;
+        case INST_EXPR_NOT_EQ:
+            if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
+                dest.data.i = op1.data.i != op2.data.i;
+            } else {
+                if (op1.arg_type == DOUBLE && op2.arg_type == DOUBLE) {
+                    dest.data.i = op1.data.d != op2.data.d;
+                } else {
+                    if (op1.arg_type == DOUBLE && op2.arg_type == INTEGER) {
+                        dest.data.i = op1.data.d != op2.data.i;
+                    } else {
+                        dest.data.i = op1.data.i != op2.data.d;
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+    }
+
+    stack_push(&glob_stack,dest);
 }
 
 void pop(){
@@ -656,6 +768,26 @@ void jump_zero() {
     }
 
     if (tmp_ptr->data.i == 0) {                                                            //ak je operand nulovy takze false, urobi sa skok
+        tmp_ptr = glob_ins_list->active->instruction.addr1;  //nacita z tabulky symbolov ukazatel na instrukciu
+        glob_ins_list->active = tmp_ptr->data.instruction;                               //priradi ukazatel do listu, takze zmeni tok programu
+    }
+}
+
+void jump_not_zero(){
+    tmp_ptr = glob_ins_list->active->instruction.addr2;     //nacita operand pre porovnanie
+
+    switch (tmp_ptr->arg_type){
+        case STACK_EBP:
+            tmp_ptr = stack_ebp_relative_ptr(glob_stack,tmp_ptr->data.i);
+            break;
+        case ON_TOP:
+            tmp_ptr = stack_top_ptr(glob_stack);
+            break;
+        default:
+            break;
+    }
+
+    if (tmp_ptr->data.i) {                                                            //ak je operand nenulovy takze true, urobi sa skok
         tmp_ptr = glob_ins_list->active->instruction.addr1;  //nacita z tabulky symbolov ukazatel na instrukciu
         glob_ins_list->active = tmp_ptr->data.instruction;                               //priradi ukazatel do listu, takze zmeni tok programu
     }

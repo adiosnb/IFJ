@@ -6,30 +6,27 @@
 
 int main () {
     stab_t *sym_tab;
-    argument_var_t tmp_var;
-    argument_var_t *ptr_to_tab;
     instruction_list_t *i_list;
-    instruction_item_t *ptr_inst;
 
     data_t input_data;
-    data_t *ptr_to_table1, *ptr_to_table2, *ptr_to_table3;
+    data_t *ptr_to_table1, *ptr_to_table2;
 
 
-    sym_tab = stable_init(1024);
 
     char lokal_a[] = "Main.Run.a";
     char lokal_b[] = "Main.Run.b";
     char lokal_c[] = "Main.Run.c";
     char stack_top[] = "stack-top";
 
+    sym_tab = stable_init(1024);
 
     input_data.data.arg_type = INTEGER;
     input_data.data.data.i = 5;
-    stable_add_var(sym_tab, lokal_a, input_data);
+    stable_add_var(sym_tab, lokal_b, input_data);
 
     input_data.data.arg_type = INTEGER;
     input_data.data.data.i = 8;
-    stable_add_var(sym_tab, lokal_b, input_data);
+    stable_add_var(sym_tab, lokal_a, input_data);
 
     input_data.data.arg_type = STACK_EBP;
     input_data.data.data.i = 1;
@@ -191,11 +188,11 @@ int main () {
     create_and_add_instruction(i_list, INST_PUSH_DOUBLE, 0, 0, 0);
     ptr_to_table1 = stable_get_var(sym_tab, lokal_a);
     ptr_to_table1->data.arg_type = DOUBLE;
-    ptr_to_table1->data.data.d = 56.333365;
+    ptr_to_table1->data.data.d = 123.456;
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table1->data, 0, 0);
     ptr_to_table1 = stable_get_var(sym_tab, lokal_b);
     ptr_to_table1->data.arg_type = DOUBLE;
-    ptr_to_table1->data.data.d = 123.456;
+    ptr_to_table1->data.data.d = 56.333365;
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table1->data, 0, 0);
     create_and_add_instruction(i_list, INST_EXPR_SUB, 0, 0, 0);
     ptr_to_table1 = stable_get_var(sym_tab, lokal_c);
@@ -247,11 +244,11 @@ int main () {
     create_and_add_instruction(i_list, INST_PUSH_DOUBLE, 0, 0, 0);
     ptr_to_table1 = stable_get_var(sym_tab, lokal_a);
     ptr_to_table1->data.arg_type = DOUBLE;
-    ptr_to_table1->data.data.d = 56.333365;
+    ptr_to_table1->data.data.d = 123.456;
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table1->data, 0, 0);
     ptr_to_table1 = stable_get_var(sym_tab, lokal_b);
     ptr_to_table1->data.arg_type = DOUBLE;
-    ptr_to_table1->data.data.d = 123.456;
+    ptr_to_table1->data.data.d = 56.333365;
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table1->data, 0, 0);
     create_and_add_instruction(i_list, INST_EXPR_DIV, 0, 0, 0);
     ptr_to_table1 = stable_get_var(sym_tab, lokal_c);

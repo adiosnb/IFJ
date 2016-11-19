@@ -12,7 +12,7 @@ set(scanner scanner.c scanner-unit.c str.c)
 set(interpret-expr-test interpret.c interpret-expr-test.c str.c instruction_list.c stack.c stable.c ial.c)
 set(stable_test stable-test.c stable.c stack.h str.c ial.c)
 set(interpret-str-test interpret-str-test.c str.c interpret.c stack.c stable.c instruction_list.c instructions.h ial.c)
-
+set(interpre-rel-test interpret.c interpret-relation-test.c str.c instruction_list.c stack.c stable.c ial.c)
 set(parser op_prec_parser/op-parser.c op_prec_parser/utils/dynamic_stack.c error.c op_prec_parser/error_op/error_op.c stable.c ial.c scanner_alt.c str.c)
 
 add_executable(main ${SOURCE_FILES})
@@ -25,3 +25,4 @@ add_executable(interpret-expr-test ${interpret-expr-test})
 add_executable(stable-test ${stable_test})
 
 add_executable(interpret-str-test ${interpret-str-test})
+add_executable(interpret-rel-test ${interpre-rel-test})
