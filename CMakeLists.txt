@@ -13,12 +13,9 @@ set(interpret-expr-test interpret.c interpret-expr-test.c str.c instruction_list
 set(stable_test stable-test.c stable.c stack.h str.c ial.c)
 set(interpret-str-test interpret-str-test.c str.c interpret.c stack.c stable.c instruction_list.c instructions.h ial.c)
 
-set(parser op_prec_parser/op-parser/op-parser.c op_prec_parser/utils/dynamic_stack.c op_prec_parser/error/error.c op_prec_parser/scanner/scanner_alt.c op_prec_parser/scanner/str.c)
+set(parser op_prec_parser/op-parser.c op_prec_parser/utils/dynamic_stack.c error.c op_prec_parser/error_op/error_op.c stable.c ial.c scanner_alt.c str.c)
 
 add_executable(main ${SOURCE_FILES})
-add_executable(interpret_idea ${SOURCE_FILES})
-add_executable(inter_idea_recursion ${INTER_IDEA_REC})
-add_executable(read_test ${READ_TEST})
 
 add_executable(parser ${parser})
 add_executable(str_test ${str_test})

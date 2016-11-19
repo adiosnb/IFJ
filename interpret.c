@@ -643,14 +643,19 @@ void inst_jump() {
 
 void jump_zero() {
     tmp_ptr = glob_ins_list->active->instruction.addr2;     //nacita operand pre porovnanie
-    if (tmp_ptr->arg_type == STACK_EBP) {
-        tmp_var = stack_ebp_relative(glob_stack,
-                                     tmp_ptr->data.i);                       //ak je na zasobniku zoberie hodnotu operandu z tade
-    } else {
-        tmp_var = *tmp_ptr;
+
+    switch (tmp_ptr->arg_type){
+        case STACK_EBP:
+            tmp_ptr = stack_ebp_relative_ptr(glob_stack,tmp_ptr->data.i);
+            break;
+        case ON_TOP:
+            tmp_ptr = stack_top_ptr(glob_stack);
+            break;
+        default:
+            break;
     }
 
-    if (tmp_var.data.i == 0) {                                                            //ak je operand nulovy takze false, urobi sa skok
+    if (tmp_ptr->data.i == 0) {                                                            //ak je operand nulovy takze false, urobi sa skok
         tmp_ptr = glob_ins_list->active->instruction.addr1;  //nacita z tabulky symbolov ukazatel na instrukciu
         glob_ins_list->active = tmp_ptr->data.instruction;                               //priradi ukazatel do listu, takze zmeni tok programu
     }
