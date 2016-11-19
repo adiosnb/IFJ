@@ -1,8 +1,9 @@
 #include <stdio.h>
 
 #include "../scanner.h"
-#include "../utils/dynamic_stack.h"
+#include "utils/dynamic_stack.h"
 #include "../error.h"
+#include "error_op/error_op.h"
 #include "op-parser.h"
 
 //#define NDEBUG
