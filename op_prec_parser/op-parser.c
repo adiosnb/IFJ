@@ -3,8 +3,10 @@
 #include "../scanner.h"
 #include "utils/dynamic_stack.h"
 #include "../error.h"
-#include "error_op/error_op.h"
+//#include "error_op/error_op.h"
 #include "op-parser.h"
+
+#include "../stable.h"
 
 //#define NDEBUG
 
@@ -41,7 +43,7 @@ static inline t_token validate_ins(t_token s)
 
     if (!(((int)s.type >= TOK_EQ && s.type <= BOTTOM) || s.type == C))
     // TODO: validate input symbol and print its string....how? scanner is not capable of doing that
-        error_and_die(ERR_SYNTAX, "Expression: invalid input symbol %i", s.type);
+        error_and_die(SYNTAX_ERROR, "Expression: invalid input symbol %i", s.type);
     return s;
 }
 
@@ -55,15 +57,15 @@ static void generate_syntax_error(t_token topt, t_token inst)
     int ins = inst.type; 
 
     if (top == TOK_ID && ins == TOK_ID)
-        error_and_die(ERR_SYNTAX, "Expression: missing operator between two identifiers");
+        error_and_die(SYNTAX_ERROR, "Expression: missing operator between two identifiers");
     if (top == TOK_ID && ins == TOK_LEFT_PAR)
-        error_and_die(ERR_SYNTAX, "Expression: missing operator between identifier and '('");
+        error_and_die(SYNTAX_ERROR, "Expression: missing operator between identifier and '('");
     if (top == TOK_LEFT_PAR && ins == BOTTOM)
-        error_and_die(ERR_SYNTAX, "Expression: missing ')'"); 
+        error_and_die(SYNTAX_ERROR, "Expression: missing ')'"); 
     if (top == TOK_RIGHT_PAR && ins == TOK_ID)
-        error_and_die(ERR_SYNTAX, "Expression: missing operator between ')' and identifier"); 
+        error_and_die(SYNTAX_ERROR, "Expression: missing operator between ')' and identifier"); 
     if (top == TOK_RIGHT_PAR && ins == TOK_LEFT_PAR)
-        error_and_die(ERR_SYNTAX, "Expression: missing operator between ')' and '('"); 
+        error_and_die(SYNTAX_ERROR, "Expression: missing operator between ')' and '('"); 
 }
 
 #define IS_OPERATOR(op)    (op == TOK_NOTEQ || op == TOK_LESS || op == TOK_GREATER || op == TOK_LE || op == TOK_GE || op == TOK_PLUS || op == TOK_MINUS || op == TOK_MUL || op == TOK_DIV)    
@@ -78,9 +80,9 @@ static void generate_reduction_error(t_token topt, t_token inst)
     int ins = inst.type; 
 
     if (IS_OPERATOR(top) && (ins != TOK_ID || ins != TOK_LEFT_PAR))
-        error_and_die(ERR_SYNTAX, "Expression: missing right operand");
+        error_and_die(SYNTAX_ERROR, "Expression: missing right operand");
     if (top == C && !IS_OPERATOR(ins))
-        error_and_die(ERR_SYNTAX, "Expression: missing left operand");
+        error_and_die(SYNTAX_ERROR, "Expression: missing left operand");
 }
 
 static char compare_token(int pda_symbol, int input_symbol)
@@ -156,7 +158,7 @@ enum data_type parse_expression(void)
                         {
                                if (find_right_side(&handle) == -1)
                                    if (stack_top(&pda)->type == TOK_LEFT_PAR && ins.type == TOK_RIGHT_PAR)
-                                       error_and_die(ERR_SYNTAX, "Expression: no expression between parentheses"); 
+                                       error_and_die(SYNTAX_ERROR, "Expression: no expression between parentheses"); 
                         }
                         // push input symbol 
                         stack_push(&pda, g_lastToken);
@@ -245,17 +247,17 @@ enum data_type parse_expression(void)
                                generate_reduction_error(*stack_top(&pda), ins);
                         }
                         else    
-                            error_and_die(ERR_SYNTAX, "Expression: Handle does not exist!\n");
+                            error_and_die(SYNTAX_ERROR, "Expression: Handle does not exist!\n");
 
                         break; 
                 case '_': 
                         if (top_terminal.type == TOK_LEFT_PAR && ins.type == BOTTOM) 
-                            error_and_die(ERR_SYNTAX, "Expression: Missing right parenthesis!");
+                            error_and_die(SYNTAX_ERROR, "Expression: Missing right parenthesis!");
                         if (top_terminal.type == BOTTOM && ins.type == TOK_RIGHT_PAR) 
-                            error_and_die(ERR_SYNTAX, "Expression: Unbalanced '('");
+                            error_and_die(SYNTAX_ERROR, "Expression: Unbalanced '('");
                         generate_syntax_error(*stack_top(&pda), ins); 
                 case 'E':
-                        error_and_die(ERR_SYNTAX, "Expression: Logical operators are not associative!");
+                        error_and_die(SYNTAX_ERROR, "Expression: Logical operators are not associative!");
             }
             top_terminal_tmp = get_top_terminal(&pda);
     }
@@ -392,7 +394,7 @@ t_token get_top_terminal(stack_t *stack)
     return cur_token;
 }
 
-
+stab_t* staticSym = NULL;
 int main(void)
 {
     fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression());
