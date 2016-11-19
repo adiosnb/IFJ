@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdarg.h>
 #include "error.h"
 #include "scanner.h"
 #include "stable.h"
@@ -24,3 +25,19 @@ void errorLeave(int errtype)
 	clean_up();
 	exit(errtype);
 }
+
+void error_and_die(enum errorTypes type, const char *fmt, ...)
+{
+    va_list valist;
+    char buffer[512];
+    
+    va_start(valist, fmt);
+    vsprintf(buffer, fmt, valist);
+    fprintf(stderr, "%.511s\n", buffer);
+
+    va_end(valist);
+
+    // TODO: free all resources and end the program 
+    errorLeave(type);
+}
+

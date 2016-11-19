@@ -30,3 +30,6 @@ void clean_up();
 
 // Leave the process with error 'errtype'
 void errorLeave(int errtype);
+
+// Error and die with code
+void error_and_die(enum errorTypes type, const char *fmt, ...);
