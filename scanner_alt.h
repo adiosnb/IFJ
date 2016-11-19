@@ -22,8 +22,6 @@ typedef struct {
 	// the lexical type of token (identifier, keyword, etc)	
 	unsigned int 	type;
 	t_tokenData	data;	
-	int		line;
-	int		character;
 } t_token;
 
 
@@ -106,20 +104,4 @@ int	getToken();
 // Return token
 int	ungetToken();
 
-// Returns the type of last token
-int	getLastToken();
-//
-// Returns integer value of last token
-int	getTokInt();
-
-// Returns double value of last token
-double	getTokDouble();
-
-// Returns string value of last token
-char* 	getTokString();
-
-// Returns last token line
-int	getTokLine();
-// Returns last token line
-int	getTokTabs();
 #endif

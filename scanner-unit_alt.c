@@ -1,5 +1,5 @@
-#include "scanner.h"
-#include "stable.h"
+#include "str.h"
+#include "scanner_alt.h"
 
 char* debug_keyword(int type)
 {
@@ -8,30 +8,28 @@ char* debug_keyword(int type)
 	return keywords[type];
 }
 
-stab_t* staticSym = NULL;
-
 void printToken()
 {
-	int typeOfToken = getLastToken();
+	int typeOfToken = g_lastToken.type;	
 	switch(typeOfToken)
 	{
 		case TOK_ID:
-			printf("ID %s\n",getTokString());
+			printf("ID %s\n",g_lastToken.data.string);
 			break;
 		case TOK_SPECIAL_ID:
-			printf("SPECIALID %s\n",getTokString());
+			printf("SPECIALID %s\n",g_lastToken.data.string);
 			break;
 		case TOK_KEYWORD:
-			printf("KEYWORD %s\n", debug_keyword(getTokInt()));
+			printf("KEYWORD %s\n", debug_keyword(g_lastToken.data.integer));
 			break;
 		case TOK_CONST:
-			printf("NUM %d\n",getTokInt());
+			printf("NUM %d\n",g_lastToken.data.integer);
 			break;
 		case TOK_DOUBLECONST:
-			printf("DOUBLE %f\n",getTokDouble());
+			printf("DOUBLE %f\n",g_lastToken.data.real);
 			break;
 		case TOK_LITERAL:
-			printf("LITERAL '%s' \n",getTokString());
+			printf("LITERAL '%s' \n",g_lastToken.data.string);
 			break;
 		case TOK_RIGHT_BRACE:
 			printf("}\n");
@@ -88,13 +86,18 @@ void printToken()
 			printf("-\n");
 			break;
 		default:
-			printf("Unk token with type %d\n",getLastToken());
+			printf("Unk token with type %d\n",g_lastToken.type);
 			break;
 	}
 }
 
 int main(int argc, char* argv[])
 {
+	first = str_init();
+    second = str_init();
+    literal = str_init();
+
+
 	char name[256] = "source.java";
 	if(argc >= 2)
 		snprintf(name,255,"%s",argv[1]);
@@ -113,7 +116,7 @@ int main(int argc, char* argv[])
 				printf("%3d. ",count);
 				printToken(typeOfToken);
 			} 
-			if(getLastToken() != TOK_EOF)
+			if(g_lastToken.type != TOK_EOF)
 			{
 				printf("Lexical error has occured.\n");
 				return 1;
@@ -124,5 +127,10 @@ int main(int argc, char* argv[])
 	} else {
 		printf("Error has occured while opening the file %s.\n",name);	
 	}
+
+    str_destroy(first);
+    str_destroy(second);
+    str_destroy(literal);
+
 	return 0;
 }

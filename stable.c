@@ -2,7 +2,13 @@
 // Created by k on 9.10.2016.
 //
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include "stable.h"
+#include "instruction_list.h"
+#include "str.h"
+
+#include <stdarg.h>
 
 unsigned hash_fun_ptr(char *id, unsigned stab_size){
     int i = 0, pom = 0;
@@ -26,114 +32,138 @@ stab_t *stable_init(unsigned size){
     return pom;
 }
 
+/*
 //rekurzivne prejde jednosmerne viazany zoznam elementov a uvolni pamat
 void stable_destroy_element(stab_element_t *p_element){
+
     if (p_element->stab_next->stab_next != NULL)
         stable_destroy_element(p_element->stab_next);
+
     free(p_element->stab_next);
     p_element->stab_next = NULL;
     return;
 }
+*/
 
 //zavola funkciu na destrukciu prvkov v tabulke a potm uvolni tabulku
 void stable_destroy(stab_t **p_table) {
     stab_element_t *current, *next;
 
-    for (unsigned i = 0; i < p_table[0]->stab_size; i++) {
-        current = p_table[0]->arr[i];
-        while (current != NULL) {
-            next = current->stab_next;
-            free(current);
-            current = next;
+    if (*p_table != NULL) {
+        for (unsigned i = 0; i < p_table[0]->stab_size; i++) {
+            current = p_table[0]->arr[i];
+            while (current != NULL) {
+                next = current->stab_next;
+                free(current->stab_key);
+                if (current->stab_content.data.arg_type == STRING) {
+                    str_destroy(&current->stab_content.data.data.s);
+                }
+                free(current);
+                current = next;
+            }
         }
+        free(*p_table);
+        *p_table = NULL;
     }
-    free(*p_table);
     return;
 }
 
 //pridava polozku do zoznamu
-int stable_add_var(stab_t *p_stable, char *id, stab_element_t *p_var){
+data_t* stable_add_var(stab_t *p_stable, char *id, data_t p_var){
+
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
-    stab_element_t *pom = p_stable->arr[index];
+    stab_element_t **pom = &p_stable->arr[index];
 
-    if (p_stable->arr[index] != NULL) {
-        //nastavy pom na posledny prvok
-        while (pom->stab_next != NULL)
-            pom = pom->stab_next;
-        //za posledny prvok sa naalokuje miesto na dalsi
-        if ((pom->stab_next = malloc(sizeof(stab_element_t))) == NULL){
-            return 1; //todo dohodnut sa na error hlaske
-        }
-        pom = pom->stab_next;
-    } else {
-        if ((p_stable->arr[index] = malloc(sizeof(stab_element_t))) == NULL) {
-            return 1;
-        }
-
-        pom = p_stable->arr[index];
+    while ((*pom) != NULL){
+        if (!strcmp((*pom)->stab_key,id))
+            return NULL;
+        pom = &((*pom)->stab_next);
     }
 
-    pom->stab_content = *p_var;
-    pom->stab_key = id;
-    pom->stab_next = NULL;
+    if (((*pom) = malloc(sizeof(stab_element_t))) == NULL){
+        return NULL;
+    }
+    (*pom)->stab_content = p_var;
 
+    char *new_key = NULL;
+    if ((new_key = malloc(sizeof(char) * strlen(id) + 1)) == NULL)
+        return NULL;
 
-    return 0;
+    strcpy(new_key, id);
+    (*pom)->stab_key = new_key;
+    (*pom)->stab_next = NULL;
+
+    return &(*pom)->stab_content;
 }
 
 //vrati polozku zo zoznamu
-argument_var_t *stable_get_var(stab_t *p_stable, char *id){
-    unsigned index = hash_fun_ptr(id, p_stable->stab_size);
-    stab_element_t *pom = p_stable->arr[index];
+data_t *stable_get_var(stab_t *p_stable, char *id){
+    if (p_stable != NULL) {
+        unsigned index = hash_fun_ptr(id, p_stable->stab_size);
+        stab_element_t *pom = p_stable->arr[index];
 
-    if (pom == NULL)
-        return NULL;
-
-    //najde polozku s id
-    while (strcmp(pom->stab_key, id))//todo skontroluj
-        if ((pom = pom->stab_next) == NULL)
-            return NULL;
-
-    return &pom->stab_content;
+        while (pom != NULL) {
+            if (!strcmp(pom->stab_key,id)){
+                return &pom->stab_content;
+            }
+            pom = pom->stab_next;
+        }
+    }
+    return NULL;
 }
 
 //odstrni polozkiu zo zoznamu
-void stable_remove_var(stab_t *p_stable, char *id){
+bool stable_remove_var(stab_t *p_stable, char *id){
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
-
-    if (pom == NULL)
-        return;
-
-    //najde polozku pred polozkou s id
-    while (strcmp(pom->stab_next->stab_key, id)) //todo skontroluj
-        if ((pom = pom->stab_next) == NULL)
-            return;
-
-    return;
-}
-
-bool stable_search(stab_t *p_stable, char *srch_el){
-    unsigned index = hash_fun_ptr(id, p_stable->stab_size);
-    stab_element_t *pom = p_stable->arr[index];
+    stab_element_t *vymaz;
 
     if (pom == NULL)
         return false;
 
-    //najde polozku s id
-    while (strcmp(pom->stab_key, id))
-        if ((pom = pom->stab_next) == NULL)
-            return false;
+    //ak je to 1. polozka
+    if (!strcmp(pom->stab_key, id)) {
+        p_stable->arr[index] = pom->stab_next;
+        vymaz = pom;
+    }
+    else {
+        //ak je to 2. az n polozka
+        //najde polozku pred polozkou s id
+        while (strcmp(pom->stab_next->stab_key, id)) //todo skontroluj
+            if ((pom = pom->stab_next) == NULL)
+                return false;
+        vymaz = pom->stab_next;
+        pom->stab_next = pom->stab_next->stab_next;
+    }
+    free(vymaz->stab_key);
+    free(vymaz);
 
     return true;
 }
 
-bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, stab_element_t *data){
+bool stable_search(stab_t *p_stable, char *srch_el){
+    if (stable_get_var(p_stable,srch_el) == NULL){
+        return false;
+    } else {
+        return true;
+    }
+}
+
+bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, data_t data){
     char *pom;
     int j = 0, i = 0;
-    int size = strlen(clss) + strlen(fnct) + strlen(local);
+    int size = 0;
 
-    if ((pom = malloc(size * sizeof(char) + 2)) == NULL) //+2 lebo sa vkadaju max 2x '.'
+    if (clss != NULL) {
+        size += strlen(clss);
+        if (fnct != NULL) {
+            size += strlen(fnct);
+            if (local != NULL)
+                size += strlen(local);
+        }
+    }
+
+    if ((pom = malloc(size * sizeof(char) + 2 + 1)) == NULL) //+2 lebo sa vkadaju max 2x '.' +1 lebo '\0'
         return false;
 
     if(clss != NULL)
@@ -154,9 +184,106 @@ bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *loca
             pom[j++] = local[i++];
     }
 
-    if(stable_add_var(p_stable, pom, &data))
+    pom[j] = '\0';
+
+    if(stable_add_var(p_stable, pom, data) == NULL) {
+        free(pom);
         return false;
+    }
+    free(pom);
     return true;
 
+}
 
+void stable_print(stab_t *stable) {
+    stab_element_t *current;
+    printf("************** STABLE ****************\n");
+    for (int i = 0; i < stable->stab_size; i++) {
+        current = stable->arr[i];
+        while (current != NULL) {
+            printf("KEY : %s \t\t CONTENT : ", current->stab_key);
+            switch (current->stab_content.data.arg_type) {
+                case INTEGER:
+                    printf("%d\n", current->stab_content.data.data.i);
+                    break;
+                case DOUBLE:
+                    printf("%g\n", current->stab_content.data.data.d);
+                    break;
+                case STRING:
+                    printf("%s\n", current->stab_content.data.data.s.str);
+                    break;
+                case STACK_EBP:
+                    printf("position on stack >> %d\n", current->stab_content.data.data.i);
+                    break;
+                default:
+                    printf("on top of stack\n");
+                    break;
+            }
+
+
+            current = current->stab_next;
+        }
+    }
+    printf("********** STABLE END ****************\n");
+}
+
+// Searching a key of format 1.2.3......count
+data_t* stable_search_variadic(stab_t *p_stable, int count, ...)
+{
+	if(count == 0)
+		return NULL;
+	data_t* result = NULL;
+	string_t str = str_init();
+
+	va_list args;
+	va_start(args, count);
+	char* ptr = va_arg(args,char*);
+	if(ptr != NULL)
+	{
+		// for (count-1): append strings at the end of str
+		str_append_chars(&str, ptr);
+		while(--count)
+		{
+			ptr = va_arg(args,char*);
+			if(ptr == NULL)	
+				break;
+			str_add_char(&str,'.');
+			str_append_chars(&str, ptr);
+		}
+		// now search
+		result = stable_get_var(p_stable, str.str);
+	}
+	va_end(args);
+	str_destroy(&str);
+	return result;	
+}
+
+data_t* stable_add_variadic(stab_t *p_stable,data_t data, int count, ...)
+{
+	if(count == 0)
+		return NULL;
+	data_t* result = NULL;
+	string_t str = str_init();
+
+	va_list args;
+	va_start(args, count);
+	char* ptr = va_arg(args,char*);
+	if(ptr != NULL)
+	{
+		// for (count-1): append strings at the end of str
+		str_append_chars(&str, ptr);
+		while(--count)
+		{
+			ptr = va_arg(args,char*);
+			if(ptr == NULL)	
+				break;
+			str_add_char(&str,'.');
+			str_append_chars(&str, ptr);
+		}
+		// now add
+		result = stable_add_var(p_stable, str.str, data);
+	}
+	va_end(args);
+	str_destroy(&str);
+	return result;	
 }

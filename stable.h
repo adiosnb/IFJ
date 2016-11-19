@@ -5,11 +5,16 @@
 #ifndef IFJ_STABLE_H
 #define IFJ_STABLE_H
 
+#include <stdbool.h>
+#include "instruction_list.h"
 #include "instruction_list.h"
 
-typedef struct {
-    int type;
+
+typedef struct dt{ 
+    int type;			// void, int, ...
+    struct dt* next_param;	// used in function
     int inter_table;
+    argument_var_t data;
 }data_t;
 
 typedef struct STAB_ELEMENT{
@@ -20,7 +25,7 @@ typedef struct STAB_ELEMENT{
 
 typedef struct {
     unsigned stab_size;
-    unsigned (*hash_fun_ptr)(unsigned, unsigned);
+    unsigned (*hash_fun_ptr)(char *id, unsigned);
     unsigned stab_count;
     stab_element_t *arr[];
 }stab_t;
@@ -32,18 +37,25 @@ stab_t *stable_init(unsigned size);
 void stable_destroy(stab_t **p_table);
 
 //odstrani jeden prvok z tabulky
-void stable_remove_var(stab_t *p_stable, char *id);
+bool stable_remove_var(stab_t *p_stable, char *id);
 
-//prida prvok do tabulky
-int stable_add_var(stab_t *p_stable, char *id, stab_element_t *p_var);
+//prida prvok do tabulky a vrati odkaz na data. V pripade zlyhania vrati NULL
+data_t* stable_add_var(stab_t *p_stable, char *id, data_t p_var);
 
 //vrati ukazatel na dotazovany prvok
-argument_var_t *stable_get_var(stab_t *p_stable, char *id);
+data_t *stable_get_var(stab_t *p_stable, char *id);
 
 //prida prvok zadany oddelene ako 3x string (class, function, local); pri nedostatku miest vracia false
-bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, stab_element_t *data);
+bool stable_add_concatenate(stab_t *p_stable, char* clss, char *fnct, char *local, data_t data);
 
 //true hodnotu ak sa prvok nasiel
 bool stable_search(stab_t *p_stable, char *srch_el);
+
+// Searching a key of format 1.2.3......count
+data_t* stable_search_variadic(stab_t *p_stable, int count, ...);
+// Variadic form of adding a key into table
+data_t* stable_add_variadic(stab_t *p_stable,data_t data, int count, ...);
+
+void stable_print(stab_t *stable);
 
 #endif //IFJ_STABLE_H

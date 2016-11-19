@@ -1,25 +1,45 @@
-<source-program>              -> <class-definition-list> <end>
-<end>                         -> EOF
-<class-definition-list>       -> <class-definition> <more-class-definition>
-<more-class-definition>       -> <class-definition-list> 
-<more-class-definition>       -> epsilon
+/******************************************************************************
+// This grammar has been verified using Java applet. There is ONE collision
+// in <assign-statement>, which is not LL1 and it's covered in our parser in 
+// the way how it was proposed by Mr. Krivka.
+// Ifj16.print is also hacked without being specified explicitly here.
+//							*Roman
+/******************************************************************************
 
-<class-definition>            -> class <identifier> <compound-statement>
+<source-program>              -> <class-definition-list>
 
-<definition>                  -> <static-type> <type-specifier> <identifier> <more-definition>
-<more-definition>             -> ( <function-parameters-list> ) <compound-statement>
-<more-definition>             -> <variable-initialization> ;
+<class-definition-list>       -> <class-definition> <class-definition-list>
+<class-definition-list>       -> epsilon
 
-<variable-initialization>        -> = expression
-<variable-initialization>        -> epsilon
+<class-definition>            -> class simple-identifier { <class-body> }
 
-<function-parameters-list>     -> <definition> <more-function-parameters>
+<class-body>                  -> epsilon
+<class-body>                  -> <definition> <class-body> 
+
+<definition>                  -> static <type-specifier> simple-identifier <more-definition>
+<more-definition>             -> ( <function-parameters-list> ) { <function-body> }
+<more-definition>             -> ;
+<more-definition>             -> = <expr> ;
+
+<function-body>               -> <statement> <function-body>
+<function-body>               -> <local-definition> <function-body>
+<function-body>               -> epsilon 
+
+<local-definition>            -> <type-specifier> simple-identifier <variable-initialization> ;
+<variable-initialization>     -> = <more-next>
+<variable-initialization>     -> epsilon
+
+<parameter-definition>        -> <type-specifier> simple-identifier
+<function-parameters-list>     -> <parameter-definition> <more-function-parameters>
 <function-parameters-list>     -> epsilon
-<more-function-parameters>     -> , <function-parameters-list> 
+<more-function-parameters>     -> , <parameter-definition> <more-function-parameters> 
 <more-function-parameters>     -> epsilon
 
-<static-type>                 -> epsilon
-<static-type>                  -> static
+<argument-definition>         -> <term>
+<function-arguments-list>     -> <argument-definition> <more-function-arguments>
+<function-arguments-list>     -> epsilon
+<more-function-arguments>     -> , <argument-definition> <more-function-arguments> 
+<more-function-arguments>     -> epsilon
 
 <statement>                    -> <compound-statement>
 <statement>                   -> <assign-statement>
@@ -27,34 +47,36 @@
 <statement>                    -> <iteration-statement>
 <statement>                    -> <jump-statement>
 
-<block-items-list>             -> <block-item> <more-block-items>
-<more-block-items>             -> <block-items-list>
-<more-block-items>             -> epsilon
-<block-item>                   -> <definition>
+<block-items-list>             -> <statement> <block-items-list>
+<block-items-list>             -> epsilon
 
 <compound-statement>           -> { <block-items-list> }
-<assign-statement>             -> identifier <next> ;
-<selection-statement>          -> if ( expression ) <compound-statement> else <compound-statement>
-<iteration-statement>          -> while ( expression ) <compound-statement>
+<assign-statement>             -> <identifier> <next> ;
+<selection-statement>          -> if ( <expr> ) <compound-statement> else <compound-statement>
+<iteration-statement>          -> while ( <expr> ) <compound-statement>
 <jump-statement>               -> return <expr> ;
 
-<next>                         -> ( <function-parameters-list> ) 
+<next>                         -> ( <function-arguments-list> ) 
 <next>                         -> = <more-next>
 
-<more-next>                    -> <identifier> ( <function-parameters-list> ) 
-<more-next>                    -> expression 
+<more-next>                    -> <identifier> ( <function-arguments-list> ) 
+<more-next>                    -> <expr>
+
+/*	Types	*/
+
 
 <identifier>                   -> simple-identifier
 <identifier>                   -> fully-qualified-identifier
-<identifier>                   -> decimal-constant
-<identifier>                   -> floating-point-constant
+
+<term>                   -> simple-identifier
+<term>                   -> fully-qualified-identifier
+<term>                   -> decimal-constant
+<term>                   -> floating-point-constant
 
 <type-specifier>               -> void
 <type-specifier>               -> double
 <type-specifier>               -> int
 <type-specifier>               -> String
-<type-specifier>               -> epsilon
-
 
 <expr>                         -> epsilon
 <expr>                         -> expression
