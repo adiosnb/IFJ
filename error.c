@@ -1,14 +1,19 @@
 #include <stdlib.h>
 #include "error.h"
 #include "scanner.h"
+#include "stable.h"
+
+extern stab_t* staticSym; 
+
 
 // Call module dtors
 void clean_up()
 {
 	// TODO: 
 	// scanner clean up
-		scanner_closeFile();
+	scanner_closeFile();
 	// symbolic table clean up
+	stable_destroy(&staticSym);
 	// interpret clean up
 }
 

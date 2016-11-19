@@ -148,6 +148,9 @@ int main() {
     printf("%d\n",ret_search);
 */
 
+    printf("\n################## TEST11 ###################\n");
+    printf("volanie str_sort\n");
+
     str_destroy(&str1);
     str_destroy(&str2);
     str_destroy(&str3);
@@ -155,7 +158,7 @@ int main() {
     str_reinit(&str1);
     str_append_chars(&str1,"qwertyulkajhfjf;ldsjf;fj;ljiop");
     str_print(str1);
-    str_sort(str1);
+    str_sort(&str1);
     str_print(str1);
 
 

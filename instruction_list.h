@@ -28,6 +28,7 @@
 #define ON_TOP        3
 #define STACK_EBP       4
 #define INSTRUCTION     5
+#define VOID		6
 
 
 typedef union {

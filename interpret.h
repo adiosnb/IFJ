@@ -34,6 +34,7 @@ void call_str_cmp();
 void call_str_find();
 void call_str_sort();
 void call_str_substr();
+void call_str_len();
 void ret();     //
 void push();     //src
 void pop();     //

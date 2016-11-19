@@ -546,12 +546,10 @@ int main() {
     tmp_var.data.data.s = str_init();
     str_append_chars(&tmp_var.data.data.s,"qwertyuiopasdfghjkl");
     ptr_to_table1 = stable_add_var(sym_tab,"str",tmp_var);
-    str_print(tmp_var.data.data.s);
 
     tmp_var.data.arg_type = STRING;
     tmp_var.data.data.s = str_init();
     ptr_to_table4 = stable_add_var(sym_tab,"ret_str",tmp_var);
-    str_print(tmp_var.data.data.s);
 
     tmp_var.data.arg_type = INTEGER;
     tmp_var.data.data.i = 4;
@@ -560,6 +558,7 @@ int main() {
     tmp_var.data.data.i = 6;
     ptr_to_table3 = stable_add_var(sym_tab, "n", tmp_var);
 
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table1->data,0,0);
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table1->data, 0, 0);
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table2->data, 0, 0);
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table3->data, 0, 0);
@@ -567,7 +566,7 @@ int main() {
     create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
     create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
     create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
-
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table4->data,0,0);
 
 
 
@@ -576,9 +575,11 @@ int main() {
     dest_inst_list(&i_list);
     stable_destroy(&sym_tab);
 
+
+
     printf("\n\n"
                    "TEST10\n"
-                   "volanie substr nad lokalnymi premennymi\n");
+                   "volanie substr nad lokalnymou premennou\n");
     i_list = init_inst_list();
     sym_tab = stable_init(10);
 
@@ -631,19 +632,172 @@ int main() {
     ptr_to_table3 = stable_get_var(sym_tab,"i");
     ptr_to_table4 = stable_get_var(sym_tab,"n");
 
-
+    create_and_add_instruction(i_list,INST_WRITE,&ptr_to_table1->data,0,0);
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table1->data, 0, 0);
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table3->data, 0, 0);
     create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table4->data, 0, 0);
-    create_and_add_instruction(i_list, INST_CALL_SUBSTR, &ptr_to_table2->data,0,0);
+    create_and_add_instruction(i_list, INST_CALL_SUBSTR, &ptr_to_table1->data,0,0);
     create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
     create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
     create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
+    create_and_add_instruction(i_list,INST_WRITE,&ptr_to_table1->data,0,0);
 
 
     create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
     interpret(i_list, sym_tab);
 
+    dest_inst_list(&i_list);
+    stable_destroy(&sym_tab);
+
+    printf("\n\n"
+                   "TEST11\n"
+                   "volanie str_sort nad globanymi premennymi\n");
+
+    i_list = init_inst_list();
+    sym_tab = stable_init(10);
+
+    tmp_var.data.arg_type = STRING;
+    tmp_var.data.data.s = str_init();
+    str_append_chars(&tmp_var.data.data.s,"qwert1234567890p-ojhgfdszx cvbnmklp[';,mnbvl64789324[p';/.yuiopasdfghjkl");
+    str_append_chars(&tmp_var.data.data.s, str1);
+    stable_add_var(sym_tab, "glob_str_1", tmp_var);
+
+    tmp_var.data.data.s = str_init();
+    tmp_var.data.arg_type = STRING;
+    stable_add_var(sym_tab, "ret", tmp_var);
+
+    ptr_to_table1 = stable_get_var(sym_tab,"glob_str_1");
+    ptr_to_table4 = stable_get_var(sym_tab,"ret");
+
+    create_and_add_instruction(i_list,INST_WRITE,&ptr_to_table1->data,0,0);
+    create_and_add_instruction(i_list,INST_PUSH,&ptr_to_table1->data,0,0);
+    create_and_add_instruction(i_list,INST_CALL_SORT,&ptr_to_table4->data,0,0);
+    create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
+    create_and_add_instruction(i_list,INST_WRITE,&ptr_to_table4->data,0,0);
+
+
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
+    interpret(i_list, sym_tab);
+    dest_inst_list(&i_list);
+    stable_destroy(&sym_tab);
+
+
+    printf("\n\n"
+                   "TEST12\n"
+                   "volanie str_sort nad lokalnumi premennymi\n");
+
+
+    i_list = init_inst_list();
+    sym_tab = stable_init(10);
+
+    tmp_var.data.arg_type = STACK_EBP;
+    tmp_var.data.data.i = 1;
+    stable_add_var(sym_tab, "str", tmp_var);
+    tmp_var.data.arg_type = STACK_EBP;
+    tmp_var.data.data.i = 2;
+    stable_add_var(sym_tab, "str_ret", tmp_var);
+
+    tmp_var.data.arg_type = STRING;
+    tmp_var.data.data.s = str_init();
+    str_append_chars(&tmp_var.data.data.s, "qwertyuiopasdf8348y5u438h;l3;t43ecfc/w"
+            "['llkjghdslkhlkdhoi79843ytpoireuhkf j;noiervtw3o98trp98bewvt79438v7btp9ghjkl");
+    stable_add_var(sym_tab, "lit1", tmp_var);
+
+
+    create_and_add_instruction(i_list, INST_PUSH_STRING, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_STRING, 0, 0, 0);
+
+    ptr_to_table1 = stable_get_var(sym_tab, "str");
+    ptr_to_table2 = stable_get_var(sym_tab, "lit1");
+    create_and_add_instruction(i_list, INST_STORE, &ptr_to_table1->data, &ptr_to_table2->data, 0);
+
+
+    ptr_to_table1 = stable_get_var(sym_tab,"str");
+    ptr_to_table2 = stable_get_var(sym_tab,"str_ret");
+
+    create_and_add_instruction(i_list,INST_PUSH,&ptr_to_table1->data,0,0);
+    create_and_add_instruction(i_list,INST_CALL_SORT,&ptr_to_table2->data,0,0);
+    create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
+    create_and_add_instruction(i_list,INST_WRITE,&ptr_to_table2->data,0,0);
+
+
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
+    interpret(i_list, sym_tab);
+    dest_inst_list(&i_list);
+    stable_destroy(&sym_tab);
+
+
+    printf("\n\n"
+                   "TEST13\n"
+                   "volanie str_len nad globalnymi premennymi\n");
+
+    i_list = init_inst_list();
+    sym_tab = stable_init(10);
+
+    tmp_var.data.arg_type = STRING;
+    tmp_var.data.data.s = str_init();
+    str_append_chars(&tmp_var.data.data.s,"qwert1234567890p-ojhgfdszx cvbnmklp[';,mnbvl64789324[p';/.yuiopasdfghjkl");
+    str_append_chars(&tmp_var.data.data.s, str1);
+    stable_add_var(sym_tab, "glob_str_1", tmp_var);
+
+    tmp_var.data.arg_type = INTEGER;
+    stable_add_var(sym_tab, "ret", tmp_var);
+
+    ptr_to_table1 = stable_get_var(sym_tab,"glob_str_1");
+    ptr_to_table4 = stable_get_var(sym_tab,"ret");
+
+    create_and_add_instruction(i_list,INST_WRITE,&ptr_to_table1->data,0,0);
+    create_and_add_instruction(i_list,INST_PUSH,&ptr_to_table1->data,0,0);
+    create_and_add_instruction(i_list,INST_CALL_LEN,&ptr_to_table4->data,0,0);
+    create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
+    create_and_add_instruction(i_list,INST_WRITE,&ptr_to_table4->data,0,0);
+
+
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
+    interpret(i_list, sym_tab);
+    dest_inst_list(&i_list);
+    stable_destroy(&sym_tab);
+
+
+    printf("\n\n"
+                   "TEST14\n"
+                   "volanie str_len nad lokalnymi premennymi\n");
+    i_list = init_inst_list();
+    sym_tab = stable_init(10);
+
+    tmp_var.data.arg_type = STACK_EBP;
+    tmp_var.data.data.i = 1;
+    stable_add_var(sym_tab, "str", tmp_var);
+    tmp_var.data.arg_type = STACK_EBP;
+    tmp_var.data.data.i = 2;
+    stable_add_var(sym_tab, "str_ret", tmp_var);
+
+    tmp_var.data.arg_type = STRING;
+    tmp_var.data.data.s = str_init();
+    str_append_chars(&tmp_var.data.data.s, "qwertyuiopasdf8348y5u438h;l3;t43ecfc/w"
+            "['llkjghdslkhlkdhoi79843ytpoireuhkf j;noiervtw3o98trp98bewvt79438v7btp9ghjkl");
+    stable_add_var(sym_tab, "lit1", tmp_var);
+
+
+    create_and_add_instruction(i_list, INST_PUSH_STRING, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_INT, 0, 0, 0);
+
+    ptr_to_table1 = stable_get_var(sym_tab, "str");
+    ptr_to_table2 = stable_get_var(sym_tab, "lit1");
+    create_and_add_instruction(i_list, INST_STORE, &ptr_to_table1->data, &ptr_to_table2->data, 0);
+
+
+    ptr_to_table1 = stable_get_var(sym_tab,"str");
+    ptr_to_table2 = stable_get_var(sym_tab,"str_ret");
+    create_and_add_instruction(i_list,INST_WRITE,&ptr_to_table1->data,0,0);
+    create_and_add_instruction(i_list,INST_PUSH,&ptr_to_table1->data,0,0);
+    create_and_add_instruction(i_list,INST_CALL_LEN,&ptr_to_table2->data,0,0);
+    create_and_add_instruction(i_list, INST_POP, 0, 0, 0);
+    create_and_add_instruction(i_list,INST_WRITE,&ptr_to_table2->data,0,0);
+
+
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
+    interpret(i_list, sym_tab);
     dest_inst_list(&i_list);
     stable_destroy(&sym_tab);
 
