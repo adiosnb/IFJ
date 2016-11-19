@@ -71,10 +71,10 @@ const int rule_len[MAX_RULES] =
     4
 };
 
-int find_right_side(const stack_t *const);
-stack_t get_reduce_symbols(const stack_t const*, stack_t *const);
-const int *get_rule(int);
-void stack_reduce_rule(stack_t *const, int);
-t_token get_top_terminal(stack_t *);
+int         find_right_side(const stack_t *const);
+stack_t     get_reduce_symbols(const stack_t const*, stack_t *const);
+const int*  get_rule(int);
+void        stack_reduce_rule(stack_t *const, int);
+t_token     get_top_terminal(stack_t *);
 
 #endif

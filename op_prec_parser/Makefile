@@ -6,14 +6,20 @@ IAL=ial
 STRING=str
 ERROR=error
 
+DIR=op_prec_praser
+
 all:
-	gcc -std=c11 -Wall -g -Wextra -pedantic utils/${STACK}.c -c
-	gcc -std=c11 -Wall -g -Wextra -pedantic error/${ERROR}.c -c
-	gcc -std=c11 -Wall -g -Wextra -pedantic scanner/${STRING}.c -c
-	gcc -std=c11 -Wall -g -Wextra -pedantic scanner/${IAL}.c -c
-	gcc -std=c11 -Wall -g -Wextra -pedantic scanner/${LEX}.c -c	
-	gcc -std=c11 -Wall -g -Wextra -pedantic op-parser/${PARSER}.c -c
-	gcc -std=c11 -o ${PROGRAM} ${IAL}.o ${STACK}.o ${ERROR}.o ${STRING}.o ${LEX}.o ${PARSER}.o
+	pushd ..
+	
+	gcc -std=c11 -Wall -g -Wextra -pedantic op_prec_parser/utils/${STACK}.c -c
+	gcc -std=c11 -Wall -g -Wextra -pedantic -o ${DIR}/${ERROR} ${ERROR}.c -c
+	gcc -std=c11 -Wall -g -Wextra -pedantic -o ${DIR}/${STRING} ${STRING}.c -c
+	gcc -std=c11 -Wall -g -Wextra -pedantic -o ${DIR}/${IAL} ${IAL}.c -c
+	gcc -std=c11 -Wall -g -Wextra -pedantic -o ${DIR}/${LEX} ${LEX}.c -c	
+	gcc -std=c11 -Wall -g -Wextra -pedantic ${DIR}/${PARSER}.c -c
+	gcc -std=c11 -o ${DIR}/${PROGRAM} ${DIR}/${IAL}.o ${DIR}/${STACK}.o ${DIR}/${ERROR}.o ${DIR}/${STRING}.o ${DIR}/${LEX}.o ${DIR}/${PARSER}.o
+	
+	popd
 
 clean:
-	rm *.o  ${PROGRAM}
+	rm *.o  ${DIR}/${PROGRAM}
