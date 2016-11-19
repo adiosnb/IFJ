@@ -5,4 +5,6 @@ interpret_idea
 main
 .idea/
 *.o
+*.swp
+parser
 a.out
