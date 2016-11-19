@@ -11,9 +11,19 @@ extern const char op_table[][MAX_TERMINALS];
 extern const int rule_table[][MAX_RULES];
 extern const int rule_len[MAX_RULES];
 
+bool end_of_expr = false;
+
 static inline t_token validate_ins(t_token s)
 {
     // just for now to see where is end of input tokens string
+   
+    if (s.type == TOK_DELIM)
+    {
+        ungetToken();
+        end_of_expr = true;
+        return s;
+    }
+
     if (s.type == TOK_EOF)
     {
         s.data.op = '$';
@@ -28,7 +38,6 @@ static inline t_token validate_ins(t_token s)
         case TOK_DOUBLECONST: if (s.data.op != '$') s.type = TOK_ID;
     }
 
-    
     if (!(((int)s.type >= TOK_EQ && s.type <= BOTTOM) || s.type == C))
     // TODO: validate input symbol and print its string....how? scanner is not capable of doing that
         error_and_die(ERR_SYNTAX, "Expression: invalid input symbol %i", s.type);
@@ -104,20 +113,27 @@ static inline t_token get_next_token(void)
     return validate_ins(g_lastToken);
 }
 
-void parse_expression(void)
+
+
+enum data_type parse_expression(void)
 {
     if (!scanner_openFile("input_test.txt"))
     {
         fprintf(stderr, "Cannot open file!\n");
-        return;
+        return 0;
     }
+
+    enum data_type expr_data_type= T_UNDEF;
 
     stack_t     handle = stack_ctor(); // dynamic allocation
     stack_t     pda = stack_ctor();    // dynamic allocation
 
-    t_token     ins = get_next_token();
     t_token     top_terminal;
     t_token     top_terminal_tmp;
+    t_token     ins = get_next_token();
+
+    if (end_of_expr)
+        return expr_data_type;
 
     // HACK HACK: BOTTOM equals to TOK_SPECIAL_ID, adding dollar to find out BOTTOM
     t_token     bottom = {.type = BOTTOM, .data.op = '$'};
@@ -146,6 +162,10 @@ void parse_expression(void)
 
                         // read next token
                         ins = get_next_token();
+
+                        if (end_of_expr)
+                            return expr_data_type;
+
                         break;
                 case '<':
                         // replacement of top terminal with top terminal and '<' (beginning of handle)
@@ -156,6 +176,9 @@ void parse_expression(void)
 
                         // read next token
                         ins = get_next_token();
+
+                        if (end_of_expr)
+                            return expr_data_type;
                         break;
                 case '>':
                         handle = stack_clear(&handle);
@@ -174,21 +197,64 @@ void parse_expression(void)
                                 // postfix actions
                                 if (res != 11)
                                     printf("%s ", tokens[res]);
+
+                                // other combinations then these for semantic typing are ERR_SEMANTIC_TYPE
+                                switch (res)
+                                {
+                                    // logical operators if one operand is int and second double, int is converted to double
+                                    // strings are not supported
+                                    case TOK_EQ:
+                                        // do action
+                                        break;
+                                    case TOK_NOTEQ:
+                                        break;
+                                    case TOK_LESS:
+                                        break;
+                                    case TOK_GREATER:
+                                        break;
+                                    case TOK_LE:
+                                        break;
+                                    case TOK_GE:
+                                        break;
+                                    case TOK_PLUS:
+                                        // if one of the operands is string, concatenate (second operand is converted to string too, using ifj16.print)
+                                        break;
+                                    case TOK_MINUS:
+                                        break;
+                                    case TOK_MUL:
+                                        break;
+                                    case TOK_DIV:
+                                        // accept only integer or double operands
+                                        // int op int = integer division
+                                        // otherwise default division and result is double
+                                        break;
+                                    case TOK_ID:
+                                        // type conversions
+                                        // int op int = int
+                                        //
+                                        // o1.double op double(o2.int) = double
+                                        // double(o1.int) op o2.double = double
+                                        // o1.double op o2.double = double
+                                        // 
+                                        //  
+                                        break;
+                                }
                             }
                             else
                                generate_reduction_error(*stack_top(&pda), ins);
                         }
                         else    
-                            error_and_die(ERR_SYNTAX, "Handle does not exist!\n");
+                            error_and_die(ERR_SYNTAX, "Expression: Handle does not exist!\n");
 
                         break; 
                 case '_': 
                         if (top_terminal.type == TOK_LEFT_PAR && ins.type == BOTTOM) 
-                            error_and_die(ERR_SYNTAX, "Missing right parenthesis!");
+                            error_and_die(ERR_SYNTAX, "Expression: Missing right parenthesis!");
                         if (top_terminal.type == BOTTOM && ins.type == TOK_RIGHT_PAR) 
-                            error_and_die(ERR_SYNTAX, "Unbalanced '('");
+                            error_and_die(ERR_SYNTAX, "Expression: Unbalanced '('");
                         generate_syntax_error(*stack_top(&pda), ins); 
-                        return;
+                case 'E':
+                        error_and_die(ERR_SYNTAX, "Expression: Logical operators are not associative!");
             }
             top_terminal_tmp = get_top_terminal(&pda);
     }
@@ -197,6 +263,8 @@ void parse_expression(void)
     putchar('\n');
     handle = stack_dtor(&handle);
     pda = stack_dtor(&pda);
+
+    return expr_data_type;
 }
 
 static inline bool is_stack_bottom(const stack_t *const stack)
@@ -326,6 +394,6 @@ t_token get_top_terminal(stack_t *stack)
 
 int main(void)
 {
-	parse_expression();
+    fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression());
 	return 0;
 }
