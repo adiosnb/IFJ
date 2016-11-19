@@ -453,7 +453,7 @@ int assign_statement()
 		if(isSecondPass)
 		{
 			if(getLastToken() == TOK_ID)
-				symbol = stable_search_variadic(staticSym,2,parser_class,getTokString());
+				symbol = stable_search_variadic(staticSym,3,parser_class,parser_fun,getTokString());
 			else
 				symbol = stable_search_variadic(staticSym,1,getTokString());
 			if(!symbol)
