@@ -1,4 +1,4 @@
-//#define	DEBUG 1 
+#define	DEBUG 2 
 #include "parser.h"
 #include <stdio.h>
 #include <string.h>
@@ -345,8 +345,13 @@ int next(data_t* symbol)
 			} else {
 				GEN("Check if symbol '%s' is defined", getTokString());
 
-				if(function_arguments_list() == SYN_ERR)
+				data_t*	dt = NULL;
+				if(isSecondPass)
+					dt = symbol->next_param;
+				if(function_arguments_list(&dt) == SYN_ERR)
 					return SYN_ERR;	
+				if(dt != NULL)
+					return throw("SEMANTIC - too few arguments in funciton call");
 				GEN("Generate a function call INSTR");
 				if(getToken() != TOK_RIGHT_PAR)
 					return throw("Expected )");
