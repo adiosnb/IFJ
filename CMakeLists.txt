@@ -13,16 +13,18 @@ set(interpret-expr-test interpret.c interpret-expr-test.c str.c instruction_list
 set(stable_test stable-test.c stable.c stack.h str.c ial.c)
 set(interpret-str-test interpret-str-test.c str.c interpret.c stack.c stable.c instruction_list.c instructions.h ial.c)
 set(interpre-rel-test interpret.c interpret-relation-test.c str.c instruction_list.c stack.c stable.c ial.c)
-set(parser op_prec_parser/op-parser.c op_prec_parser/utils/dynamic_stack.c error.c stable.c ial.c scanner.c str.c)
+set(op_parser op_prec_parser/op-parser.c op_prec_parser/utils/dynamic_stack.c error.c stable.c ial.c scanner.c str.c)
+set(parser str.c ial.c stable.c scanner.c parser.c error.c)
+
 
 add_executable(main ${SOURCE_FILES})
 
-add_executable(parser ${parser})
+add_executable(op_parser ${op_parser})
 add_executable(str_test ${str_test})
 add_executable(my_scanner ${my_scanner})
 add_executable(scanner ${scanner})
 add_executable(interpret-expr-test ${interpret-expr-test})
 add_executable(stable-test ${stable_test})
-
+add_executable(parser ${parser})
 add_executable(interpret-str-test ${interpret-str-test})
 add_executable(interpret-rel-test ${interpre-rel-test})
