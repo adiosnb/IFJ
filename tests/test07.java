@@ -2,15 +2,16 @@ class Main
 {
 	static void run()
 	{
-		Game.play();        //too few arguments
-		Game.play(qopiweyrt);
-		Game.play(qopiweyrt,qwer);
+	    String a;
+	    a = "qwertyu";
+		Game.play(a);
 	}
 }
 class Game
 	{
 	static void play(String str)
 	{
+	    ifj16.print(str);
 	    return;
 	}
 }
