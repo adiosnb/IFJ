@@ -14,16 +14,17 @@ extern const char op_table[][MAX_TERMINALS];
 extern const int rule_table[][MAX_RULES];
 extern const int rule_len[MAX_RULES];
 
-bool end_of_expr = false;
+bool is_it_assign = false;
 
 static inline t_token validate_ins(t_token s)
 {
     // just for now to see where is end of input tokens string
    
-    if (s.type == TOK_DELIM)
+    if (is_it_assign && s.type == TOK_DELIM)
     {
+        s.data.op = '$';
+        s.type = BOTTOM;
         ungetToken();
-        end_of_expr = true;
         return s;
     }
 
@@ -46,6 +47,7 @@ static inline t_token validate_ins(t_token s)
         error_and_die(SYNTAX_ERROR, "Expression: invalid input symbol %i", s.type);
     return s;
 }
+
 
 // top is top terminal of pushdown automaton and ins is input symbol
 static void generate_syntax_error(t_token topt, t_token inst)
@@ -118,7 +120,7 @@ static inline t_token get_next_token(void)
 
 
 
-enum data_type parse_expression(void)
+enum data_type parse_expression(bool is_assign, bool is_condition)
 {
     if (!scanner_openFile("input_test.txt"))
     {
@@ -126,6 +128,10 @@ enum data_type parse_expression(void)
         return 0;
     }
 
+    is_it_assign = is_assign;
+    bool is_it_condition = is_condition;
+
+    bool end_of_expr = false;
     enum data_type expr_data_type= T_UNDEF;
 
     stack_t     handle = stack_ctor(); // dynamic allocation
@@ -135,9 +141,6 @@ enum data_type parse_expression(void)
     t_token     top_terminal_tmp;
     t_token     ins = get_next_token();
 
-    if (end_of_expr)
-        return expr_data_type;
-
     // HACK HACK: BOTTOM equals to TOK_SPECIAL_ID, adding dollar to find out BOTTOM
     t_token     bottom = {.type = BOTTOM, .data.op = '$'};
 
@@ -145,12 +148,25 @@ enum data_type parse_expression(void)
     do
     {
         top_terminal = get_top_terminal(&pda);
+
+        if (is_it_condition && !end_of_expr && ins.type == TOK_RIGHT_PAR)
+        {
+            ins.type = BOTTOM;
+            ins.data.op = '$';
+        }
         
+        if (is_it_condition && ins.type == TOK_LEFT_PAR)
+            end_of_expr = true;
+
         int result = compare_token(top_terminal.type, ins.type);     
 
         switch(result)
         {
                 case '=':
+
+                        if (is_it_condition) 
+                            end_of_expr = false;
+                        
                         handle = stack_clear(&handle);
                         handle = get_reduce_symbols(&pda, &handle);
 
@@ -166,9 +182,6 @@ enum data_type parse_expression(void)
                         // read next token
                         ins = get_next_token();
 
-                        if (end_of_expr)
-                            return expr_data_type;
-
                         break;
                 case '<':
                         // replacement of top terminal with top terminal and '<' (beginning of handle)
@@ -180,8 +193,6 @@ enum data_type parse_expression(void)
                         // read next token
                         ins = get_next_token();
 
-                        if (end_of_expr)
-                            return expr_data_type;
                         break;
                 case '>':
                         handle = stack_clear(&handle);
@@ -266,6 +277,8 @@ enum data_type parse_expression(void)
     putchar('\n');
     handle = stack_dtor(&handle);
     pda = stack_dtor(&pda);
+
+    scanner_closeFile();
 
     return expr_data_type;
 }
@@ -397,6 +410,6 @@ t_token get_top_terminal(stack_t *stack)
 stab_t* staticSym = NULL;
 int main(void)
 {
-    fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression());
+    fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(false, true));
 	return 0;
 }

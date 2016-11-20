@@ -8,21 +8,20 @@
 // how long is generated expression
 const int MAX_OUTPUT = 1000;
 
-const int MAX_OPERATORS = 10;
-const int MAX_IDENTIFIERS = 4;
+#define MAX_OPERATORS (sizeof(operators)/sizeof(char *))
+#define MAX_IDENTIFIERS (sizeof(identifiers)/sizeof(char *))
+#define MAX_RULES (sizeof(rules)/sizeof(char *))
 
-const int MAX_RULES = 12;
-
-#define MAX_DEPTH 3 
+#define MAX_DEPTH  20
 
 const char *rules[] = 
 {
-    "C == C",
-    "C != C",
-    "C < C",
-    "C > C",
-    "C <= C",
-    "C >= C",
+  //  "C == C",
+  //  "C != C",
+  //  "C < C",
+  //  "C > C",
+  //  "C <= C",
+  //  "C >= C",
     "C + C",
     "C - C",
     "C * C",
@@ -33,7 +32,7 @@ const char *rules[] =
 
 const char *identifiers[] =
 { 
-   "1",
+   "9",
    "ID",
    "1.5",
    "a.b"
@@ -41,12 +40,12 @@ const char *identifiers[] =
 
 const char *operators[] = 
 {
-   "==",
-   "!=",
-   "<",
-   ">",
-   "<=",
-   ">=",
+ //  "==",
+ //  "!=",
+ //  "<",
+ //  ">",
+ //  "<=",
+ //  ">=",
    "+",
    "-",
    "*",
@@ -55,19 +54,24 @@ const char *operators[] =
 
 int counter = 0;
 
+int rdtsc()    
+{    
+        __asm__ __volatile__("rdtsc");    
+}    
+
+
 void generate_expr(const char *rule)
 {
     static int depth = MAX_DEPTH;
 
-            srandom(time(NULL));            
+    srandom(rdtsc());
+
     for (; *rule != '\0'; rule++)
         if (*rule == 'C')
         {
-            srandom(time(NULL));            
             if (depth > 0)
             {
                 depth--;
-            srandom(time(NULL));            
                 generate_expr(rules[random() % MAX_RULES]);
             }
             else
@@ -76,7 +80,6 @@ void generate_expr(const char *rule)
         else if (!isspace(*rule)) 
             printf("%c", *rule);
 
-            srandom(time(NULL));            
     counter++;
 
     depth++;

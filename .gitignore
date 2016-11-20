@@ -7,4 +7,10 @@ main
 *.o
 *.swp
 parser
+op_prec_parser/build/
+op_prec_parser/generate_expr/
+op_prec_parser/generate_expr/!Makefile
+op_prec_parser/generate_expr/!expr_generator.c
+op_prec_parser/**/*.txt
+op_prec_parser/!input_test.txt
 a.out
