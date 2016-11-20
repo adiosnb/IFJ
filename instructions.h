@@ -23,6 +23,12 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_EXPR_SUB,      //take last 2 operands from stack
     INST_EXPR_MUL,      //take last 2 operands from stack
     INST_EXPR_DIV,      //take last 2 operands from stack
+    INST_EXPR_LOWER,    //take last 2 operands from stack
+    INST_EXPR_HIGHER,   //take last 2 operands from stack
+    INST_EXPR_LOW_EQ,   //take last 2 operands from stack
+    INST_EXPR_HIG_EQ,   //take last 2 operands from stack
+    INST_EXPR_EQUAL,    //take last 2 operands from stack
+    INST_EXPR_NOT_EQ,   //take last 2 operands from stack
     INST_PUSH,          //var to push       ---             ---
     INST_PUSH_INT,      //---               ---             ---
     INST_PUSH_DOUBLE,   //---               ---             ---
@@ -33,6 +39,7 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_JEQ,           //ddr to jump       value           value
     INST_JNEQ,          //ddr to jump       value           value
     INST_JZ,            //addr to jump      value for equation  ---
+    INST_JNZ,           //addr to jump      value for equation  ---
     INST_CALL,          //addr of func      where to save return value or nothing     ---
     INST_CALL_PRINT,    //num_of_strings    ---             ---
     INST_CALL_CMP,      //return_value      ---             ---
@@ -50,9 +57,6 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_STR_LEN,       //destination       source          ---
     INST_STR_CONCATENATE,//destination      str1            str2
     INST_STR_CMP,       //destination       str1            str2
-    INST_STR_FIND,      //TODO
-    INST_STR_SORT,      //TODO
-    INST_STR_SUBSTR,    //TODO
     INST_HALT,          //no imputs
     INST_LABEL,         //no inputs
 };
