@@ -9,7 +9,7 @@ int main() {
     instruction_list_t *i_list;
     instruction_item_t *ptr_inst_item;
     data_t tmp_data;
-    data_t *ptr_to_tabl1,*p0,*p1,*p2,*on_stack,*el1,*el2,*a,*b,*n,*fib;
+    data_t *ptr_to_tabl1,*p0,*p1,*p2,*on_stack,*el1,*el2,*a,*b,*n,*fib,*x,*main;
 
     sym_tab = stable_init(1024);
     i_list = init_inst_list();
@@ -29,6 +29,7 @@ int main() {
     tmp_data.data.arg_type = STACK_EBP;
     tmp_data.data.data.i = 1;
     a = stable_add_var(sym_tab,"a",tmp_data);
+    x = stable_add_var(sym_tab,"x",tmp_data);
     tmp_data.data.arg_type = STACK_EBP;
     tmp_data.data.data.i = 2;
     b = stable_add_var(sym_tab,"b",tmp_data);
@@ -37,7 +38,7 @@ int main() {
     on_stack = stable_add_var(sym_tab,"on_stack",tmp_data);
     el1 = stable_add_var(sym_tab,"el1",tmp_data);
     el2 = stable_add_var(sym_tab,"el2",tmp_data);
-    stable_add_var(sym_tab,"end fib",tmp_data);
+    main = stable_add_var(sym_tab,"main",tmp_data);
 
 
 /*
@@ -56,6 +57,9 @@ int main() {
 } //label end fib
  */
 
+    //pred zacatim programu skoci do main
+    create_and_add_instruction(i_list,INST_JMP,&main->data,0,0);
+
     //zaciatok int Fibonacci(int n)
     ptr_inst_item = create_and_add_instruction(i_list,INST_LABEL,0,0,0);
     tmp_data.data.data.instruction = ptr_inst_item;
@@ -69,6 +73,7 @@ int main() {
     create_and_add_instruction(i_list,INST_JZ,&el1->data,&on_stack->data,0);
     create_and_add_instruction(i_list,INST_POP,0,0,0);
     create_and_add_instruction(i_list,INST_RET,&p0->data,0,0);
+
     ptr_inst_item = create_and_add_instruction(i_list,INST_LABEL,0,0,0);
     el1->data.arg_type = INSTRUCTION;
     el1->data.data.instruction = ptr_inst_item;
@@ -103,11 +108,28 @@ int main() {
     create_and_add_instruction(i_list,INST_PUSH,&b->data,0,0);
     create_and_add_instruction(i_list,INST_EXPR_ADD,0,0,0);
     create_and_add_instruction(i_list,INST_STORE,&a->data,&on_stack->data,0);
+    create_and_add_instruction(i_list,INST_POP,0,0,0);
+    create_and_add_instruction(i_list,INST_RET,&a->data,0,0);
 
-
-
-
-
+    //MAIN beginning
+/*
+ * int main(){
+ *      int x;
+ *      x = readint();
+ *      x = Fibonacci(x);
+ *      print(x);
+ *      exit(0);
+ * }
+ */
+    ptr_inst_item = create_and_add_instruction(i_list,INST_LABEL,0,0,0);
+    main->data.arg_type = INSTRUCTION;
+    main->data.data.instruction = ptr_inst_item;
+    create_and_add_instruction(i_list,INST_PUSH_INT,0,0,0);
+    create_and_add_instruction(i_list,INST_READ_INT,&x->data,0,0);
+    create_and_add_instruction(i_list,INST_PUSH,&x->data,0,0);
+    create_and_add_instruction(i_list,INST_CALL,&fib->data,&x->data,0);
+    create_and_add_instruction(i_list,INST_POP,0,0,0);
+    create_and_add_instruction(i_list,INST_WRITE,&x->data,0,0);
 
 
 

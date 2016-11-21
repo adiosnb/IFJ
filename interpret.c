@@ -114,6 +114,9 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_JZ:
                 jump_zero();
                 break;
+            case INST_JNZ:
+                jump_not_zero();
+                break;
             case INST_JEQ:
                 jump_equal();
                 break;
@@ -172,11 +175,16 @@ void call() {
 
 void ret(){
     int prev_base;
+    int current_base, current_used;
     argument_var_t *return_value, *destination;
 
     //pristup k hodnotam pred volanim funckie
     tmp_var = stack_ebp_relative(glob_stack, 0);
     prev_base = tmp_var.data.i;
+
+    //zapisanie aktualnych poloh na zasobniku kvoli cisteniu stringov
+    current_base = glob_stack->base;
+    current_used = glob_stack->used;
 
     //ziskanie hodnoty ktora sa predava z funkcie
     return_value = glob_ins_list->active->instruction.addr1;
@@ -186,19 +194,26 @@ void ret(){
         if (return_value->arg_type == STACK_EBP) {
             return_value = stack_ebp_relative_ptr(glob_stack, return_value->data.i);
         }
+        if (return_value->arg_type == ON_TOP) {
+            return_value = stack_top_ptr(glob_stack);
+        }
 
         //prepisanie aktualnych hodnot riadeni interpretu
         tmp_var = stack_ebp_relative(glob_stack, -1);
         glob_ins_list->active = tmp_var.data.instruction;
 
+        for (int i = glob_stack->used;i>prev_base;i--)
+
         //upratanie zasobnik apo volani funckie
         glob_stack->used = glob_stack->base;
         glob_stack->base = prev_base; //TODO : clear strings
+
 
         //ziskanie polohykam zapisat navratovu hodnotu a jej zapis
         destination = glob_ins_list->active->instruction.addr2;
         //ak nechecme nikam ulozit navratovau hodnotu funkcie tak zapis preskocime
         if (destination != NULL) {
+            //TODO thing abou string magic
             if (destination->arg_type == STACK_EBP) {
                 stack_actualize_from_ebp(glob_stack, *return_value, destination->data.i);
             } else {
@@ -215,6 +230,9 @@ void ret(){
         glob_stack->base = prev_base;
 
     }
+    printf("\nret : %d %d\n",prev_base,glob_stack->used);
+    printf("ret : %d %d\n",current_base,current_used);
+    //for (int i = )
 }
 
 void write() {
