@@ -15,7 +15,7 @@ set(interpret-str-test interpret-str-test.c str.c interpret.c stack.c stable.c i
 set(interpre-rel-test interpret.c interpret-relation-test.c str.c instruction_list.c stack.c stable.c ial.c)
 set(op_parser op_prec_parser/op-parser.c op_prec_parser/utils/dynamic_stack.c error.c stable.c ial.c scanner.c str.c)
 set(parser str.c ial.c stable.c scanner.c parser.c error.c)
-
+set(fib interpret-fib.c str.c interpret.c stack.c stable.c instruction_list.c instructions.h ial.c)
 
 add_executable(main ${SOURCE_FILES})
 
@@ -28,3 +28,4 @@ add_executable(stable-test ${stable_test})
 add_executable(parser ${parser})
 add_executable(interpret-str-test ${interpret-str-test})
 add_executable(interpret-rel-test ${interpre-rel-test})
+add_executable(fib ${fib})

@@ -193,7 +193,7 @@ void ret(){
 
         //upratanie zasobnik apo volani funckie
         glob_stack->used = glob_stack->base;
-        glob_stack->base = prev_base;
+        glob_stack->base = prev_base; //TODO : clear strings
 
         //ziskanie polohykam zapisat navratovu hodnotu a jej zapis
         destination = glob_ins_list->active->instruction.addr2;
