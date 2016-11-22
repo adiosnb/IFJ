@@ -8,6 +8,8 @@
 
 
 stab_t	*staticSym = NULL;
+instruction_list_t* insProgram	= NULL;
+instruction_list_t* insInit	= NULL;
 
 char*	parser_class = NULL;
 char*	parser_fun = NULL;
@@ -261,7 +263,7 @@ int more_next(data_t* var)
 			getToken();
 			builtin_print();
 			// NOTE: it's a semantic error in any case, just check syntax
-			error_and_die(SYNTAX_ERROR,"Semantic error");
+			error_and_die(SYNTAX_ERROR,"Assigned void function to variable.");
 		} else 
 		{
 			char* callName = getTokString();
@@ -725,7 +727,7 @@ int parameter_definition()
 	int type;
 	type_specifier(&type);
 	if(type == VOID) 
-		error_and_die(SYNTAX_ERROR,"Expected type-specifier (void,int,double,String)\n");
+		error_and_die(SYNTAX_ERROR,"Expected type-specifier (int,double,String)\n");
 
 	if(getToken() != TOK_ID)
 		error_and_die(SYNTAX_ERROR,"Expected a simple-identifier for formal parameter.");
@@ -769,7 +771,7 @@ int local_definition()
 	if(type_specifier(&type) == SYN_ERR)
 		error_and_die(SYNTAX_ERROR,"Expected type-specifier (int,double,String)\n");
 	if(type == VOID)
-		error_and_die(SEMANTIC_TYPE_ERROR,"Definition of void variable.");
+		error_and_die(SYNTAX_ERROR,"Definition of void variable.");
 
 	if(getToken() != TOK_ID)
 		error_and_die(SYNTAX_ERROR,"Expected simple-id in local definition");
@@ -847,7 +849,11 @@ int more_definition(data_t* sym)
 				
 			if(getToken() != TOK_LEFT_BRACE)
 				error_and_die(SYNTAX_ERROR,"Expected '{'");		
-			GEN("Generate and save function label in instruction list.");
+			if(isSecondPass)
+			{
+				GEN("Generate and save function label in instruction list.");
+				sym->data.data.instruction = create_and_add_instruction(insProgram, INST_LABEL,0,0,0);
+			}
 			if(function_body() == SYN_ERR)
 				return SYN_ERR;
 			if(getToken() != TOK_RIGHT_BRACE)
@@ -860,8 +866,11 @@ int more_definition(data_t* sym)
 			GEN("Assign value");
 			if(expression() == SYN_ERR)
 				return SYN_ERR;
+			// TODO: checkout expression type
 			
 			// TODO: assign const value to symbol table
+			if(isSecondPass)
+				create_and_add_instruction(insInit,INST_STORE,&sym->data,0,0);
 
 			if(getToken() != TOK_DELIM)
 				error_and_die(SYNTAX_ERROR,"Missing ';' in definition");
@@ -870,7 +879,7 @@ int more_definition(data_t* sym)
 			{
 				inicializeData(sym);	
 				if(sym->type == VOID)
-					error_and_die(SEMANTIC_TYPE_ERROR,"Void variable definition");
+					error_and_die(SYNTAX_ERROR,"Void variable definition");
 			}
 			return SYN_OK;
 		default:
@@ -892,7 +901,7 @@ int definition()
 		error_and_die(SYNTAX_ERROR,"Expected keyword 'static'");
 	int type;	
 	if(type_specifier(&type) == SYN_ERR)
-		error_and_die(SYNTAX_ERROR,"Expected type-specifier (void,int,double,String)\n");
+		error_and_die(SYNTAX_ERROR,"Expected type-specifier (int,double,String) or void\n");
 
 	if(getToken() != TOK_ID)
 		error_and_die(SYNTAX_ERROR,"Expected simple-id");
@@ -1004,6 +1013,8 @@ int main(int argc, char ** argv)
 	}
 	if(scanner_openFile(argv[1]))
 	{
+		insProgram = init_inst_list();
+		insInit = init_inst_list();
 		staticSym = stable_init(1024);
 		addBuiltInToTable(staticSym);
 		int result = source_program();

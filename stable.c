@@ -201,7 +201,7 @@ void stable_print(stab_t *stable) {
     for (int i = 0; i < stable->stab_size; i++) {
         current = stable->arr[i];
         while (current != NULL) {
-            printf("KEY : %s \t\t CONTENT : ", current->stab_key);
+            printf("KEY : %-30s CONTENT : ", current->stab_key);
             switch (current->stab_content.data.arg_type) {
                 case INTEGER:
                     printf("%d\n", current->stab_content.data.data.i);
@@ -214,6 +214,9 @@ void stable_print(stab_t *stable) {
                     break;
                 case STACK_EBP:
                     printf("position on stack >> %d\n", current->stab_content.data.data.i);
+                    break;
+                case INSTRUCTION:
+                    printf("FUNCTION: %p \n", current->stab_content.data.data.instruction);
                     break;
                 default:
                     printf("on top of stack\n");
