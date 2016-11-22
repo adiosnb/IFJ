@@ -54,6 +54,7 @@ void fillStaticVarData(data_t* data,int type)
 	data->type = type;
 	data->data.arg_type = type;	
 	data->data.data.i = UNINITIALIZED;
+	data->next_param = NULL;
 }
 
 void inicializeData(data_t* data)
@@ -145,7 +146,8 @@ char* type2str(int type)
 	return str[type];
 }
 
-int util_corretParamList(data_t* func)
+// Set correct stack positions for function formal parameters
+int util_correctParamList(data_t* func)
 {
 	data_t* ptr = func->next_param;
 	if(!ptr)
@@ -711,7 +713,8 @@ int parameter_definition()
 	if(getToken() != TOK_ID)
 		return throw("Expected a simple-identifier for formal parameter.");
 
-	if(isSecondPass)
+	// in the first pass create all formal parameters = crucial
+	if(!isSecondPass)
 	{
 		if(stable_search_variadic(staticSym, 3, parser_class, parser_fun, getTokString()))
 			return throw("SEMANTIC - Formal parameter '%s' already declared.", getTokString());
@@ -818,9 +821,9 @@ int more_definition(data_t* sym)
 
 			if(function_parameters_list(sym) == SYN_ERR)
 				return SYN_ERR;
-			if(isSecondPass)
+			if(!isSecondPass)
 			{
-				util_corretParamList(sym);
+				util_correctParamList(sym);
 			}
 			if(getToken() != TOK_RIGHT_PAR)
 				return throw("Expected ')'");		
