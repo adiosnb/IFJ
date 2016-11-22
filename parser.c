@@ -48,6 +48,7 @@ void fillFunctionData(data_t* data,int type)
 	data->type = type;
 	data->data.arg_type = INSTRUCTION;	
 	data->data.data.instruction = NULL; 
+	data->next_param = NULL;
 }
 void fillStaticVarData(data_t* data,int type)
 {
@@ -90,6 +91,7 @@ void addBuiltInToTable(stab_t* table)
 	stable_add_variadic(table,data,2,"ifj16","readDouble");
 	// readString
 	fillFunctionData(&data,STRING);
+	data.next_param = NULL;
 	stable_add_variadic(table,data,2,"ifj16","readString");
 	 
 	// length 
@@ -262,6 +264,7 @@ int more_next(data_t* var)
 			error_and_die(SYNTAX_ERROR,"Semantic error");
 		} else 
 		{
+			char* callName = getTokString();
 			data_t*	func = NULL, *data = NULL;
 			if(isSecondPass)
 			{
@@ -275,7 +278,7 @@ int more_next(data_t* var)
 				if(func->data.arg_type != INSTRUCTION)
 					error_and_die(SEMANTIC_ERROR,"Expecting '%s' to be function", getTokString());
 				if(func->type != var->type)
-					error_and_die(SEMANTIC_TYPE_ERROR,"Function call type dismatch");
+					error_and_die(SEMANTIC_TYPE_ERROR,"Function call type dismatch [%s]",callName);
 				data = func->next_param;
 			}
 			getToken();
@@ -284,7 +287,7 @@ int more_next(data_t* var)
 				return SYN_ERR;
 
 			if(data != NULL)
-				error_and_die(SEMANTIC_TYPE_ERROR,"Too few arguments in funciton call");
+				error_and_die(SEMANTIC_TYPE_ERROR,"Too few arguments in funciton call [%s]",callName);
 
 			if(getToken() != TOK_RIGHT_PAR)
 				error_and_die(SYNTAX_ERROR,"Expected )");
@@ -338,7 +341,7 @@ int builtin_print()
 //<next>                         -> = <more-next>
 //<next>                         -> ( <function-parameters-list> ) 
 
-int next(data_t* symbol)
+int next(data_t* symbol,char* id)
 {	
 	int isPrint = !strcmp(getTokString(),"ifj16.print");
 	switch(getToken())
@@ -362,7 +365,7 @@ int next(data_t* symbol)
 				if(function_arguments_list(&dt) == SYN_ERR)
 					return SYN_ERR;	
 				if(dt != NULL)
-					error_and_die(SEMANTIC_TYPE_ERROR,"Too few arguments in funciton call");
+					error_and_die(SEMANTIC_TYPE_ERROR,"Too few arguments in funciton call [%s]",id);
 				GEN("Generate a function call INSTR");
 				if(getToken() != TOK_RIGHT_PAR)
 					error_and_die(SYNTAX_ERROR,"Expected )");
@@ -465,6 +468,7 @@ int assign_statement()
 	getToken();
 	if(isIdentifier())
 	{	
+		char* assign_id = getTokString();
 		data_t* symbol = NULL;
 		GEN("Check if variable '%s'  is defined", getTokString());
 
@@ -477,7 +481,7 @@ int assign_statement()
 			if(!symbol)
 				error_and_die(SEMANTIC_ERROR,"Symbol %s is missing",getTokString());
 		}
-		return next(symbol);
+		return next(symbol,assign_id);
 	}
 	error_and_die(SYNTAX_ERROR,"Expected identifier or full-identifier.");
 	return SYN_ERR;
@@ -996,7 +1000,7 @@ int main(int argc, char ** argv)
 {
 	if(argc < 2)
 	{
-		error_and_die(SYNTAX_ERROR,"USAGE: filename");
+		error_and_die(INTERNAL_ERROR,"USAGE: filename");
 	}
 	if(scanner_openFile(argv[1]))
 	{
@@ -1019,7 +1023,7 @@ int main(int argc, char ** argv)
 		fprintf(stderr,"Result: %d\n",result);
 		return 0;
 	}
-	error_and_die(SYNTAX_ERROR,"Failed to open %s",argv[1]);
+	error_and_die(INTERNAL_ERROR,"Failed to open %s",argv[1]);
 	return 1;
 }
 
