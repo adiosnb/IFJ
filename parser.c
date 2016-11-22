@@ -1,4 +1,4 @@
-#define	DEBUG 2 
+//#define	DEBUG 2 
 #include "parser.h"
 #include <stdio.h>
 #include <string.h>
@@ -151,11 +151,11 @@ char* type2str(int type)
 }
 
 // Set correct stack positions for function formal parameters
-int util_correctParamList(data_t* func)
+void util_correctParamList(data_t* func)
 {
 	data_t* ptr = func->next_param;
 	if(!ptr)
-		return 0;
+		return;
 	int offset = 0;
 	while(ptr)
 	{
@@ -182,6 +182,7 @@ int compound_statement();
 int function_parameters_list();
 int statement();
 int parameter_definition();
+int function_arguments_list(data_t**);
 
 /*<expr>                         -> expression
 <expr>                         -> eps
@@ -239,6 +240,9 @@ int expression()
 	}
 	return SYN_OK;
 }
+
+int builtin_print();
+
 //<more-next>                    -> expression 
 //<more-next>                    -> <identifier> ( <function-parameters-list> ) 
 int more_next(data_t* var)
@@ -255,7 +259,7 @@ int more_next(data_t* var)
 			getToken();
 			builtin_print();
 			// NOTE: it's a semantic error in any case, just check syntax
-			return throw("Semantic error");
+			error_and_die(SYNTAX_ERROR,"Semantic error");
 		} else 
 		{
 			data_t*	func = NULL, *data = NULL;
@@ -266,11 +270,12 @@ int more_next(data_t* var)
 				else
 					func = stable_search_variadic(staticSym, 1, getTokString());
 				if(!func)
-					return throw("SEMANTIC - function '%s' not found.",getTokString());
+					error_and_die(SEMANTIC_ERROR,"Function '%s' not found.",getTokString());
+				// TODO: verify ERROR code in this special case
 				if(func->data.arg_type != INSTRUCTION)
-					return throw("SEMANTIC - expecting '%s' to be function", getTokString());
+					error_and_die(SEMANTIC_ERROR,"Expecting '%s' to be function", getTokString());
 				if(func->type != var->type)
-					return throw("SEMANTIC - function call type dismatch");
+					error_and_die(SEMANTIC_TYPE_ERROR,"Function call type dismatch");
 				data = func->next_param;
 			}
 			getToken();
@@ -279,10 +284,10 @@ int more_next(data_t* var)
 				return SYN_ERR;
 
 			if(data != NULL)
-				return throw("SEMANTIC - too few arguments in funciton call");
+				error_and_die(SEMANTIC_TYPE_ERROR,"Too few arguments in funciton call");
 
 			if(getToken() != TOK_RIGHT_PAR)
-				return throw("Expected )");
+				error_and_die(SYNTAX_ERROR,"Expected )");
 		}
 		return SYN_OK;
 	} else {
@@ -299,7 +304,7 @@ int more_next(data_t* var)
 int builtin_print()
 {
 	if(getToken() == TOK_RIGHT_PAR)
-		return throw("Expected a term or concatenation");
+		error_and_die(SYNTAX_ERROR,"Expected a term or concatenation");
 	ungetToken();	
 	do {
 		int res = getToken();
@@ -312,18 +317,18 @@ int builtin_print()
 			case TOK_LITERAL:
 				break;
 			default:
-				return throw("Expected an identifier or a constant.");
+				error_and_die(SYNTAX_ERROR,"Expected an identifier or a constant.");
 		}
 		
 		res = getToken();
 		if(res == TOK_RIGHT_PAR)
 			break;
 		if(res != TOK_PLUS)
-			return throw("Expected +");
+			error_and_die(SYNTAX_ERROR,"Expected +");
 
 	} while (1);
 	if(getToken() != TOK_DELIM)
-		return throw("Expected ;");
+		error_and_die(SYNTAX_ERROR,"Expected ;");
 
 	return SYN_OK;
 	
@@ -342,7 +347,7 @@ int next(data_t* symbol)
 			if(more_next(symbol) == SYN_ERR)
 				return SYN_ERR;
 			if(getToken() != TOK_DELIM)
-				return throw("Expected ;");
+				error_and_die(SYNTAX_ERROR,"Expected ;");
 			return SYN_OK;
 		case TOK_LEFT_PAR:
 			if(isPrint)
@@ -357,16 +362,17 @@ int next(data_t* symbol)
 				if(function_arguments_list(&dt) == SYN_ERR)
 					return SYN_ERR;	
 				if(dt != NULL)
-					return throw("SEMANTIC - too few arguments in funciton call");
+					error_and_die(SEMANTIC_TYPE_ERROR,"Too few arguments in funciton call");
 				GEN("Generate a function call INSTR");
 				if(getToken() != TOK_RIGHT_PAR)
-					return throw("Expected )");
+					error_and_die(SYNTAX_ERROR,"Expected )");
 				if(getToken() != TOK_DELIM)
-					return throw("Expected ;");
+					error_and_die(SYNTAX_ERROR,"Expected ;");
 				return SYN_OK;
 			}
 	}
-	return throw("Expected = or (");
+	error_and_die(SYNTAX_ERROR,"Expected = or (");
+	return SYN_ERR;
 }
 
 
@@ -375,11 +381,11 @@ int jump_statement()
 {
 	getToken();
 	if(!isTokenKeyword(KW_RETURN))
-		return throw("Expected return");
+		error_and_die(SYNTAX_ERROR,"Expected return");
 	if(expression() == SYN_ERR)
 		return SYN_ERR;
 	if(getToken() != TOK_DELIM)
-		return throw("Expected ; at the end of return statement.");
+		error_and_die(SYNTAX_ERROR,"Expected ; at the end of return statement.");
 
 	GEN("Generate RETURN instruction and expression");
 
@@ -393,17 +399,17 @@ int iteration_statement()
 {
 	getToken();
 	if(!isTokenKeyword(KW_WHILE))
-		return throw("Expected return");
+		error_and_die(SYNTAX_ERROR,"Expected return");
 
 	GEN("Generate WHILE.test label"); 
 	if(getToken() != TOK_LEFT_PAR)
-		return throw("Expected (");
+		error_and_die(SYNTAX_ERROR,"Expected (");
 
 	if(expression() == SYN_ERR)
 		return SYN_ERR;
 
 	if(getToken() != TOK_RIGHT_PAR)
-		return throw("Expected )");
+		error_and_die(SYNTAX_ERROR,"Expected )");
 
 	GEN("Generate COMPARE and JUMP test"); 
 
@@ -421,7 +427,7 @@ int selection_statement()
 	if(isTokenKeyword(KW_IF))
 	{
 		if(getToken() != TOK_LEFT_PAR)
-			return throw("Expected (");
+			error_and_die(SYNTAX_ERROR,"Expected (");
 		
 		if(expression() == SYN_ERR)
 			return SYN_ERR;
@@ -429,7 +435,7 @@ int selection_statement()
 		GEN("Generate a CMP and JUMP.");
 
 		if(getToken() != TOK_RIGHT_PAR)
-			return throw("Expected )");
+			error_and_die(SYNTAX_ERROR,"Expected )");
 	
 		
 		if(compound_statement() == SYN_ERR)
@@ -440,7 +446,7 @@ int selection_statement()
 
 		getToken();
 		if(!isTokenKeyword(KW_ELSE))
-			return throw("Expected else");
+			error_and_die(SYNTAX_ERROR,"Expected else");
 
 		if(compound_statement() == SYN_ERR)
 			return SYN_ERR;		
@@ -449,7 +455,8 @@ int selection_statement()
 		return SYN_OK;	
 		
 	}	
-	return throw("Expected IF");
+	error_and_die(SYNTAX_ERROR,"Expected IF");
+	return SYN_ERR;
 }
 
 //<assign-statement>             -> identifier <next> ;
@@ -468,23 +475,24 @@ int assign_statement()
 			else
 				symbol = stable_search_variadic(staticSym,1,getTokString());
 			if(!symbol)
-				return throw("SEMANTIC error - symbol %s is missin",getTokString());
+				error_and_die(SEMANTIC_ERROR,"Symbol %s is missing",getTokString());
 		}
 		return next(symbol);
-	} else
-		return throw("Expected identifier or full-identifier.");
+	}
+	error_and_die(SYNTAX_ERROR,"Expected identifier or full-identifier.");
+	return SYN_ERR;
 }
 //<compound-statement>           -> { <block-items-list> }
 int compound_statement()
 {
 	if(getToken() != TOK_LEFT_BRACE)
-		return throw("Expected {");
+		error_and_die(SYNTAX_ERROR,"Expected {");
 
 	if(block_items_list() == SYN_ERR)
 		return SYN_ERR;
 
 	if(getToken() != TOK_RIGHT_BRACE)
-		return throw("Expected {");
+		error_and_die(SYNTAX_ERROR,"Expected {");
 	return SYN_OK;
 }
 
@@ -513,7 +521,7 @@ int block_items_list()
 {
 	int type = getToken();
 	if(type == TOK_EOF)
-		return throw("Missing }");
+		error_and_die(SYNTAX_ERROR,"Missing }");
 	if(type == TOK_RIGHT_BRACE)
 	{
 		ungetToken();
@@ -551,7 +559,7 @@ int statement()
 				case KW_WHILE:
 					return iteration_statement();
 				default:
-					return throw("Got keyword, Expected if, while or return");
+					error_and_die(SYNTAX_ERROR,"Got keyword, Expected if, while or return");
 			}
 		}
 		case TOK_ID:
@@ -562,7 +570,8 @@ int statement()
 		default:
 			break;
 	}
-	return throw("Expected a statement");
+	error_and_die(SYNTAX_ERROR,"Expected a statement");
+	return SYN_ERR;
 }
 
 //<argument-definition>	-> <term>
@@ -573,7 +582,7 @@ int argument_definition(data_t** fun)
 	if(isSecondPass)
 	{
 		if(!(*fun))
-			return throw("Semantic error: too many arguments");
+			error_and_die(SYNTAX_ERROR,"Semantic error: too many arguments");
 		switch(getToken())
 		{
 			case TOK_ID:
@@ -581,13 +590,13 @@ int argument_definition(data_t** fun)
 				if(!var)
 					var = stable_search_variadic(staticSym,2, parser_class,getTokString());
 				if(!var)
-					return throw("SEMANTIC error - '%s' is not a valid symbol.", getTokString());
+					error_and_die(SEMANTIC_ERROR," '%s' is missing.", getTokString());
 				arg_type = var->type;
 				break;
 			case TOK_SPECIAL_ID:
 				var = stable_search_variadic(staticSym, 2, parser_class ,getTokString());
 				if(!var)
-					return throw("SEMANTIC error - '%s' is not a valid symbol.", getTokString());
+					error_and_die(SEMANTIC_ERROR,"'%s' is an undefined symbol.", getTokString());
 				arg_type = var->type;
 				break;
 			case TOK_LITERAL:
@@ -600,10 +609,10 @@ int argument_definition(data_t** fun)
 				arg_type = DOUBLE;
 				break;
 			default:
-				return throw("Expected a term in function call");
+				error_and_die(SYNTAX_ERROR,"Expected a term in function call");
 		}
 		if(arg_type != (*fun)->type)
-			return throw("SEM - argument type dismatch.");
+			error_and_die(SYNTAX_ERROR,"SEM - argument type dismatch.");
 		*fun = (*fun)->next_param;
 	} else {
 		switch(getToken())
@@ -615,7 +624,7 @@ int argument_definition(data_t** fun)
 			case TOK_DOUBLECONST:
 				break;
 			default:
-				return throw("Expected a term in function call");
+				error_and_die(SYNTAX_ERROR,"Expected a term in function call");
 		}
 	}
 	return SYN_OK;
@@ -635,7 +644,7 @@ int more_function_arguments(data_t** fun)
 			ungetToken();
 			return SYN_OK;
 		default:
-			return throw("Expected ,");
+			error_and_die(SYNTAX_ERROR,"Expected ,");
 	}
 	return SYN_ERR;
 			
@@ -677,7 +686,7 @@ int more_function_parameters()
 			ungetToken();
 			return SYN_OK;
 		default:
-			return throw("Expected ,");
+			error_and_die(SYNTAX_ERROR,"Expected ,");
 	}
 	return SYN_ERR;
 			
@@ -712,16 +721,16 @@ int parameter_definition()
 	int type;
 	type_specifier(&type);
 	if(type == VOID) 
-		return throw("Expected type-specifier (void,int,double,String)\n");
+		error_and_die(SYNTAX_ERROR,"Expected type-specifier (void,int,double,String)\n");
 
 	if(getToken() != TOK_ID)
-		return throw("Expected a simple-identifier for formal parameter.");
+		error_and_die(SYNTAX_ERROR,"Expected a simple-identifier for formal parameter.");
 
 	// in the first pass create all formal parameters = crucial
 	if(!isSecondPass)
 	{
 		if(stable_search_variadic(staticSym, 3, parser_class, parser_fun, getTokString()))
-			return throw("SEMANTIC - Formal parameter '%s' already declared.", getTokString());
+			error_and_die(SEMANTIC_ERROR,"Formal parameter '%s' already declared.", getTokString());
 		GEN(">>> Add parameter '%s':'%s'",getTokString(),type2str(type));
 		// create a new symbol	
 		data_t data;
@@ -744,7 +753,7 @@ int variable_initialization(data_t* variable)
 	if(res == TOK_DELIM)
 		return SYN_OK;
 	if(getToken() != TOK_ASSIGN)
-		return throw("Expected = in inicialization");
+		error_and_die(SYNTAX_ERROR,"Expected = in inicialization");
 	return more_next(variable);
 }
 
@@ -754,18 +763,18 @@ int local_definition()
 	data_t* def = NULL;
 	int type;	
 	if(type_specifier(&type) == SYN_ERR)
-		return throw("Expected type-specifier (int,double,String)\n");
+		error_and_die(SYNTAX_ERROR,"Expected type-specifier (int,double,String)\n");
 	if(type == VOID)
-		return throw("SEMANTIC error -> void definition of local symbol.");
+		error_and_die(SEMANTIC_TYPE_ERROR,"Definition of void variable.");
 
 	if(getToken() != TOK_ID)
-		return throw("Expected simple-id in local definition");
+		error_and_die(SYNTAX_ERROR,"Expected simple-id in local definition");
 	char* var = getTokString();
 	// generate locale vars in the second run
 	if(isSecondPass)
 	{
 		if(stable_search_variadic(staticSym, 3,parser_class, parser_fun,var))
-			return throw("SEMANTIC - Local symbol '%s' of function '%s.%s'"
+			error_and_die(SEMANTIC_ERROR,"Local symbol '%s' ['%s.%s'] redef."
 			" already defined.", var, parser_class,parser_fun);	
 		
 		data_t data;
@@ -776,7 +785,7 @@ int local_definition()
 	if(variable_initialization(def) == SYN_ERR)
 		return SYN_ERR;
 	if(getToken() != TOK_DELIM)
-		return throw("Expected ; in local definition");
+		error_and_die(SYNTAX_ERROR,"Expected ; in local definition");
 
 	
 	GEN("Local variable '%s' with type: %s",var,type2str(type));
@@ -830,15 +839,15 @@ int more_definition(data_t* sym)
 				util_correctParamList(sym);
 			}
 			if(getToken() != TOK_RIGHT_PAR)
-				return throw("Expected ')'");		
+				error_and_die(SYNTAX_ERROR,"Expected ')'");		
 				
 			if(getToken() != TOK_LEFT_BRACE)
-				return throw("Expected '{'");		
+				error_and_die(SYNTAX_ERROR,"Expected '{'");		
 			GEN("Generate and save function label in instruction list.");
 			if(function_body() == SYN_ERR)
 				return SYN_ERR;
 			if(getToken() != TOK_RIGHT_BRACE)
-				return throw("Expected '}'");		
+				error_and_die(SYNTAX_ERROR,"Expected '}'");		
 			
 			GEN("Verify if RETURN was generated somewhere and clear LOCAL VARS");
 			return SYN_OK;
@@ -851,17 +860,17 @@ int more_definition(data_t* sym)
 			// TODO: assign const value to symbol table
 
 			if(getToken() != TOK_DELIM)
-				return throw("Missing ';' in definition");
+				error_and_die(SYNTAX_ERROR,"Missing ';' in definition");
 		case TOK_DELIM:
 			if(!isSecondPass)
 			{
 				inicializeData(sym);	
 				if(sym->type == VOID)
-					return throw("SEMANTIC ERROR - Void variable definition");
+					error_and_die(SEMANTIC_TYPE_ERROR,"Void variable definition");
 			}
 			return SYN_OK;
 		default:
-			return throw("Expected ';','=' or '(' in static definition.");
+			error_and_die(SYNTAX_ERROR,"Expected ';','=' or '(' in static definition.");
 	}
 	return SYN_ERR;
 	
@@ -876,19 +885,19 @@ int definition()
 {
 	getToken();
 	if(!isTokenKeyword(KW_STATIC))
-		return throw("Expected keyword 'static'");
+		error_and_die(SYNTAX_ERROR,"Expected keyword 'static'");
 	int type;	
 	if(type_specifier(&type) == SYN_ERR)
-		return throw("Expected type-specifier (void,int,double,String)\n");
+		error_and_die(SYNTAX_ERROR,"Expected type-specifier (void,int,double,String)\n");
 
 	if(getToken() != TOK_ID)
-		return throw("Expected simple-id");
+		error_and_die(SYNTAX_ERROR,"Expected simple-id");
 
 	data_t* pData = NULL;
 	if(!isSecondPass)
 	{
 		if(stable_search_variadic(staticSym, 2,parser_class,getTokString()))
-			return throw("SEMANTIC ERROR - Static symbol %s.%s already declared",
+			error_and_die(SEMANTIC_ERROR,"Static symbol %s.%s already declared",
 				parser_class, getTokString());
 		GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
 		data_t data;
@@ -924,10 +933,10 @@ int class_definition()
 {
 	getToken();
 	if(!isTokenKeyword(KW_CLASS))
-		return throw("Expected keyword 'class'\n");	
+		error_and_die(SYNTAX_ERROR,"Expected keyword 'class'\n");	
 
 	if(getToken() != TOK_ID)
-		return throw("Expected simple-identifier\n");
+		error_and_die(SYNTAX_ERROR,"Expected simple-identifier\n");
 
 	// if it's the first pass
 	if(!isSecondPass)
@@ -936,7 +945,7 @@ int class_definition()
 		if(stable_get_var(staticSym, getTokString()) != NULL)
 		{
 			// semantic error, class redefinition	
-			return throw("SEMANTIC - class redefinition");
+			error_and_die(SEMANTIC_ERROR,"Class redefinition");
 		} else {
 			data_t data;
 			fillClassData(&data);
@@ -946,11 +955,11 @@ int class_definition()
 	parser_class = getTokString();
 
 	if(getToken() != TOK_LEFT_BRACE)
-		return throw("Expected { in class definition\n");
+		error_and_die(SYNTAX_ERROR,"Expected { in class definition\n");
 	if(class_body() == SYN_ERR)
 		return SYN_ERR;
 	if(getToken() != TOK_RIGHT_BRACE)
-		return throw("Expected } in class definition\n");
+		error_and_die(SYNTAX_ERROR,"Expected } in class definition\n");
 	return SYN_OK;
 }
 
@@ -987,7 +996,7 @@ int main(int argc, char ** argv)
 {
 	if(argc < 2)
 	{
-		return throw("USAGE: filename");
+		error_and_die(SYNTAX_ERROR,"USAGE: filename");
 	}
 	if(scanner_openFile(argv[1]))
 	{
@@ -1001,6 +1010,8 @@ int main(int argc, char ** argv)
 			GEN("--------------- SECOND PASS ---------------");
 			result = source_program();
 		}
+		if(!stable_search_variadic(staticSym,1, "Main.run"))
+			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
 		stable_print(staticSym);
 		stable_destroy(&staticSym);
 
@@ -1008,7 +1019,7 @@ int main(int argc, char ** argv)
 		fprintf(stderr,"Result: %d\n",result);
 		return 0;
 	}
-	return throw("Failed to open %s",argv[1]);
+	error_and_die(SYNTAX_ERROR,"Failed to open %s",argv[1]);
 	return 1;
 }
 
