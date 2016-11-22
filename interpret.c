@@ -206,14 +206,13 @@ void ret(){
 
         //upratanie zasobnik apo volani funckie
         glob_stack->used = glob_stack->base;
-        glob_stack->base = prev_base; //TODO : clear strings
+        glob_stack->base = prev_base;
 
 
         //ziskanie polohykam zapisat navratovu hodnotu a jej zapis
         destination = glob_ins_list->active->instruction.addr2;
         //ak nechecme nikam ulozit navratovau hodnotu funkcie tak zapis preskocime
         if (destination != NULL) {
-            //TODO thing abou string magic
             if (destination->arg_type == STACK_EBP) {
                 stack_actualize_from_ebp(glob_stack, *return_value, destination->data.i);
             } else {
@@ -230,9 +229,14 @@ void ret(){
         glob_stack->base = prev_base;
 
     }
-    printf("\nret : %d %d\n",prev_base,glob_stack->used);
-    printf("ret : %d %d\n",current_base,current_used);
-    //for (int i = )
+
+    //vycistenie stringov zo zasobnika
+    //TODO test it
+    for (int i = current_base; i < current_used ; i++){
+        if (glob_stack->data[i].arg_type == STRING){
+            str_destroy(&glob_stack->data[i].data.s);
+        }
+    }
 }
 
 void write() {

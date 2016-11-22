@@ -91,6 +91,9 @@ argument_var_t *stack_from_top_ptr(stack_t *stack, int position) {
 void print_stack(stack_t *stack) {
     printf("\n--------------- STACK ------------------\n");
     for (int i = 0; i < stack->used - 1; i++) {
+        if (i == stack->base){
+            printf("----------------   <-- BASE\n");
+        }
         switch (stack->data[i].arg_type) {
             case INTEGER:
                 printf("%d : %d\n", i, stack->data[i].data.i);
@@ -113,6 +116,9 @@ void print_stack(stack_t *stack) {
         case STRING:
             printf("%d : %s\n", stack->used - 1, stack->data[stack->used - 1].data.s.str);
             break;
+    }
+    if (stack->used == stack->base){
+        printf("----------------   <-- BASE\n");
     }
 
     printf("\n---------------- STACK END ---------------\n");
