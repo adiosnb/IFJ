@@ -70,6 +70,7 @@ int add_intstruction(instruction_list_t *i_list,instruction_item_t *instruction)
 instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum instructions type, argument_var_t *addr1,
                                                argument_var_t *addr2, argument_var_t *addr3);
 
+void inst_list_print(instruction_list_t *list);
 
 
 #endif //INSTRUCTION_LIST

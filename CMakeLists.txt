@@ -7,7 +7,7 @@ set(SOURCE_FILES instruction_list.c instruction_list.h instructions.h interpret.
 
 set(str_test str.c str.h str_test.c ial.c)
 
-set(my_scanner scanner_alt.c scanner-unit_alt.c str.c )
+
 set(scanner scanner.c scanner-unit.c str.c)
 set(interpret-expr-test interpret.c interpret-expr-test.c str.c instruction_list.c stack.c stable.c ial.c)
 set(stable_test stable-test.c stable.c stack.h str.c ial.c)
@@ -15,13 +15,12 @@ set(interpret-str-test interpret-str-test.c str.c interpret.c stack.c stable.c i
 set(interpre-rel-test interpret.c interpret-relation-test.c str.c instruction_list.c stack.c stable.c ial.c)
 set(op_parser op_prec_parser/op-parser.c op_prec_parser/utils/dynamic_stack.c error.c stable.c ial.c scanner.c str.c)
 set(parser str.c ial.c stable.c scanner.c parser.c error.c)
-set(fib interpret-fib.c str.c interpret.c stack.c stable.c instruction_list.c instructions.h ial.c)
+set(fib interpret-fib.c interpret.c stack.c stable.c instruction_list.c instructions.h ial.c str_old.c)
 
 add_executable(main ${SOURCE_FILES})
 
 add_executable(op_parser ${op_parser})
 add_executable(str_test ${str_test})
-add_executable(my_scanner ${my_scanner})
 add_executable(scanner ${scanner})
 add_executable(interpret-expr-test ${interpret-expr-test})
 add_executable(stable-test ${stable_test})

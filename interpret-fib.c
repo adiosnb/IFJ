@@ -132,7 +132,7 @@ int main() {
     create_and_add_instruction(i_list,INST_WRITE,&x->data,0,0);
 
 
-
+    inst_list_print(i_list);
     interpret(i_list,sym_tab);
 
     stable_destroy(&sym_tab);
