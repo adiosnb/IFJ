@@ -53,6 +53,9 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
             case INST_EXPR_NOT_EQ:
                 compare();
                 break;
+            case INST_EXPR_STR_ADD:
+                expr_str_add();
+                break;
             case INST_PUSH:
             case INST_PUSH_INT:
             case INST_PUSH_DOUBLE:
@@ -758,6 +761,20 @@ void compare(){
         default:
             break;
     }
+
+    stack_push(&glob_stack,dest);
+}
+
+void expr_str_add(){ //TODO test
+    argument_var_t dest, op1, op2;
+
+    op2 = stack_pop(glob_stack);
+    op1 = stack_pop(glob_stack);
+
+    dest.arg_type = STRING;
+    dest.data.s = str_init();
+
+    str_concatenate(&dest.data.s,&op1.data.s,&op2.data.s);
 
     stack_push(&glob_stack,dest);
 }

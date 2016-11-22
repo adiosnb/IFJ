@@ -29,6 +29,7 @@ enum instructions {     // ADDR1            ADDR2           ADDR3
     INST_EXPR_HIG_EQ,   //take last 2 operands from stack
     INST_EXPR_EQUAL,    //take last 2 operands from stack
     INST_EXPR_NOT_EQ,   //take last 2 operands from stack
+    INST_EXPR_STR_ADD,  //take last 2 operands from stack
     INST_PUSH,          //var to push       ---             ---
     INST_PUSH_INT,      //---               ---             ---
     INST_PUSH_DOUBLE,   //---               ---             ---

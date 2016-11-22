@@ -25,6 +25,7 @@ void expr_sub();
 void expr_mul();
 void expr_div();
 void compare();
+void expr_str_add(); 
 void write();    //src
 void read_int();//dst
 void read_double();//dst
@@ -51,9 +52,6 @@ void str_len();//dst  src
 void concatenate();
 
 void interpret_str_cmp();
-void interpret_str_find();
-void interpret_str_sort();
-void interpret_str_substr();
 
 
 #endif //INTERPRET
