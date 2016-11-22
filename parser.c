@@ -105,8 +105,10 @@ void addBuiltInToTable(stab_t* table)
 	fillLocalVarData(&data,INTEGER, -2);
 	ptr =  stable_add_variadic(table,data,3,"ifj16","substr","n");
 	fillLocalVarData(&data,INTEGER, -3);
+	data.next_param = ptr;
 	ptr =  stable_add_variadic(table,data,3,"ifj16","substr","i");
 	fillLocalVarData(&data,STRING, -4);
+	data.next_param = ptr;
 	ptr =  stable_add_variadic(table,data,3,"ifj16","substr","s");
 	fillFunctionData(&data,STRING);
 	data.next_param = ptr;
@@ -116,6 +118,7 @@ void addBuiltInToTable(stab_t* table)
 	fillLocalVarData(&data,STRING, -2);
 	ptr =  stable_add_variadic(table,data,3,"ifj16","compare","s2");
 	fillLocalVarData(&data,STRING, -3);
+	data.next_param = ptr;
 	ptr =  stable_add_variadic(table,data,3,"ifj16","compare","s1");
 	fillFunctionData(&data,INTEGER);
 	data.next_param = ptr;
@@ -124,6 +127,7 @@ void addBuiltInToTable(stab_t* table)
 	fillLocalVarData(&data,STRING, -2);
 	ptr =  stable_add_variadic(table,data,3,"ifj16","find","s");
 	fillLocalVarData(&data,STRING, -3);
+	data.next_param = ptr;
 	ptr =  stable_add_variadic(table,data,3,"ifj16","find","search");
 	fillFunctionData(&data,INTEGER);
 	data.next_param = ptr;
