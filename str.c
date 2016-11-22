@@ -3,13 +3,14 @@
 #include <string.h>
 #include "str.h"
 #include "ial.h"
+#include "error.h"
 
 string_t str_init(){
     string_t new_str;
 
     new_str.str = calloc(STR_ALLOC_SIZE + 1,sizeof(char));
     if (new_str.str == NULL){
-        //TODO error
+        error_and_die(INTERNAL_ERROR, "Calloc failed in string module");
     }
     new_str.len = 0;
     new_str.max = STR_ALLOC_SIZE;
@@ -25,8 +26,8 @@ void str_reinit(string_t *str){
     str->max = STR_ALLOC_SIZE;
     str->len = 0;
 
-    if ((str->str = calloc(STR_ALLOC_SIZE + 1,sizeof(char))) != NULL) {
-        //TODO error
+    if ((str->str = calloc(STR_ALLOC_SIZE + 1,sizeof(char))) == NULL) {
+        error_and_die(INTERNAL_ERROR, "Calloc failed in string module");
     }
 }
 void str_print(string_t str){
@@ -37,7 +38,7 @@ void str_resize(string_t *str) {
     char *new_str;
     str->max += STR_ALLOC_SIZE;
     if ((new_str = calloc(str->max + 1, sizeof(char))) == NULL){
-        //TODO error
+        error_and_die(INTERNAL_ERROR, "Calloc failed in string module");
     }
     strcpy(new_str,str->str);
     free(str->str);
@@ -76,6 +77,7 @@ string_t str_sub_str(string_t str, int i, int n) {
     int end = i + n;
     if (str.len < n){
         //TODO ERROR
+        error_and_die(INTERNAL_ERROR, "Substring error");
     }
 
     string_t ret = str_init();
