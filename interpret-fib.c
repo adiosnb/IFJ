@@ -74,6 +74,7 @@ int main() {
     create_and_add_instruction(i_list,INST_POP,0,0,0);
     create_and_add_instruction(i_list,INST_RET,&p0->data,0,0);
 
+
     ptr_inst_item = create_and_add_instruction(i_list,INST_LABEL,0,0,0);
     el1->data.arg_type = INSTRUCTION;
     el1->data.data.instruction = ptr_inst_item;
@@ -130,7 +131,7 @@ int main() {
     create_and_add_instruction(i_list,INST_CALL,&fib->data,&x->data,0);
     create_and_add_instruction(i_list,INST_POP,0,0,0);
     create_and_add_instruction(i_list,INST_WRITE,&x->data,0,0);
-
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, (void *) 1);
 
     inst_list_print(i_list);
     interpret(i_list,sym_tab);

@@ -76,7 +76,6 @@ string_t str_sort(string_t *str){
 string_t str_sub_str(string_t str, int i, int n) {
     int end = i + n;
     if (str.len < n){
-        //TODO ERROR
         error_and_die(INTERNAL_ERROR, "Substring error");
     }
 

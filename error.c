@@ -1,7 +1,12 @@
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include "error.h"
+
+#ifndef TEST
 #include "scanner.h"
+#endif
+
 #include "stable.h"
 
 extern stab_t* staticSym; 
@@ -12,10 +17,12 @@ void clean_up()
 {
 	// TODO: 
 	// scanner clean up
+#ifndef TEST
 	scanner_closeFile();
-	// symbolic table clean up
 	stable_destroy(&staticSym);
-	// interpret clean up
+    // interpret clean up
+#endif
+    // symbolic table clean up
 }
 
 
@@ -61,7 +68,9 @@ void error_and_die(enum errorTypes type, const char *fmt, ...)
     va_list valist;
     
     va_start(valist, fmt);
+#ifndef TEST
     fprintf(stderr,"[%s][%d:%d] ",getErrorName(type),getTokLine(),getTokTabs());
+#endif
     vfprintf(stderr,fmt, valist);
     fputc('\n',stderr);
     va_end(valist);
