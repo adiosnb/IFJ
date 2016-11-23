@@ -38,6 +38,8 @@ int	isTokenTypeSpecifier()
  			SEMANTIC UTILS
 ******************************************************************************/
 
+
+
 void fillClassData(data_t* data)
 {
 	data->type = INTEGER;
@@ -74,6 +76,32 @@ void fillLocalVarData(data_t* data,int type, int stackPos)
 	data->data.arg_type = STACK_EBP;	
 	data->data.data.i = stackPos;
 	data->next_param = NULL;
+}
+
+data_t* createConstant(int type, int iVal, double dVal, char* cVal)
+{
+	static int constNum = 0;
+	char buffer[255];
+	snprintf(buffer,254,"%d",constNum++);
+
+	data_t const_data;
+	fillStaticVarData(&const_data,type);
+
+	switch(type)
+	{
+		case INTEGER:
+			const_data.data.data.i = iVal;
+			break;
+		case DOUBLE:
+			const_data.data.data.d = dVal;
+			break;
+		case STRING:
+			inicializeData(&const_data);
+			str_append_chars(&const_data.data.data.s, cVal);
+			break;
+				
+	}
+	return stable_add_variadic(staticSym, const_data,2, "ifj16.const", buffer);
 }
 
 void addBuiltInToTable(stab_t* table)
@@ -293,6 +321,12 @@ int more_next(data_t* var)
 
 			if(getToken() != TOK_RIGHT_PAR)
 				error_and_die(SYNTAX_ERROR,"Expected )");
+			// generate function call
+			if(isSecondPass)
+			{
+				// TODO switch for built in
+				create_and_add_instruction(insProgram, INST_CALL, &var->data,0,0);
+			}
 		}
 		return SYN_OK;
 	} else {
@@ -300,6 +334,9 @@ int more_next(data_t* var)
 		ungetToken();
 		if(expression() == SYN_ERR)
 			return SYN_ERR;
+		//TODO var->type compare 
+		if(isSecondPass)
+			create_and_add_instruction(insProgram, INST_STORE, &var->data, 0,0);
 		GEN("Verify if result of expr can be assigned. If do, generate assign");
 	}	
 	return SYN_OK;
@@ -312,17 +349,54 @@ int builtin_print()
 		error_and_die(SYNTAX_ERROR,"Expected a term or concatenation");
 	ungetToken();	
 	do {
+		data_t* var = NULL;
 		int res = getToken();
-		switch(res)
+		if(isSecondPass)
 		{
-			case TOK_ID:
-			case TOK_SPECIAL_ID:
-			case TOK_CONST:
-			case TOK_DOUBLECONST:
-			case TOK_LITERAL:
-				break;
-			default:
-				error_and_die(SYNTAX_ERROR,"Expected an identifier or a constant.");
+			switch(res)
+			{
+				case TOK_ID:
+					var = stable_search_variadic(staticSym, 3, parser_class,parser_fun,getTokString());
+					if(!var)
+						var = stable_search_variadic(staticSym, 2, parser_class,getTokString());
+					if(!var)
+						error_and_die(SEMANTIC_ERROR, "Undefined variable '%s'",getTokString());
+					break;
+				case TOK_SPECIAL_ID:
+					var = stable_search_variadic(staticSym,1, getTokString());
+					if(!var)
+						error_and_die(SEMANTIC_ERROR, "Undefined variable '%s'",getTokString());
+					break;	
+				case TOK_CONST:
+					var = createConstant(INTEGER, getTokInt(), 0,NULL);
+					break;
+				case TOK_DOUBLECONST:
+					var = createConstant(DOUBLE, 0, getTokDouble(),NULL);
+					break;
+				case TOK_LITERAL:
+					var = createConstant(STRING, 0, 0,getTokString());
+					break;
+				default:
+					error_and_die(SYNTAX_ERROR,"Expected an identifier or a constant.");
+			}
+			
+			if(!var)
+				error_and_die(INTERNAL_ERROR,"Failed to create constant");
+
+			// now generate PUSH
+			create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);
+		} else {
+			switch(res)
+			{
+				case TOK_ID:
+				case TOK_SPECIAL_ID:
+				case TOK_CONST:
+				case TOK_DOUBLECONST:
+				case TOK_LITERAL:
+					break;
+				default:
+					error_and_die(SYNTAX_ERROR,"Expected an identifier or a constant.");
+			}
 		}
 		
 		res = getToken();
@@ -583,8 +657,9 @@ int statement()
 //<argument-definition>	-> <term>
 int argument_definition(data_t** fun)
 {
-	int arg_type = VOID;
 	data_t*	var;
+	// payload is used to inicialize constants
+	data_t payload;
 	if(isSecondPass)
 	{
 		if(!(*fun))
@@ -597,27 +672,50 @@ int argument_definition(data_t** fun)
 					var = stable_search_variadic(staticSym,2, parser_class,getTokString());
 				if(!var)
 					error_and_die(SEMANTIC_ERROR," '%s' is missing.", getTokString());
-				arg_type = var->type;
 				break;
 			case TOK_SPECIAL_ID:
 				var = stable_search_variadic(staticSym, 2, parser_class ,getTokString());
 				if(!var)
 					error_and_die(SEMANTIC_ERROR,"'%s' is an undefined symbol.", getTokString());
-				arg_type = var->type;
 				break;
 			case TOK_LITERAL:
-				arg_type = STRING;
+				//TODO: fix duplicates
+				var = createConstant(STRING, 0,0, getTokString());
+
+				/*	fillStaticVarData(&payload, STRING);
+				inicializeData(&payload);
+				str_append_chars(&payload.data.data.s, getTokString());
+
+				var = stable_add_variadic(staticSym,payload, 3, "ifj16","const",getTokString());
+				*/
 				break;
 			case TOK_CONST:
-				arg_type = INTEGER;
+				var = createConstant(INTEGER, getTokInt(),0,0);
+				/*
+				fillStaticVarData(&payload, INTEGER);
+				payload.data.data.i = getTokInt();
+
+				var = stable_add_variadic(staticSym,payload, 3, "ifj16","const",atoi(getTokInt()));
+				*/
 				break;
 			case TOK_DOUBLECONST:
-				arg_type = DOUBLE;
+				var = createConstant(DOUBLE, 0,getTokDouble(),0);
+				/*fillStaticVarData(&payload, DOUBLE);
+				payload.data.data.d = getTokDouble();
+
+				var = stable_add_variadic(staticSym,payload,3, "ifj16","const",atof(getTokDouble()));
+				*/
 				break;
 			default:
 				error_and_die(SYNTAX_ERROR,"Expected a term in function call");
 		}
-		if(arg_type != (*fun)->type)
+		if(!var)
+			error_and_die(INTERNAL_ERROR, "Failed to create constant");
+
+		// push variable
+		create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);	
+
+		if(var->type != (*fun)->type)
 			error_and_die(SYNTAX_ERROR,"SEM - argument type dismatch.");
 		*fun = (*fun)->next_param;
 	} else {
@@ -788,6 +886,21 @@ int local_definition()
 		def = stable_add_variadic(staticSym,data,3, parser_class,parser_fun,var);
 	}
 	
+	if(isSecondPass)
+	{
+		switch(type)
+		{
+			case INTEGER:
+				create_and_add_instruction(insProgram, INST_PUSH_INT,0,0,0);
+				break;
+			case STRING:
+				create_and_add_instruction(insProgram, INST_PUSH_STRING,0,0,0);
+				break;
+			case DOUBLE:
+				create_and_add_instruction(insProgram, INST_PUSH_DOUBLE,0,0,0);
+				break;
+		}
+	}	
 	if(variable_initialization(def) == SYN_ERR)
 		return SYN_ERR;
 	if(getToken() != TOK_DELIM)
