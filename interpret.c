@@ -1,5 +1,6 @@
 #include "interpret.h"
 #include "instruction_list.h"
+#include "error.h"
 
 stack_t *glob_stack;
 stab_t *glob_stable;
@@ -231,6 +232,9 @@ void ret(){
         glob_stack->used = glob_stack->base;
         glob_stack->base = prev_base;
 
+        if (glob_ins_list->active->instruction.addr3 != (void *) 6) {
+            error_and_die(RUNTIME_UNINITIALIZED, "Error :no return");
+        }
     }
 
     //vycistenie stringov zo zasobnika
@@ -262,8 +266,9 @@ void write() {
             tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
             tmp_ptr = &tmp_var;
             write();
+            break;
         default:
-            //TODO error maybe
+            error_and_die(RUNTIME_ERROR, "INST_WRITE error");
             break;
     }
 
@@ -272,7 +277,9 @@ void write() {
 void read_int(){
     int readed_int;
     //nacita premennu do docasnej premennej
-    scanf("%d",&readed_int);
+    if (scanf("%d", &readed_int) == EOF) {
+        error_and_die(RUNTIME_READ_ERROR, "read integer");
+    }
 
     tmp_ptr = glob_ins_list->active->instruction.addr1;
 
@@ -288,7 +295,9 @@ void read_int(){
 void read_double(){
     double readed_double;
     //nacita premennu do docasnej premennej
-    scanf("%lf",&readed_double);
+    if (scanf("%lf", &readed_double) == EOF) {
+        error_and_die(RUNTIME_READ_ERROR, "read double");
+    }
 
     tmp_ptr = glob_ins_list->active->instruction.addr1;
 
@@ -542,7 +551,7 @@ void divisoin(){
     } else {
         b = arg3->data.i;
     }
-
+    if (!b) exit(9);
     //zapisanie vysledku
     if (arg1->arg_type == DOUBLE){
         arg1->data.d = a / b;
@@ -638,6 +647,16 @@ void expr_div() {
 
     op2 = stack_pop(glob_stack);
     op1 = stack_pop(glob_stack);
+
+    if (op2.arg_type == INTEGER) {
+        if (!op2.data.i) { //division by zero error
+            error_and_die(RUNTIME_NULLDIVISION, "Division by 0");
+        }
+    } else {
+        if (!op2.data.d) {
+            error_and_die(RUNTIME_NULLDIVISION, "Division by 0");
+        }
+    }
 
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
@@ -832,7 +851,7 @@ void jump_not_zero(){
     }
 }
 
-void jump_equal(){      //TODO test it
+void jump_equal() {
     argument_var_t *op1, *op2;
 
     //nacitanie oprandov z tabulky symbolov
@@ -879,7 +898,7 @@ void jump_equal(){      //TODO test it
     }
 }
 
-void jump_not_equal(){      //TODO test it
+void jump_not_equal() {
     argument_var_t *op1, *op2;
 
     //nacitanie oprandov z tabulky symbolov

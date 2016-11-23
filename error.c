@@ -1,21 +1,26 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "error.h"
-#include "scanner.h"
-#include "stable.h"
-#include "parser.h"
+#include <stdio.h>
+#include "ial.h"
 
+#ifndef TEST
+#include "scanner.h"
+#include "parser.h"
+#endif
 extern stab_t* staticSym; 
 
 
 // Call module dtors
 void clean_up()
 {
+#ifndef TEST
 	// TODO: 
 	// scanner clean up
 	scanner_closeFile();
 	// parser clean up
 	parser_clean();
+#endif
 }
 
 
@@ -63,7 +68,9 @@ void error_and_die(enum errorTypes type, const char *fmt, ...)
     va_list valist;
     
     va_start(valist, fmt);
+#ifndef TEST
     fprintf(stderr,"[%s][%d:%d] ",getErrorName(type),getTokLine(),getTokTabs());
+#endif
     vfprintf(stderr,fmt, valist);
     fputc('\n',stderr);
     va_end(valist);

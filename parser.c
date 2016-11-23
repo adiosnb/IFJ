@@ -5,6 +5,7 @@
 #include "scanner.h"
 #include "interpret.h"
 #include "stable.h"
+#include "ial.h"
 #include "error.h"
 
 

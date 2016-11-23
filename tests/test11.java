@@ -1,8 +1,9 @@
 class Main {
     static int fun1(int cislo) {
         int a;
-        a = b + cislo;
         int b;
+        b = run();
+        a = b + cislo;
         return a;
     }
 

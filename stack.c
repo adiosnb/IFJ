@@ -11,6 +11,7 @@
  ***************************************/
 #include "stack.h"
 #include "instruction_list.h"
+#include "error.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -32,6 +33,12 @@ stack_t *stack_init() {
 }
 
 void stack_destroy(stack_t **stack){
+    //string killing
+    for (int i = 0; i < (*stack)->used; i++) {
+        if ((*stack)->data[i].arg_type == STRING) {
+            str_destroy(&(*stack)->data[i].data.s);
+        }
+    }
     free(*stack);
 }
 
@@ -51,8 +58,9 @@ argument_var_t stack_pop(stack_t *stack) {
     if(stack->used > 0) {
         pop_var = stack->data[stack->used - 1];
         stack->used--;
-    } else pop_var.arg_type = -1;
-
+    } else {
+        error_and_die(RUNTIME_ERROR, "Empty stack pop");
+    }
     return pop_var;
 }
 
