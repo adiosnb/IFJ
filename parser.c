@@ -38,6 +38,48 @@ int	isTokenTypeSpecifier()
  			SEMANTIC UTILS
 ******************************************************************************/
 
+void generateFunctionCall(data_t* func,data_t* retSym)
+{
+	// memory address to receive the return value
+	argument_var_t* retVal = (retSym != NULL)?(&retSym->data):NULL;
+	if(!func)
+		return;
+	switch(func->data.data.i)
+	{
+		case BUILTIN_READ:
+			switch(func->type)
+			{
+				case INTEGER:
+					create_and_add_instruction(insProgram, INST_READ_INT, retVal,0,0);
+					break;
+				case DOUBLE:
+					create_and_add_instruction(insProgram, INST_READ_DOUBLE, retVal,0,0);
+					break;
+				case STRING:
+					create_and_add_instruction(insProgram, INST_READ_STRING, retVal,0,0);
+					break;
+			}
+			break;
+		case BUILTIN_LEN:
+			create_and_add_instruction(insProgram, INST_CALL_LEN, retVal,0,0);
+			break;
+		case BUILTIN_SUBSTR:
+			create_and_add_instruction(insProgram, INST_CALL_SUBSTR, retVal,0,0);
+			break;
+		case BUILTIN_CMP:
+			create_and_add_instruction(insProgram, INST_CALL_CMP, retVal,0,0);
+			break;
+		case BUILTIN_FIND:
+			create_and_add_instruction(insProgram, INST_CALL_FIND, retVal,0,0);
+			break;
+		case BUILTIN_SORT:
+			create_and_add_instruction(insProgram, INST_CALL_SORT, retVal,0,0);
+			break;
+			
+		default:
+			create_and_add_instruction(insProgram, INST_CALL, func->data.data.instruction,retVal,0);
+	}
+}
 
 
 void fillClassData(data_t* data)
@@ -112,16 +154,19 @@ void addBuiltInToTable(stab_t* table)
 	stable_add_var(table, "ifj16",data);
 	// print 
 	fillFunctionData(&data,VOID);
+	data.data.data.i = BUILTIN_PRINT;
 	stable_add_variadic(table,data,2,"ifj16","print");
 	// readInt 
 	fillFunctionData(&data,INTEGER);
+	data.data.data.i = BUILTIN_READ;
 	stable_add_variadic(table,data,2,"ifj16","readInt");
 	// readDouble
 	fillFunctionData(&data,DOUBLE);
+	data.data.data.i = BUILTIN_READ;
 	stable_add_variadic(table,data,2,"ifj16","readDouble");
 	// readString
 	fillFunctionData(&data,STRING);
-	data.next_param = NULL;
+	data.data.data.i = BUILTIN_READ;
 	stable_add_variadic(table,data,2,"ifj16","readString");
 	 
 	// length 
@@ -129,6 +174,7 @@ void addBuiltInToTable(stab_t* table)
 	ptr =  stable_add_variadic(table,data,3,"ifj16","length","s");
 
 	fillFunctionData(&data,INTEGER);
+	data.data.data.i = BUILTIN_LEN;
 	data.next_param = ptr;
 	stable_add_variadic(table,data,2,"ifj16","length");
 
@@ -144,6 +190,7 @@ void addBuiltInToTable(stab_t* table)
 	ptr =  stable_add_variadic(table,data,3,"ifj16","substr","s");
 	fillFunctionData(&data,STRING);
 	data.next_param = ptr;
+	data.data.data.i = BUILTIN_SUBSTR;
 	stable_add_variadic(table,data,2,"ifj16","substr");
 
 	//compare 
@@ -154,6 +201,7 @@ void addBuiltInToTable(stab_t* table)
 	ptr =  stable_add_variadic(table,data,3,"ifj16","compare","s1");
 	fillFunctionData(&data,INTEGER);
 	data.next_param = ptr;
+	data.data.data.i = BUILTIN_CMP;
 	stable_add_variadic(table,data,2,"ifj16","compare");
 	// find
 	fillLocalVarData(&data,STRING, -2);
@@ -163,6 +211,7 @@ void addBuiltInToTable(stab_t* table)
 	ptr =  stable_add_variadic(table,data,3,"ifj16","find","search");
 	fillFunctionData(&data,INTEGER);
 	data.next_param = ptr;
+	data.data.data.i = BUILTIN_FIND;
 	stable_add_variadic(table,data,2,"ifj16","find");
 
 	//sort 
@@ -170,6 +219,7 @@ void addBuiltInToTable(stab_t* table)
 	ptr =  stable_add_variadic(table,data,3,"ifj16","sort","s");
 	fillFunctionData(&data,STRING);
 	data.next_param = ptr;
+	data.data.data.i = BUILTIN_SORT;
 	stable_add_variadic(table,data,2,"ifj16","sort");
 
 
@@ -325,7 +375,7 @@ int more_next(data_t* var)
 			if(isSecondPass)
 			{
 				// TODO switch for built in
-				create_and_add_instruction(insProgram, INST_CALL, &var->data,0,0);
+				generateFunctionCall(func,var);
 			}
 		}
 		return SYN_OK;
@@ -385,6 +435,7 @@ int builtin_print()
 
 			// now generate PUSH
 			create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);
+			create_and_add_instruction(insProgram, INST_CALL_PRINT, &var->data,0,0);
 		} else {
 			switch(res)
 			{
@@ -1142,6 +1193,8 @@ int main(int argc, char ** argv)
 			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
 		stable_print(staticSym);
 		stable_destroy(&staticSym);
+		
+		inst_list_print(insProgram);
 
 		scanner_closeFile();
 		fprintf(stderr,"Result: %d\n",result);

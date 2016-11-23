@@ -30,7 +30,9 @@
 #define INSTRUCTION     5
 #define VOID		6
 
-
+enum buitInCodes { BUILTIN_INVALID, BUILTIN_PRINT, BUILTIN_CMP, BUILTIN_FIND, BUILTIN_SORT,
+	 BUILTIN_SUBSTR, BUILTIN_LEN,BUILTIN_READ};
+  
 typedef union {
     int i;
     double d;
