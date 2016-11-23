@@ -395,6 +395,7 @@ int more_next(data_t* var)
 // a concatenation as an argument
 int builtin_print()
 {
+	int paramCount = 0;
 	if(getToken() == TOK_RIGHT_PAR)
 		error_and_die(SYNTAX_ERROR,"Expected a term or concatenation");
 	ungetToken();	
@@ -435,7 +436,7 @@ int builtin_print()
 
 			// now generate PUSH
 			create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);
-			create_and_add_instruction(insProgram, INST_CALL_PRINT, &var->data,0,0);
+			paramCount++;
 		} else {
 			switch(res)
 			{
@@ -457,6 +458,11 @@ int builtin_print()
 			error_and_die(SYNTAX_ERROR,"Expected +");
 
 	} while (1);
+	if(isSecondPass)
+	{
+		data_t* varCount = createConstant(INTEGER, paramCount, 0,NULL);
+		create_and_add_instruction(insProgram, INST_CALL_PRINT, &varCount->data,0,0);
+	}
 	if(getToken() != TOK_DELIM)
 		error_and_die(SYNTAX_ERROR,"Expected ;");
 
@@ -512,8 +518,41 @@ int jump_statement()
 	getToken();
 	if(!isTokenKeyword(KW_RETURN))
 		error_and_die(SYNTAX_ERROR,"Expected return");
+	
+	int hasExpression = 1;
+	if(getToken() == TOK_DELIM)
+		hasExpression = 0;
+	ungetToken();
+
+	if(isSecondPass)
+	{
+		data_t* fn = stable_search_variadic(staticSym, 2, parser_class, parser_fun);
+		if(!fn)
+			error_and_die(INTERNAL_ERROR,"Can't get the handle of function");
+		if(fn->type == VOID && hasExpression)
+		{
+			error_and_die(SEMANTIC_TYPE_ERROR, "Void function can't return an expr");
+		}
+		if(fn->type != VOID && !hasExpression)
+		{
+			error_and_die(RUNTIME_UNINITIALIZED, "Missing return value");
+		} 
+	}
+
 	if(expression() == SYN_ERR)
 		return SYN_ERR;
+
+	if(isSecondPass)
+	{
+		if(fn->type == VOID)
+		{
+			create_and_add_instruction(insProgram,INST_RET, 0,0,0);
+		} else {
+			//TODO 
+			create_and_add_instruction(insProgram,INST_RET, 0xDEAFBEEF,0,0);
+		}
+	}
+
 	if(getToken() != TOK_DELIM)
 		error_and_die(SYNTAX_ERROR,"Expected ; at the end of return statement.");
 
