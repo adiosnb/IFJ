@@ -81,6 +81,13 @@ void generateFunctionCall(data_t* func,data_t* retSym)
 		default:
 			create_and_add_instruction(insProgram, INST_CALL, func->data.data.instruction,retVal,0);
 	}
+	// generate stack POPs
+	data_t* ptrParam = func->next_param;
+	while(ptrParam)
+	{
+		create_and_add_instruction(insProgram, INST_POP, 0,0,0);
+		ptrParam = ptrParam->next_param;
+	}
 }
 
 
@@ -478,6 +485,8 @@ int builtin_print()
 	{
 		data_t* varCount = createConstant(INTEGER, paramCount, 0,NULL);
 		create_and_add_instruction(insProgram, INST_CALL_PRINT, &varCount->data,0,0);
+		while(paramCount-- > 0)
+			create_and_add_instruction(insProgram,INST_POP, 0,0,0);
 	}
 	if(getToken() != TOK_DELIM)
 		error_and_die(SYNTAX_ERROR,"Expected ;");
@@ -520,6 +529,10 @@ int next(data_t* symbol,char* id)
 					error_and_die(SYNTAX_ERROR,"Expected )");
 				if(getToken() != TOK_DELIM)
 					error_and_die(SYNTAX_ERROR,"Expected ;");
+				if(isSecondPass)
+				{
+					generateFunctionCall(symbol,NULL);
+				}
 				return SYN_OK;
 			}
 	}
@@ -824,32 +837,13 @@ int argument_definition(data_t** fun)
 					error_and_die(SEMANTIC_ERROR,"'%s' is an undefined symbol.", getTokString());
 				break;
 			case TOK_LITERAL:
-				//TODO: fix duplicates
 				var = createConstant(STRING, 0,0, getTokString());
-
-				/*	fillStaticVarData(&payload, STRING);
-				inicializeData(&payload);
-				str_append_chars(&payload.data.data.s, getTokString());
-
-				var = stable_add_variadic(staticSym,payload, 3, "ifj16","const",getTokString());
-				*/
 				break;
 			case TOK_CONST:
 				var = createConstant(INTEGER, getTokInt(),0,0);
-				/*
-				fillStaticVarData(&payload, INTEGER);
-				payload.data.data.i = getTokInt();
-
-				var = stable_add_variadic(staticSym,payload, 3, "ifj16","const",atoi(getTokInt()));
-				*/
 				break;
 			case TOK_DOUBLECONST:
 				var = createConstant(DOUBLE, 0,getTokDouble(),0);
-				/*fillStaticVarData(&payload, DOUBLE);
-				payload.data.data.d = getTokDouble();
-
-				var = stable_add_variadic(staticSym,payload,3, "ifj16","const",atof(getTokDouble()));
-				*/
 				break;
 			default:
 				error_and_die(SYNTAX_ERROR,"Expected a term in function call");
@@ -858,7 +852,8 @@ int argument_definition(data_t** fun)
 			error_and_die(INTERNAL_ERROR, "Failed to create constant");
 
 		// push variable
-		create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);	
+		if(isSecondPass)
+			create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);	
 
 		if(var->type != (*fun)->type)
 			error_and_die(SYNTAX_ERROR,"SEM - argument type dismatch.");
@@ -1118,6 +1113,10 @@ int more_definition(data_t* sym)
 				error_and_die(SYNTAX_ERROR,"Expected '}'");		
 			
 			GEN("Verify if RETURN was generated somewhere and clear LOCAL VARS");
+			if(isSecondPass)
+			{
+				create_and_add_instruction(insProgram, INST_RET, 0,0,0);	
+			}
 			return SYN_OK;
 		break;
 		case TOK_ASSIGN:
@@ -1313,6 +1312,7 @@ void parser_clean()
 	if(staticSym)
 		stable_print(staticSym);
 	if(insProgram)
+		inst_list_print(insProgram);
 			
 	
 	if(insProgram)
