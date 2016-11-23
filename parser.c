@@ -39,7 +39,13 @@ int	isTokenTypeSpecifier()
 /******************************************************************************
  			SEMANTIC UTILS
 ******************************************************************************/
-
+int isSymbolFunction(data_t* sym)
+{
+	if(sym != NULL)
+		if(sym->data.arg_type == INSTRUCTION)
+			return 1;
+	return 0;
+}
 void generateFunctionCall(data_t* func,data_t* retSym)
 {
 	// memory address to receive the return value
@@ -378,7 +384,7 @@ int more_next(data_t* var)
 				if(!func)
 					error_and_die(SEMANTIC_ERROR,"Function '%s' not found.",getTokString());
 				// TODO: verify ERROR code in this special case
-				if(func->data.arg_type != INSTRUCTION)
+				if(!isSymbolFunction(func))
 					error_and_die(SEMANTIC_ERROR,"Expecting '%s' to be function", getTokString());
 				if(func->type != var->type)
 					error_and_die(SEMANTIC_TYPE_ERROR,"Function call type dismatch [%s]",callName);
@@ -516,7 +522,13 @@ int next(data_t* symbol,char* id)
 				return builtin_print();
 			} else {
 				GEN("Check if symbol '%s' is defined", getTokString());
-
+			
+				if(isSecondPass)
+				{
+					if(!isSymbolFunction(symbol))
+						error_and_die(SEMANTIC_TYPE_ERROR, "Expected a function symbol.");
+				}
+				
 				data_t*	dt = NULL;
 				if(isSecondPass)
 					dt = symbol->next_param;
@@ -709,9 +721,13 @@ int assign_statement()
 		if(isSecondPass)
 		{
 			if(getLastToken() == TOK_ID)
+			{
 				symbol = stable_search_variadic(staticSym,3,parser_class,parser_fun,getTokString());
-			else
+				if(!symbol)
+					symbol = stable_search_variadic(staticSym,2,parser_class,getTokString());
+			} else {
 				symbol = stable_search_variadic(staticSym,1,getTokString());
+			}
 			if(!symbol)
 				error_and_die(SEMANTIC_ERROR,"Symbol %s is missing",getTokString());
 		}
@@ -1279,8 +1295,12 @@ int main(int argc, char ** argv)
 		// second pass
 		source_program();
 
-		if(!stable_search_variadic(staticSym,1, "Main.run"))
+		data_t* run = stable_search_variadic(staticSym,1, "Main.run");
+		if(isSymbolFunction(run))
 			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
+		if(run->type != VOID)
+			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
+			
 		//stable_print(staticSym);
 		//stable_destroy(&staticSym);
 		
@@ -1308,12 +1328,12 @@ void parser_init()
 }
 void parser_clean()
 {
-	//debug
+#ifdef DEBUG
 	if(staticSym)
 		stable_print(staticSym);
 	if(insProgram)
 		inst_list_print(insProgram);
-			
+#endif			
 	
 	if(insProgram)
 		dest_inst_list(&insProgram);	
