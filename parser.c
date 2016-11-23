@@ -64,6 +64,9 @@ void generateFunctionCall(data_t* func,data_t* retSym)
 {
 	// memory address to receive the return value
 	argument_var_t* retVal = (retSym != NULL)?(&retSym->data):NULL;
+	argument_var_t* callType = NULL; 
+	if(func->type)
+		callType = (argument_var_t*) VOID;
 	if(!func)
 		return;
 	switch(func->data.data.i)
@@ -99,7 +102,7 @@ void generateFunctionCall(data_t* func,data_t* retSym)
 			break;
 			
 		default:
-			create_and_add_instruction(insProgram, INST_CALL, &func->data,retVal,0);
+			create_and_add_instruction(insProgram, INST_CALL, &func->data,retVal,callType);
 	}
 	// generate stack POPs
 	data_t* ptrParam = func->next_param;
