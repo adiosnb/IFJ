@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "error.h"
-#include "stable.h"
 #include <stdio.h>
+#include "ial.h"
 
 #ifndef TEST
 #include "scanner.h"

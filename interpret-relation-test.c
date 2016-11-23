@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "stable.h"
+#include "ial.h"
 #include "interpret.h"
 #include "instruction_list.h"
 

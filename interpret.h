@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "stable.h"
+#include "ial.h"
 #include "instruction_list.h"
 #include "stack.h"
 

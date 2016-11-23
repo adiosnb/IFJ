@@ -1,7 +1,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "stable.h"
+#include "ial.h"
 
 int main(){
 

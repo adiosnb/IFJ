@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "scanner.h"
-#include "stable.h"
+#include "ial.h"
 #include "error.h"
 
 
