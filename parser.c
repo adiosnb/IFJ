@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "scanner.h"
+#include "interpret.h"
 #include "stable.h"
 #include "error.h"
 
@@ -15,6 +16,8 @@ int isSecondPass = 0;
 
 char*	parser_class = NULL;
 char*	parser_fun = NULL;
+
+int	localVariablesCount = 0;
 /******************************************************************************
  			SYNTACTIC UTILS
 ******************************************************************************/
@@ -96,7 +99,7 @@ void generateFunctionCall(data_t* func,data_t* retSym)
 			break;
 			
 		default:
-			create_and_add_instruction(insProgram, INST_CALL, func->data.data.instruction,retVal,0);
+			create_and_add_instruction(insProgram, INST_CALL, &func->data,retVal,0);
 	}
 	// generate stack POPs
 	data_t* ptrParam = func->next_param;
@@ -1048,7 +1051,7 @@ int local_definition()
 			" already defined.", var, parser_class,parser_fun);	
 		
 		data_t data;
-		fillLocalVarData(&data, type, 1);
+		fillLocalVarData(&data, type, ++localVariablesCount);
 		def = stable_add_variadic(staticSym,data,3, parser_class,parser_fun,var);
 	}
 	
@@ -1114,6 +1117,8 @@ int more_definition(data_t* sym)
 	switch(getToken())
 	{
 		case TOK_LEFT_PAR:
+			// semantic hack
+			localVariablesCount = 0;
 			if(!isSecondPass)
 				fillFunctionData(sym,sym->type);
 
@@ -1312,13 +1317,9 @@ int main(int argc, char ** argv)
 		if(run->type != VOID)
 			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
 			
-		//stable_print(staticSym);
-		//stable_destroy(&staticSym);
-		
-		//inst_list_print(insProgram);
+		// run it
+		interpret(insProgram, staticSym);
 
-		//scanner_closeFile();
-		//fprintf(stderr,"Result: %d\n",result);
 		error_and_die(SUCCESS_ERROR, "OK");
 		return 0;
 	}
