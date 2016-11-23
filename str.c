@@ -69,7 +69,8 @@ void str_append_str(string_t *str_dest,string_t *str_src){
 int str_find(string_t *str,string_t *search) {
     return KMP_hladaj(str->str,search->str);
 }
-string_t str_sort(string_t *str){
+
+void str_sort(string_t *str) {
     ial_qsort(str->str,0,str->len);
 }
 

@@ -138,6 +138,7 @@ void inst_list_print(instruction_list_t *list) {
          current != NULL;
          current = current->next) {
         printf("%3d: %-15s %-10p %-10p %-10p\n", i++, inst[current->instruction.type],
-               current->instruction.addr1, current->instruction.addr2, current->instruction.addr3);
+               (void *) current->instruction.addr1, (void *) current->instruction.addr2,
+               (void *) current->instruction.addr3);
     }
 }

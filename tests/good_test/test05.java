@@ -4,7 +4,7 @@ class Main
 	{
 	    String a;
 	    a = "qwertyu";
-		Game.play(a);
+	    Game.play(a);
 	}
 }
 class Game

@@ -292,7 +292,7 @@ void stable_print(stab_t *stable) {
                     break;
             }
 
-            printf("    || %p \n", &current->stab_content.data);
+            printf("    || %p \n", (void *) &current->stab_content.data);
             current = current->stab_next;
         }
     }

@@ -28,7 +28,8 @@ void str_resize(string_t *str);
 void str_append_str(string_t *str_dest,string_t *str_src);
 
 int str_find(string_t *str,string_t *search);
-string_t str_sort(string_t *str);
+
+void str_sort(string_t *str);
 string_t str_sub_str(string_t str, int i, int n);
 
 void str_concatenate(string_t *str_dest, string_t *str_src1, string_t *str_src2);
