@@ -1,4 +1,3 @@
-#define	DEBUG 0 
 #include "parser.h"
 #include <stdio.h>
 #include <string.h>
@@ -1316,10 +1315,11 @@ int main(int argc, char ** argv)
 			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
 		if(run->type != VOID)
 			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
-			
+
+#ifndef NOINTERPRET
 		// run it
 		interpret(insProgram, staticSym);
-
+#endif
 		error_and_die(SUCCESS_ERROR, "OK");
 		return 0;
 	}

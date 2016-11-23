@@ -21,7 +21,7 @@ echo
 echo "Tests for error code"
 for i in `ls`
 do
-    ./../../parser $i > /dev/null 2> /dev/null
+    ./../../parser $i > /dev/null
     ret=$?
     if [ $ret -eq 0 ]
         then
@@ -39,7 +39,7 @@ pwd
 echo "Tests for good code"
 for i in `ls`
 do
-    ./../../parser $i > /dev/null 2> /dev/null
+    ./../../parser $i > /dev/null
     ret=$?
     if [ $ret -eq 0 ]
         then
