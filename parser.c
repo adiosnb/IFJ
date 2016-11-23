@@ -146,6 +146,20 @@ data_t* createConstant(int type, int iVal, double dVal, char* cVal)
 	return stable_add_variadic(staticSym, const_data,2, "ifj16.const", buffer);
 }
 
+data_t* generateLabel(instruction_list_t* list)
+{
+	static int labelCounter = 0;
+
+	instruction_item_t* itemLabel = create_and_add_instruction(list, INST_LABEL, 0,0,0);
+
+	data_t dataLbl;
+	fillFunctionData(&dataLbl,VOID);
+	dataLbl.data.data.instruction = itemLabel;	
+
+	char buff[100];
+	snprintf(buff,99,"%u", labelCounter++);
+	return stable_add_variadic(staticSym,dataLbl, 3, "ifj16", "labels", buff);
+}
 void addBuiltInToTable(stab_t* table)
 {
 	data_t data, *ptr;
@@ -524,9 +538,9 @@ int jump_statement()
 		hasExpression = 0;
 	ungetToken();
 
+	data_t* fn = stable_search_variadic(staticSym, 2, parser_class, parser_fun);
 	if(isSecondPass)
 	{
-		data_t* fn = stable_search_variadic(staticSym, 2, parser_class, parser_fun);
 		if(!fn)
 			error_and_die(INTERNAL_ERROR,"Can't get the handle of function");
 		if(fn->type == VOID && hasExpression)
@@ -566,11 +580,18 @@ int jump_statement()
 
 int iteration_statement()
 {
+	instruction_item_t* skipJump = NULL; 
+	data_t* lblTest = NULL;
+
 	getToken();
 	if(!isTokenKeyword(KW_WHILE))
 		error_and_die(SYNTAX_ERROR,"Expected return");
 
 	GEN("Generate WHILE.test label"); 
+	if(isSecondPass)
+	{
+		lblTest= generateLabel(insProgram);
+	}
 	if(getToken() != TOK_LEFT_PAR)
 		error_and_die(SYNTAX_ERROR,"Expected (");
 
@@ -580,18 +601,33 @@ int iteration_statement()
 	if(getToken() != TOK_RIGHT_PAR)
 		error_and_die(SYNTAX_ERROR,"Expected )");
 
-	GEN("Generate COMPARE and JUMP test"); 
-
+	if(isSecondPass)
+	{
+		skipJump = create_and_add_instruction(insProgram, INST_JZ, NULL, 0xDEADBEEF,NULL); 
+		GEN("Generate COMPARE and JUMP test"); 
+	}
 	if(compound_statement() == SYN_ERR)
 		return SYN_ERR;
-	GEN("Generate WHILE_SKIP label and altern CMP jmp addres");
+	if(isSecondPass)
+	{
+		GEN("Generate WHILE_SKIP label and altern CMP jmp addres");
+		create_and_add_instruction(insProgram, INST_JMP, &lblTest->data,0,0);
+		data_t* lblSkip = generateLabel(insProgram);
 
+		// now altern compare to jmp to skip
+		skipJump->instruction.addr1 = &lblSkip->data;
+	}
 	return SYN_OK;
 }
 
 //<selection-statement>          -> if ( expression ) <compound-statement> else <compound-statement>
 int selection_statement()
 {
+	instruction_item_t* selection = NULL;
+	instruction_item_t* endJmp = NULL;
+	data_t* lblElse = NULL;
+	data_t* lblSkip = NULL;
+
 	getToken();
 	if(isTokenKeyword(KW_IF))
 	{
@@ -601,8 +637,11 @@ int selection_statement()
 		if(expression() == SYN_ERR)
 			return SYN_ERR;
 
-		GEN("Generate a CMP and JUMP.");
-
+		if(isSecondPass)
+		{
+			GEN("Generate a CMP and JUMP.");
+			selection = create_and_add_instruction(insProgram, INST_JNZ, 0,0,0);
+		}
 		if(getToken() != TOK_RIGHT_PAR)
 			error_and_die(SYNTAX_ERROR,"Expected )");
 	
@@ -610,8 +649,16 @@ int selection_statement()
 		if(compound_statement() == SYN_ERR)
 			return SYN_ERR;		
 
-		GEN("Generate a JMP.");
-		GEN("Generate a IF_ELSE label and altern JMP");
+		if(isSecondPass)
+		{
+			GEN("Generate a JMP.");
+			// jump to the end of IF-ELSE
+			endJmp = create_and_add_instruction(insProgram, INST_JMP, 0,0,0);
+			GEN("Generate a IF_ELSE label and altern JMP");
+			lblElse = generateLabel(insProgram);
+			// altern the jmp after condition to jmp to ELSE branch
+			selection->instruction.addr1 = &lblElse->data;
+		}
 
 		getToken();
 		if(!isTokenKeyword(KW_ELSE))
@@ -620,7 +667,13 @@ int selection_statement()
 		if(compound_statement() == SYN_ERR)
 			return SYN_ERR;		
 		
-		GEN("Generate a IF_SKIP label and altern JMP.");
+		if(isSecondPass)
+		{
+			GEN("Generate a IF_SKIP label and altern JMP.");
+			lblSkip = generateLabel(insProgram);
+			// altern JMP after first compound to jmp to the end
+			endJmp->instruction.addr1 = &lblSkip->data;
+		}
 		return SYN_OK;	
 		
 	}	
@@ -1210,16 +1263,20 @@ int source_program()
 
 int main(int argc, char ** argv)
 {
+	// inicialize & fill default data
+	insProgram = init_inst_list();
+	insInit = init_inst_list();
+	staticSym = stable_init(1024);
+	addBuiltInToTable(staticSym);
+
+	// if no INPUT file has been specified
 	if(argc < 2)
 	{
 		error_and_die(INTERNAL_ERROR,"USAGE: filename");
 	}
 	if(scanner_openFile(argv[1]))
 	{
-		insProgram = init_inst_list();
-		insInit = init_inst_list();
-		staticSym = stable_init(1024);
-		addBuiltInToTable(staticSym);
+		// first pass of syntactic analyzer
 		int result = source_program();
 		if(result != SYN_ERR)
 		{
