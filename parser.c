@@ -50,7 +50,8 @@ void generateIntro()
 	
 	argument_var_t* item = (run != NULL)?(&run->data):NULL;
 	
-	create_and_add_instruction(insProgram, INST_CALL, item,0,0);
+	create_and_add_instruction(insProgram, INST_CALL, item,0,
+		(argument_var_t*) 0x6);
 	create_and_add_instruction(insProgram, INST_HALT, 0,0,0);
 }
 int isSymbolFunction(data_t* sym)
