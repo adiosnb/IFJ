@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include "str.h"
 
-enum returnCodes { ERROR, OK};
 
 extern string_t first, second, literal;
 
