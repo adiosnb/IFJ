@@ -11,6 +11,8 @@ stab_t	*staticSym = NULL;
 instruction_list_t* insProgram	= NULL;
 instruction_list_t* insInit	= NULL;
 
+int isSecondPass = 0;
+
 char*	parser_class = NULL;
 char*	parser_fun = NULL;
 
@@ -1263,12 +1265,6 @@ int source_program()
 
 int main(int argc, char ** argv)
 {
-	// inicialize & fill default data
-	insProgram = init_inst_list();
-	insInit = init_inst_list();
-	staticSym = stable_init(1024);
-	addBuiltInToTable(staticSym);
-
 	// if no INPUT file has been specified
 	if(argc < 2)
 	{
@@ -1276,24 +1272,24 @@ int main(int argc, char ** argv)
 	}
 	if(scanner_openFile(argv[1]))
 	{
+		parser_init();
 		// first pass of syntactic analyzer
-		int result = source_program();
-		if(result != SYN_ERR)
-		{
-			scanner_rewind();
-			// second pass
-			GEN("--------------- SECOND PASS ---------------");
-			result = source_program();
-		}
+		source_program();
+		scanner_rewind();
+		GEN("--------------- SECOND PASS ---------------");
+		// second pass
+		source_program();
+
 		if(!stable_search_variadic(staticSym,1, "Main.run"))
 			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
-		stable_print(staticSym);
-		stable_destroy(&staticSym);
+		//stable_print(staticSym);
+		//stable_destroy(&staticSym);
 		
-		inst_list_print(insProgram);
+		//inst_list_print(insProgram);
 
-		scanner_closeFile();
-		fprintf(stderr,"Result: %d\n",result);
+		//scanner_closeFile();
+		//fprintf(stderr,"Result: %d\n",result);
+		error_and_die(SUCCESS_ERROR, "OK");
 		return 0;
 	}
 	error_and_die(INTERNAL_ERROR,"Failed to open %s",argv[1]);
@@ -1301,4 +1297,28 @@ int main(int argc, char ** argv)
 }
 
 
+void parser_init()
+{
+	// inicialize & fill default data
+	insProgram = init_inst_list();
+	insInit = init_inst_list();
+	staticSym = stable_init(1024);
+	addBuiltInToTable(staticSym);
 
+
+}
+void parser_clean()
+{
+	//debug
+	if(staticSym)
+		stable_print(staticSym);
+	if(insProgram)
+			
+	
+	if(insProgram)
+		dest_inst_list(&insProgram);	
+	if(insInit)
+		dest_inst_list(&insInit);	
+	if(staticSym)
+		stable_destroy(&staticSym);
+}

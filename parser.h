@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 //	Private variables
 //-----------------------------------------------------------------------------
-int isSecondPass = 0;
+extern int isSecondPass;
 
 // Return state
 // NOTE: upon using a error.c, this might actually be obsolete
@@ -37,3 +37,6 @@ enum syntaxCorrectness {SYN_OK,SYN_ERR};
 //-----------------------------------------------------------------------------
 
 int source_program();
+
+void parser_init();
+void parser_clean();

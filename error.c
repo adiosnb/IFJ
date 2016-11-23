@@ -3,6 +3,7 @@
 #include "error.h"
 #include "scanner.h"
 #include "stable.h"
+#include "parser.h"
 
 extern stab_t* staticSym; 
 
@@ -13,9 +14,8 @@ void clean_up()
 	// TODO: 
 	// scanner clean up
 	scanner_closeFile();
-	// symbolic table clean up
-	stable_destroy(&staticSym);
-	// interpret clean up
+	// parser clean up
+	parser_clean();
 }
 
 
@@ -30,6 +30,8 @@ const char* getErrorName(enum errorTypes type)
 {
 	switch(type)
 	{
+		case SUCCESS_ERROR:
+			return "DONE";
 		case LEXICAL_ERROR:
 			return "LEXICAL";
 		case SYNTAX_ERROR:

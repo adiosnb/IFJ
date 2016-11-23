@@ -1,6 +1,8 @@
 // Have a look at page no.2 of assignment 
 enum errorTypes
 {
+	// it's ok
+	SUCCESS_ERROR = 0,
 	// Lex. error (bad float format)
 	LEXICAL_ERROR = 1,
 	// Syntax error (violation of syntax rules)
