@@ -204,26 +204,26 @@ void stable_print(stab_t *stable) {
             printf("KEY : %-30s CONTENT : ", current->stab_key);
             switch (current->stab_content.data.arg_type) {
                 case INTEGER:
-                    printf("%d\n", current->stab_content.data.data.i);
+                    printf("%d\t\t\t\t\t", current->stab_content.data.data.i);
                     break;
                 case DOUBLE:
-                    printf("%g\n", current->stab_content.data.data.d);
+                    printf("%g", current->stab_content.data.data.d);
                     break;
                 case STRING:
-                    printf("%s\n", current->stab_content.data.data.s.str);
+                    printf("%s", current->stab_content.data.data.s.str);
                     break;
                 case STACK_EBP:
-                    printf("position on stack >> %d\n", current->stab_content.data.data.i);
+                    printf("position on stack >> %d", current->stab_content.data.data.i);
                     break;
                 case INSTRUCTION:
-                    printf("FUNCTION: %p \n", current->stab_content.data.data.instruction);
+                    printf("FUNCTION: %p \t\t", current->stab_content.data.data.instruction);
                     break;
                 default:
-                    printf("on top of stack\n");
+                    printf("on top of stack");
                     break;
             }
 
-
+            printf("\t\t || %p \n",&current->stab_content.data);
             current = current->stab_next;
         }
     }
