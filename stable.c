@@ -130,7 +130,7 @@ bool stable_remove_var(stab_t *p_stable, char *id){
         //ak je to 2. az n polozka
         //najde polozku pred polozkou s id
         while (strcmp(pom->stab_next->stab_key, id)) //todo skontroluj
-            if ((pom = pom->stab_next) == NULL)
+            if ((pom = pom->stab_next) == NULL) //TODO bug TODO fix
                 return false;
         vymaz = pom->stab_next;
         pom->stab_next = pom->stab_next->stab_next;
