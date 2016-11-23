@@ -1,10 +1,10 @@
 class Main {
-    static int run() {
+    static void run() {
         int a;
         int b;
         b = fun1();
         a = b + 2;
-        return a;
+        return;
     }
 
     static int fun1(){

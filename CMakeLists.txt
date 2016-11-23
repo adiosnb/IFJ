@@ -1,6 +1,6 @@
 project(IFJ)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic -std=c99 -DDEBUG=2 -DTEST")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic -std=c99 -DDEBUG=0 -DTEST -DNOINTERPRET")
 
 set(SOURCE_FILES instruction_list.c instruction_list.h instructions.h interpret.c interpret.h
         stack.c stack.h)
@@ -14,7 +14,7 @@ set(stable_test stable-test.c ial.c stack.h str.c)
 set(interpret-str-test interpret-str-test.c str.c interpret.c stack.c instruction_list.c instructions.h ial.c)
 set(interpre-rel-test interpret.c interpret-relation-test.c str.c error.c instruction_list.c stack.c ial.c)
 set(op_parser op_prec_parser/op-parser.c op_prec_parser/utils/dynamic_stack.c error.c ial.c scanner.c str.c)
-set(parser str.c ial.c scanner.c parser.c error.c instruction_list.c interpret.c)
+set(parser str.c ial.c scanner.c parser.c error.c instruction_list.c interpret.c stack.c)
 set(fib interpret-fib.c interpret.c stack.c ial.c instruction_list.c instructions.h ial.c str.c error.c)
 
 add_executable(main ${SOURCE_FILES})
