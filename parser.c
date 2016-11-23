@@ -1,4 +1,4 @@
-//#define	DEBUG 2 
+#define	DEBUG 0 
 #include "parser.h"
 #include <stdio.h>
 #include <string.h>
@@ -15,7 +15,9 @@ int isSecondPass = 0;
 
 char*	parser_class = NULL;
 char*	parser_fun = NULL;
-
+/******************************************************************************
+ 			SYNTACTIC UTILS
+******************************************************************************/
 int	isTokenKeyword(int kw)
 {
 	return (getLastToken() == TOK_KEYWORD && getTokInt() == kw);
@@ -39,6 +41,15 @@ int	isTokenTypeSpecifier()
 /******************************************************************************
  			SEMANTIC UTILS
 ******************************************************************************/
+void generateIntro()
+{
+	data_t* run = stable_search_variadic(staticSym, 1, "Main.run");
+	
+	argument_var_t* item = (run != NULL)?(&run->data):NULL;
+	
+	create_and_add_instruction(insProgram, INST_CALL, item,0,0);
+	create_and_add_instruction(insProgram, INST_HALT, 0,0,0);
+}
 int isSymbolFunction(data_t* sym)
 {
 	if(sym != NULL)
@@ -290,7 +301,7 @@ int jump_statement();
 int definition();
 int block_items_list();
 int compound_statement();
-int function_parameters_list();
+int function_parameters_list(data_t*);
 int statement();
 int parameter_definition();
 int function_arguments_list(data_t**);
@@ -833,7 +844,6 @@ int argument_definition(data_t** fun)
 {
 	data_t*	var;
 	// payload is used to inicialize constants
-	data_t payload;
 	if(isSecondPass)
 	{
 		if(!(*fun))
@@ -1293,10 +1303,11 @@ int main(int argc, char ** argv)
 		scanner_rewind();
 		GEN("--------------- SECOND PASS ---------------");
 		// second pass
+		generateIntro();
 		source_program();
 
 		data_t* run = stable_search_variadic(staticSym,1, "Main.run");
-		if(isSymbolFunction(run))
+		if(!isSymbolFunction(run))
 			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
 		if(run->type != VOID)
 			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
