@@ -1,8 +1,9 @@
-//#define	DEBUG 2 
+#define	DEBUG 0 
 #include "parser.h"
 #include <stdio.h>
 #include <string.h>
 #include "scanner.h"
+#include "interpret.h"
 #include "ial.h"
 #include "error.h"
 
@@ -16,6 +17,10 @@ int isSecondPass = 0;
 char*	parser_class = NULL;
 char*	parser_fun = NULL;
 
+int	localVariablesCount = 0;
+/******************************************************************************
+ 			SYNTACTIC UTILS
+******************************************************************************/
 int	isTokenKeyword(int kw)
 {
 	return (getLastToken() == TOK_KEYWORD && getTokInt() == kw);
@@ -39,7 +44,22 @@ int	isTokenTypeSpecifier()
 /******************************************************************************
  			SEMANTIC UTILS
 ******************************************************************************/
-
+void generateIntro()
+{
+	data_t* run = stable_search_variadic(staticSym, 1, "Main.run");
+	
+	argument_var_t* item = (run != NULL)?(&run->data):NULL;
+	
+	create_and_add_instruction(insProgram, INST_CALL, item,0,0);
+	create_and_add_instruction(insProgram, INST_HALT, 0,0,0);
+}
+int isSymbolFunction(data_t* sym)
+{
+	if(sym != NULL)
+		if(sym->data.arg_type == INSTRUCTION)
+			return 1;
+	return 0;
+}
 void generateFunctionCall(data_t* func,data_t* retSym)
 {
 	// memory address to receive the return value
@@ -79,7 +99,7 @@ void generateFunctionCall(data_t* func,data_t* retSym)
 			break;
 			
 		default:
-			create_and_add_instruction(insProgram, INST_CALL, func->data.data.instruction,retVal,0);
+			create_and_add_instruction(insProgram, INST_CALL, &func->data,retVal,0);
 	}
 	// generate stack POPs
 	data_t* ptrParam = func->next_param;
@@ -284,7 +304,7 @@ int jump_statement();
 int definition();
 int block_items_list();
 int compound_statement();
-int function_parameters_list();
+int function_parameters_list(data_t*);
 int statement();
 int parameter_definition();
 int function_arguments_list(data_t**);
@@ -378,7 +398,7 @@ int more_next(data_t* var)
 				if(!func)
 					error_and_die(SEMANTIC_ERROR,"Function '%s' not found.",getTokString());
 				// TODO: verify ERROR code in this special case
-				if(func->data.arg_type != INSTRUCTION)
+				if(!isSymbolFunction(func))
 					error_and_die(SEMANTIC_ERROR,"Expecting '%s' to be function", getTokString());
 				if(func->type != var->type)
 					error_and_die(SEMANTIC_TYPE_ERROR,"Function call type dismatch [%s]",callName);
@@ -516,7 +536,13 @@ int next(data_t* symbol,char* id)
 				return builtin_print();
 			} else {
 				GEN("Check if symbol '%s' is defined", getTokString());
-
+			
+				if(isSecondPass)
+				{
+					if(!isSymbolFunction(symbol))
+						error_and_die(SEMANTIC_TYPE_ERROR, "Expected a function symbol.");
+				}
+				
 				data_t*	dt = NULL;
 				if(isSecondPass)
 					dt = symbol->next_param;
@@ -709,9 +735,13 @@ int assign_statement()
 		if(isSecondPass)
 		{
 			if(getLastToken() == TOK_ID)
+			{
 				symbol = stable_search_variadic(staticSym,3,parser_class,parser_fun,getTokString());
-			else
+				if(!symbol)
+					symbol = stable_search_variadic(staticSym,2,parser_class,getTokString());
+			} else {
 				symbol = stable_search_variadic(staticSym,1,getTokString());
+			}
 			if(!symbol)
 				error_and_die(SEMANTIC_ERROR,"Symbol %s is missing",getTokString());
 		}
@@ -817,7 +847,6 @@ int argument_definition(data_t** fun)
 {
 	data_t*	var;
 	// payload is used to inicialize constants
-	data_t payload;
 	if(isSecondPass)
 	{
 		if(!(*fun))
@@ -1022,7 +1051,7 @@ int local_definition()
 			" already defined.", var, parser_class,parser_fun);	
 		
 		data_t data;
-		fillLocalVarData(&data, type, 1);
+		fillLocalVarData(&data, type, ++localVariablesCount);
 		def = stable_add_variadic(staticSym,data,3, parser_class,parser_fun,var);
 	}
 	
@@ -1088,6 +1117,8 @@ int more_definition(data_t* sym)
 	switch(getToken())
 	{
 		case TOK_LEFT_PAR:
+			// semantic hack
+			localVariablesCount = 0;
 			if(!isSecondPass)
 				fillFunctionData(sym,sym->type);
 
@@ -1277,17 +1308,18 @@ int main(int argc, char ** argv)
 		scanner_rewind();
 		GEN("--------------- SECOND PASS ---------------");
 		// second pass
+		generateIntro();
 		source_program();
 
-		if(!stable_search_variadic(staticSym,1, "Main.run"))
+		data_t* run = stable_search_variadic(staticSym,1, "Main.run");
+		if(!isSymbolFunction(run))
 			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
-		//stable_print(staticSym);
-		//stable_destroy(&staticSym);
-		
-		//inst_list_print(insProgram);
+		if(run->type != VOID)
+			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
+			
+		// run it
+		interpret(insProgram, staticSym);
 
-		//scanner_closeFile();
-		//fprintf(stderr,"Result: %d\n",result);
 		error_and_die(SUCCESS_ERROR, "OK");
 		return 0;
 	}
@@ -1308,12 +1340,12 @@ void parser_init()
 }
 void parser_clean()
 {
-	//debug
+#ifdef DEBUG
 	if(staticSym)
 		stable_print(staticSym);
 	if(insProgram)
 		inst_list_print(insProgram);
-			
+#endif			
 	
 	if(insProgram)
 		dest_inst_list(&insProgram);	

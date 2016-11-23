@@ -348,6 +348,8 @@ void push() {
             tmp_var.arg_type = STRING;
             tmp_var.data.s = str_init();
             break;
+	default:
+		error_and_die(INTERNAL_ERROR, "push() unknown");
 
     }
     stack_push(&glob_stack, tmp_var);
