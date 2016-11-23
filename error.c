@@ -1,13 +1,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include "error.h"
-
-#ifndef TEST
 #include "scanner.h"
-#endif
-
 #include "stable.h"
+#include "parser.h"
 
 extern stab_t* staticSym; 
 
@@ -17,12 +13,9 @@ void clean_up()
 {
 	// TODO: 
 	// scanner clean up
-#ifndef TEST
 	scanner_closeFile();
-	stable_destroy(&staticSym);
-    // interpret clean up
-#endif
-    // symbolic table clean up
+	// parser clean up
+	parser_clean();
 }
 
 
@@ -37,6 +30,8 @@ const char* getErrorName(enum errorTypes type)
 {
 	switch(type)
 	{
+		case SUCCESS_ERROR:
+			return "DONE";
 		case LEXICAL_ERROR:
 			return "LEXICAL";
 		case SYNTAX_ERROR:
@@ -68,9 +63,7 @@ void error_and_die(enum errorTypes type, const char *fmt, ...)
     va_list valist;
     
     va_start(valist, fmt);
-#ifndef TEST
     fprintf(stderr,"[%s][%d:%d] ",getErrorName(type),getTokLine(),getTokTabs());
-#endif
     vfprintf(stderr,fmt, valist);
     fputc('\n',stderr);
     va_end(valist);

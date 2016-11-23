@@ -11,6 +11,8 @@ stab_t	*staticSym = NULL;
 instruction_list_t* insProgram	= NULL;
 instruction_list_t* insInit	= NULL;
 
+int isSecondPass = 0;
+
 char*	parser_class = NULL;
 char*	parser_fun = NULL;
 
@@ -78,6 +80,13 @@ void generateFunctionCall(data_t* func,data_t* retSym)
 			
 		default:
 			create_and_add_instruction(insProgram, INST_CALL, func->data.data.instruction,retVal,0);
+	}
+	// generate stack POPs
+	data_t* ptrParam = func->next_param;
+	while(ptrParam)
+	{
+		create_and_add_instruction(insProgram, INST_POP, 0,0,0);
+		ptrParam = ptrParam->next_param;
 	}
 }
 
@@ -476,6 +485,8 @@ int builtin_print()
 	{
 		data_t* varCount = createConstant(INTEGER, paramCount, 0,NULL);
 		create_and_add_instruction(insProgram, INST_CALL_PRINT, &varCount->data,0,0);
+		while(paramCount-- > 0)
+			create_and_add_instruction(insProgram,INST_POP, 0,0,0);
 	}
 	if(getToken() != TOK_DELIM)
 		error_and_die(SYNTAX_ERROR,"Expected ;");
@@ -518,6 +529,10 @@ int next(data_t* symbol,char* id)
 					error_and_die(SYNTAX_ERROR,"Expected )");
 				if(getToken() != TOK_DELIM)
 					error_and_die(SYNTAX_ERROR,"Expected ;");
+				if(isSecondPass)
+				{
+					generateFunctionCall(symbol,NULL);
+				}
 				return SYN_OK;
 			}
 	}
@@ -822,32 +837,13 @@ int argument_definition(data_t** fun)
 					error_and_die(SEMANTIC_ERROR,"'%s' is an undefined symbol.", getTokString());
 				break;
 			case TOK_LITERAL:
-				//TODO: fix duplicates
 				var = createConstant(STRING, 0,0, getTokString());
-
-				/*	fillStaticVarData(&payload, STRING);
-				inicializeData(&payload);
-				str_append_chars(&payload.data.data.s, getTokString());
-
-				var = stable_add_variadic(staticSym,payload, 3, "ifj16","const",getTokString());
-				*/
 				break;
 			case TOK_CONST:
 				var = createConstant(INTEGER, getTokInt(),0,0);
-				/*
-				fillStaticVarData(&payload, INTEGER);
-				payload.data.data.i = getTokInt();
-
-				var = stable_add_variadic(staticSym,payload, 3, "ifj16","const",atoi(getTokInt()));
-				*/
 				break;
 			case TOK_DOUBLECONST:
 				var = createConstant(DOUBLE, 0,getTokDouble(),0);
-				/*fillStaticVarData(&payload, DOUBLE);
-				payload.data.data.d = getTokDouble();
-
-				var = stable_add_variadic(staticSym,payload,3, "ifj16","const",atof(getTokDouble()));
-				*/
 				break;
 			default:
 				error_and_die(SYNTAX_ERROR,"Expected a term in function call");
@@ -856,7 +852,8 @@ int argument_definition(data_t** fun)
 			error_and_die(INTERNAL_ERROR, "Failed to create constant");
 
 		// push variable
-		create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);	
+		if(isSecondPass)
+			create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);	
 
 		if(var->type != (*fun)->type)
 			error_and_die(SYNTAX_ERROR,"SEM - argument type dismatch.");
@@ -1116,6 +1113,10 @@ int more_definition(data_t* sym)
 				error_and_die(SYNTAX_ERROR,"Expected '}'");		
 			
 			GEN("Verify if RETURN was generated somewhere and clear LOCAL VARS");
+			if(isSecondPass)
+			{
+				create_and_add_instruction(insProgram, INST_RET, 0,0,0);	
+			}
 			return SYN_OK;
 		break;
 		case TOK_ASSIGN:
@@ -1263,12 +1264,6 @@ int source_program()
 
 int main(int argc, char ** argv)
 {
-	// inicialize & fill default data
-	insProgram = init_inst_list();
-	insInit = init_inst_list();
-	staticSym = stable_init(1024);
-	addBuiltInToTable(staticSym);
-
 	// if no INPUT file has been specified
 	if(argc < 2)
 	{
@@ -1276,24 +1271,24 @@ int main(int argc, char ** argv)
 	}
 	if(scanner_openFile(argv[1]))
 	{
+		parser_init();
 		// first pass of syntactic analyzer
-		int result = source_program();
-		if(result != SYN_ERR)
-		{
-			scanner_rewind();
-			// second pass
-			GEN("--------------- SECOND PASS ---------------");
-			result = source_program();
-		}
+		source_program();
+		scanner_rewind();
+		GEN("--------------- SECOND PASS ---------------");
+		// second pass
+		source_program();
+
 		if(!stable_search_variadic(staticSym,1, "Main.run"))
 			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
-		stable_print(staticSym);
-		stable_destroy(&staticSym);
+		//stable_print(staticSym);
+		//stable_destroy(&staticSym);
 		
-		inst_list_print(insProgram);
+		//inst_list_print(insProgram);
 
-		scanner_closeFile();
-		fprintf(stderr,"Result: %d\n",result);
+		//scanner_closeFile();
+		//fprintf(stderr,"Result: %d\n",result);
+		error_and_die(SUCCESS_ERROR, "OK");
 		return 0;
 	}
 	error_and_die(INTERNAL_ERROR,"Failed to open %s",argv[1]);
@@ -1301,4 +1296,29 @@ int main(int argc, char ** argv)
 }
 
 
+void parser_init()
+{
+	// inicialize & fill default data
+	insProgram = init_inst_list();
+	insInit = init_inst_list();
+	staticSym = stable_init(1024);
+	addBuiltInToTable(staticSym);
 
+
+}
+void parser_clean()
+{
+	//debug
+	if(staticSym)
+		stable_print(staticSym);
+	if(insProgram)
+		inst_list_print(insProgram);
+			
+	
+	if(insProgram)
+		dest_inst_list(&insProgram);	
+	if(insInit)
+		dest_inst_list(&insInit);	
+	if(staticSym)
+		stable_destroy(&staticSym);
+}
