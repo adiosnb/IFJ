@@ -7,6 +7,7 @@ class Main {
     }
     static void run(){
         int a = abc;  //error nezname abc
-        return a;
+        Main.trol();
+        return ;
     }
 }

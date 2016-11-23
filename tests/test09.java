@@ -6,9 +6,9 @@ class Main {
         return a;
     }
     static void run(){
-        return a;   //nemal by poznat a
+        return ; 
         return ;
         return ;
-        int a = abc;
+        int a = abc;   //unknown abc
     }
 }
