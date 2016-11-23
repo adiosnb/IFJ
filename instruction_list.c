@@ -82,3 +82,62 @@ instruction_item_t *create_and_add_instruction(instruction_list_t *list, enum in
 
     return new_instruction;
 }
+
+void inst_list_print(instruction_list_t *list) {
+    char *inst[] = {
+            "INST_NOP",
+            "INST_ADD",
+            "INST_SUB",
+            "INST_MUL",
+            "INST_DIV",
+            "INST_EXPR_ADD",
+            "INST_EXPR_SUB",
+            "INST_EXPR_MUL",
+            "INST_EXPR_DIV",
+            "INST_EXPR_LOWER",
+            "INST_EXPR_HIGHER",
+            "INST_EXPR_LOW_EQ",
+            "INST_EXPR_HIG_EQ",
+            "INST_EXPR_EQUAL",
+            "INST_EXPR_NOT_EQ",
+            "INST_EXPR_STR_ADD",
+            "INST_PUSH",
+            "INST_PUSH_INT",
+            "INST_PUSH_DOUBLE",
+            "INST_PUSH_STRING",
+            "INST_POP",
+            "INST_STORE",
+            "INST_JMP",
+            "INST_JEQ",
+            "INST_JNEQ",
+            "INST_JZ",
+            "INST_JNZ",
+            "INST_CALL",
+            "INST_CALL_PRINT",
+            "INST_CALL_CMP",
+            "INST_CALL_FIND",
+            "INST_CALL_SORT",
+            "INST_CALL_SUBSTR",
+            "INST_CALL_LEN",
+            "INST_RET",
+            "INST_WRITE",
+            "INST_READ_INT",
+            "INST_READ_DOUBLE",
+            "INST_READ_STRING",
+            "INST_STR_INIT",
+            "INST_STR_REINIT",
+            "INST_STR_LEN",
+            "INST_STR_CONCATENATE",
+            "INST_STR_CMP",
+            "INST_HALT",
+            "INST_LABEL",
+            NULL,
+    };
+    int i = 0;
+    for (instruction_item_t *current = list->first;
+         current != NULL;
+         current = current->next) {
+        printf("%d: %s %d %d %d\n", i++, inst[current->instruction.type],
+               current->instruction.addr1, current->instruction.addr2, current->instruction.addr3);
+    }
+}
