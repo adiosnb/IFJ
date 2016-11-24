@@ -1,4 +1,4 @@
-//calling a variable from other class
+//calling a variable from other class #4
 class Main {
     static void run(){
         trol.trol();

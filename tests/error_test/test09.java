@@ -1,4 +1,4 @@
-//double class definition
+//double class definition #3
 class abc {
     static int a;
 }
