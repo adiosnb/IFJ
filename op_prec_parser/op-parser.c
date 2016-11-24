@@ -3,6 +3,7 @@
 #include "../scanner.h"
 #include "utils/dynamic_stack.h"
 #include "../error.h"
+#include "../instruction_list.h"
 #include "op-parser.h"
 #include "../ial.h"
 
@@ -11,6 +12,8 @@
 extern const char op_table[][MAX_TERMINALS];
 extern const int rule_table[][MAX_RULES];
 extern const int rule_len[MAX_RULES];
+extern stab_t* staticSym;
+extern instruction_list_t* insProgram;
 
 void parser_clean(void) { }
 
@@ -116,12 +119,10 @@ static inline t_token get_next_token(void)
 {
     getToken();
     t_token token = validate_ins(g_lastToken);
-    if (token.type == TOK_ID)
-        printf("String: %s\n", getTokString());
     return token; 
 }
 
-enum data_type parse_expression(bool is_assign, bool is_condition)
+int parse_expression(bool is_assign, bool is_condition)
 {
     if (!scanner_openFile("input_test.txt"))
     {
@@ -133,7 +134,7 @@ enum data_type parse_expression(bool is_assign, bool is_condition)
     bool is_it_condition = is_condition;
 
     bool end_of_expr = false;
-    enum data_type expr_data_type= T_UNDEF;
+    int expr_data_type = ERROR;
 
     stack_t     handle = stack_ctor(); // dynamic allocation
     stack_t     pda = stack_ctor();    // dynamic allocation
@@ -212,26 +213,54 @@ enum data_type parse_expression(bool is_assign, bool is_condition)
                                 // switch topmost pda rule string with left side
                                 stack_reduce_rule(&pda, *left_side); 
                                 // postfix actions
-                                if (res != 11)
-                                    printf("%s ", tokens[res]);
+                                //if (res != 11)
+                                //    printf("%s ", tokens[res]);
+
+                                //TODO: DONT FORGET FIRST WALK!
+                                // types:
+                                //  ERROR -> including bool
+                                //  INTEGER
+                                //  DOUBLE
+                                //  STRING
+                                //  ? VOID ?
+                                //
+
 
                                 // other combinations then these for semantic typing are ERR_SEMANTIC_TYPE
                                 switch (res)
                                 {
                                     // logical operators if one operand is int and second double, int is converted to double
                                     // strings are not supported
+                                    //
+                                    //TODO: type conversions
+                                        // type conversions
+                                        // int op int = int
+                                        //
+                                        // o1.double op double(o2.int) = double
+                                        // double(o1.int) op o2.double = double
+                                        // o1.double op o2.double = double
+                                        // 
+                                        //  
                                     case TOK_EQ:
                                         // do action
+                                        expr_data_type = BOOL; 
+
+
                                         break;
                                     case TOK_NOTEQ:
+                                        expr_data_type = BOOL; 
                                         break;
                                     case TOK_LESS:
+                                        expr_data_type = BOOL; 
                                         break;
                                     case TOK_GREATER:
+                                        expr_data_type = BOOL; 
                                         break;
                                     case TOK_LE:
+                                        expr_data_type = BOOL; 
                                         break;
                                     case TOK_GE:
+                                        expr_data_type = BOOL; 
                                         break;
                                     case TOK_PLUS:
                                         // if one of the operands is string, concatenate (second operand is converted to string too, using ifj16.print)
@@ -247,17 +276,54 @@ enum data_type parse_expression(bool is_assign, bool is_condition)
                                         break;
                                     case TOK_ID:
                                         ;
-                                        t_token var = get_top_terminal(&handle); 
+                                        // get token with attributes (TOK_ID, TOK_SPECIAL_ID, TOK_DOUBLECONST, TOK_LITERAL, TOK_CONST)
+                                        t_token var = handle.elem[0]; 
 
+                                        //HACK HACK: Need to get previsou identigier string:
+                                        //Unget token:
+                                        ungetToken();
+                                        // next identifier string!
+                                        char *tok_string = getTokString();
+                                        //getNextToken
+                                        getToken();
 
-                                        // type conversions
-                                        // int op int = int
-                                        //
-                                        // o1.double op double(o2.int) = double
-                                        // double(o1.int) op o2.double = double
-                                        // o1.double op o2.double = double
-                                        // 
-                                        //  
+                                        if (var.type == TOK_ID)
+                                        {
+                                            char *var_name = tok_string;
+
+                                            // TODO:
+                                            // Line 272: Message for Roman: I love you! (just kidding xD but u r a great man!) just connect parser_class and parser_fun:                                            
+                                            char *parser_class = NULL;
+                                            char *parser_fun = NULL;
+                                         // ^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                            data_t *var_data;
+
+                                            var_data = stable_search_variadic(staticSym,3, parser_class, parser_fun, var_name);
+
+                                            if (var_data == NULL)
+                                                error_and_die(SEMANTIC_ERROR, "Expression: Undefined variable '%s'\n", var_name);
+                                            
+                                            // TODO: Check if variable is uninitialized
+                                            //
+                                            // push on stack
+                                            create_and_add_instruction(insProgram, INST_PUSH, var_data, 0, 0);
+                                        }
+                                            
+                                        if (var.type == TOK_SPECIAL_ID)
+                                        {
+                                            char *special_var_name = tok_string;
+                                            data_t *var_data;
+                                              
+                                            var_data = stable_search_variadic(insProgram, 1, special_var_name);
+
+                                            if (var_data == NULL)
+                                                error_and_die(SEMANTIC_ERROR, "Expression: Undefined special variable '%s'\n", special_var_name);
+                                           // 
+                                            // TODO: Check if variable is uninitialized
+
+                                            // push on stack
+                                            create_and_add_instruction(insProgram, INST_PUSH, var_data, 0, 0);
+                                        }
                                         break;
                                 }
                             }
@@ -286,6 +352,10 @@ enum data_type parse_expression(bool is_assign, bool is_condition)
     pda = stack_dtor(&pda);
 
     scanner_closeFile();
+
+    // if bool is evaluated and top-down parser does not process condition, set error as resulting type
+    if (expr_data_type == BOOL && !is_condition)
+        expr_data_type = ERROR;
 
     return expr_data_type;
 }
@@ -418,6 +488,6 @@ stab_t* staticSym = NULL;
 
 int main(void)
 {
-    fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(false, true));
+    fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(false, false));
 	return 0;
 }
