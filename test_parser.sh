@@ -32,9 +32,9 @@ do
     ret=$?
     if [ $ret -eq 0 ]
         then
-        echo -e "TEST ERROR: $i: $error"
+        echo -e "TEST ERROR: $i: $error || return code : $ret"
     else
-            echo -e "TEST ERROR: $i: $pass"
+        echo -e "TEST ERROR: $i: $pass  || return code : $ret"
     fi
 done
 
@@ -53,9 +53,9 @@ do
     ret=$?
     if [ $ret -eq 0 ]
         then
-        echo -e "TEST GOOD: $i: $pass"
+        echo -e "TEST GOOD: $i: $pass  || return code : $ret"
     else
-        echo -e "TEST GOOD: $i: $error"
+        echo -e "TEST GOOD: $i: $error || return code : $ret"
     fi
 done
 
