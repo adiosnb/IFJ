@@ -385,6 +385,11 @@ int	process_identifier()
 				// if the second part of ID fullfills requirements
 				if((first.len && second.len))
 				{
+					int kw; 
+					if(isKeyword(first.str,&kw) || isKeyword(second.str,&kw))
+					{
+						error_and_die(LEXICAL_ERROR, "Reserved keyword in fully qualified identifier.");
+					}
 					g_lastToken.data.string = createString2(first.str,second.str);
 					g_lastToken.type = TOK_SPECIAL_ID;
 				}
