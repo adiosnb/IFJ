@@ -499,7 +499,7 @@ int	process_number()
 					buff[i++] = c;
 					state = EXP_RADIX;
 				} else {
-					fprintf(stderr,"LEX: Expected a digit after +- or digit after e \n");
+					fprintf(stderr,"LEX: Expected +- or digit after e \n");
 					errorLeave(LEXICAL_ERROR);	
 					return TOK_ERROR;
 				}
