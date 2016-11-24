@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#colored strings
+pass="\033[1;32mPASS\033[1;39m"
+error="\033[1;31mFAIL\033[1;39m"
+
 #backup makefile
 
 if [ "`ls Makefile`" != "" ]
@@ -19,15 +23,18 @@ echo
 echo
 
 echo "Tests for error code"
+echo
 for i in `ls`
 do
+    echo
+    echo "Expected error:" `cat $i | grep //`
     ./../../parser $i > /dev/null
     ret=$?
     if [ $ret -eq 0 ]
         then
-        echo "TEST ERROR: $i: FAIL"
+        echo -e "TEST ERROR: $i: $error"
     else
-            echo "TEST ERROR: $i: PASS"
+            echo -e "TEST ERROR: $i: $pass"
     fi
 done
 
@@ -36,16 +43,19 @@ echo
 
 cd tests/good_test
 pwd
+echo
+echo
 echo "Tests for good code"
 for i in `ls`
 do
+    echo
     ./../../parser $i > /dev/null
     ret=$?
     if [ $ret -eq 0 ]
         then
-        echo "TEST GOOD: $i: PASS"
+        echo -e "TEST GOOD: $i: $pass"
     else
-        echo "TEST GOOD: $i: FAIL"
+        echo -e "TEST GOOD: $i: $error"
     fi
 done
 

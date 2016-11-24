@@ -1,8 +1,9 @@
+//too few arguments
 class Main
 {
 	static void run()
 	{
-		Game.play();        //too few arguments
+		Game.play();        
 		Game.play(qopiweyrt);
 		Game.play(qopiweyrt,qwer);
 	}

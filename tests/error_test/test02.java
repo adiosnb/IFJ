@@ -1,3 +1,4 @@
+//error nezname abc
 class Main {
     static int trol(){
         int a = 7;
