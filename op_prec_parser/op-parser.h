@@ -11,14 +11,7 @@ enum
     C      = 100
 };
 
-enum data_type
-{
-    T_UNDEF = 0,
-    T_INT,
-    T_DOUBLE,
-    T_STRING,
-    T_BOOL
-};
+#define BOOL    1000
 
 const char op_table[][MAX_TERMINALS] =
 {   //        0     1    2    3   4    5     6    7    8    9   10   11   12   13

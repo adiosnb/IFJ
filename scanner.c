@@ -210,6 +210,8 @@ int	process_literal()
 		switch(state)
 		{
 			case NORMAL:
+				if(c <= 31)
+					error_and_die(LEXICAL_ERROR, "Invalid character in text literal");
 				if(c == '\"')
 				{
 					// when the end of terminal is reached
@@ -260,7 +262,9 @@ int	process_literal()
 					// convert ASCII char to a number of <0,9>
 					int digit = c-'0';
 					if(digit > 7)
-						return TOK_ERROR;
+					{
+						error_and_die(LEXICAL_ERROR, "Octal number out of range");
+					}
 					// and multiply it with N power of 8
 					// => conversing octal-to-decal with one buffer sum 
 					sum += octBase*digit;
@@ -268,6 +272,10 @@ int	process_literal()
 					// if we have read 3 numbers
 					if(octBase == 0)
 					{
+						if(sum == 0)
+						{
+							error_and_die(LEXICAL_ERROR, "Octal number out of range");
+						}
 						//concatenate a new char
 						ADD_CHAR(literal,sum);
 						octBase= 64;
@@ -358,45 +366,7 @@ int	process_identifier()
 			
 			// the last character is probably a part of another token->return back
 			sungetc(c,fHandle);
-
-			// if we captured only a single word, it migh be a keyword
-			if(state != SECOND)
-			{
-				// verify if string isn't a keyword
-				if(!isNonAlpha)
-				{
-					int typeOfKeyword;
-					// if ID is in set of keywords
-					if(isKeyword(first.str,&typeOfKeyword))
-					{
-						g_lastToken.type = TOK_KEYWORD;
-						g_lastToken.data.integer = typeOfKeyword; 
-						return TOK_KEYWORD;
-					}
-					
-				}
-			}
-			// otherwise, it's an ID
-			g_lastToken.type = TOK_ID;
-			
-			// if it's a special ID (ID.ID)
-			if(state == SECOND)
-			{
-				// if the second part of ID fullfills requirements
-				if((first.len && second.len))
-				{
-					g_lastToken.data.string = createString2(first.str,second.str);
-					g_lastToken.type = TOK_SPECIAL_ID;
-				}
-				else {
-					// error in the second part of ID
-					fprintf(stderr,"Error: the second part doesn't full fill requirements\n");  
-					errorLeave(LEXICAL_ERROR);
-					return TOK_ERROR;
-				}
-			} else 
-				g_lastToken.data.string = createString(first.str);
-				return g_lastToken.type;
+			break;
 		}
 	}
 
@@ -414,12 +384,19 @@ int	process_identifier()
 				return TOK_ID;
 			}
 		} else {
+			int type;
 			if (second.len){
-				g_lastToken.type = TOK_ID;
-				g_lastToken.data.string = createString(second.str);
-				return TOK_ID;
+				if(isdigit(second.str[0]))
+					error_and_die(LEXICAL_ERROR, "The second part is invalid.");
+				if(isKeyword(first.str,&type) || isKeyword(second.str,&type))
+				{
+					error_and_die(LEXICAL_ERROR, "Reserved word in fully qualified identifier");
+				}
+				g_lastToken.type = TOK_SPECIAL_ID;
+				g_lastToken.data.string = createString2(first.str,second.str);
+				return TOK_SPECIAL_ID;
 			} else {
-				errorLeave(INTERNAL_ERROR);
+				error_and_die(LEXICAL_ERROR, "Second part of fully qualified ID is empty");
 				return TOK_ERROR;
 			}
 		}
@@ -432,10 +409,9 @@ int	process_identifier()
 
 int	process_number()
 {
-	//TODO: improve solution for larger numbers
 	//TODO: a question: is overflow/underflow taken as a scanner error ?
-	char buff[256] = {0, };
-	int c,i = 0;
+	str_reinit(&first);
+	int c; 
 
 	enum numberType {INT, DOT,DOUBLE,EXP,EXP_SIGN,EXP_RADIX};
 	int state = INT;
@@ -446,7 +422,8 @@ int	process_number()
 			case INT:
 				if(isdigit(c) || tolower(c) == 'e' || c == '.')
 				{
-					buff[i++] = c;
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					if(c == '.')
 						state = DOT;
 					else if(tolower(c) == 'e')
@@ -454,14 +431,15 @@ int	process_number()
 				} else {
 					sungetc(c,fHandle);
 					g_lastToken.type = TOK_CONST;
-					g_lastToken.data.integer = atoi(buff);
+					g_lastToken.data.integer = atoi(first.str);
 					return TOK_CONST;
 				}
 				break;
 			case DOT:
 				if(isdigit(c))
 				{
-					buff[i++] = c;
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					state = DOUBLE;
 				} else {
 					// emit error, number ends with '.' without any following digit
@@ -476,10 +454,11 @@ int	process_number()
 					// new float
 					sungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
-					g_lastToken.data.real= atof(buff);
+					g_lastToken.data.real= atof(first.str);
 					return TOK_DOUBLECONST;
 				} else {
-					buff[i++] = c;	
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					if(tolower(c) == 'e')
 						state = EXP;
 				}
@@ -487,14 +466,16 @@ int	process_number()
 			case EXP:
 				if(c == '+' || c == '-')
 				{
-					buff[i++] = c;
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					state = EXP_SIGN;
 				} else if(isdigit(c))
 				{
-					buff[i++] = c;
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					state = EXP_RADIX;
 				} else {
-					fprintf(stderr,"LEX: Expected a digit after +- or digit after e \n");
+					fprintf(stderr,"LEX: Expected +- or digit after e \n");
 					errorLeave(LEXICAL_ERROR);	
 					return TOK_ERROR;
 				}
@@ -502,7 +483,8 @@ int	process_number()
 			case EXP_SIGN:
 				if(isdigit(c))
 				{
-					buff[i++] = c;
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					state = EXP_RADIX;
 				} else {
 					fprintf(stderr,"LEX: Expected a digit after +- \n");
@@ -512,13 +494,14 @@ int	process_number()
 				break;
 			case EXP_RADIX:
 				if(isdigit(c) || c == '+' || c == '-')
-					buff[i++] = c;
-				else 
+				{
+					ADD_CHAR(first,c);
+				} else 
 				{
 					//new float
 					sungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
-					g_lastToken.data.real= atof(buff);
+					g_lastToken.data.real= atof(first.str);
 					return TOK_DOUBLECONST;
 				}
 				break;
@@ -526,27 +509,27 @@ int	process_number()
 		}
 	}
 
-	if (i) {
+	if (first.len) {
 		switch (state){
 			case INT:
 				g_lastToken.type = TOK_CONST;
-				g_lastToken.data.integer = atoi(buff);
+				g_lastToken.data.integer = atoi(first.str);
 				return TOK_CONST;
 				break;
 			case DOUBLE:
 				g_lastToken.type = TOK_DOUBLECONST;
-				g_lastToken.data.real= atof(buff);
+				g_lastToken.data.real= atof(first.str);
 				return TOK_DOUBLECONST;
 				break;
 
 			case EXP_RADIX:
 				g_lastToken.type = TOK_DOUBLECONST;
-				g_lastToken.data.real= atof(buff);
+				g_lastToken.data.real= atof(first.str);
 				return TOK_DOUBLECONST;
 				break;
 		}
 	}
-	errorLeave(SEMANTIC_ERROR);
+	errorLeave(LEXICAL_ERROR);
 	return TOK_ERROR;
 }
 
@@ -599,7 +582,7 @@ int	process_relation(char c)
 					g_lastToken.type = TOK_NOTEQ;
 				else {
 					fprintf(stderr,"LEX: ! itself is not an operator, missing =");
-					errorLeave(SEMANTIC_ERROR);
+					errorLeave(LEXICAL_ERROR);
 					return TOK_ERROR;
 				}
 				return g_lastToken.type;
@@ -626,7 +609,7 @@ int	process_relation(char c)
 				break;	
 		}
 	}
-	errorLeave(SEMANTIC_ERROR);
+	errorLeave(LEXICAL_ERROR);
 	return TOK_ERROR;
 }
 // maps ASCII symbols to token types
@@ -655,7 +638,7 @@ int	process_symbol(char op)
 			break;
 		default:
 			fprintf(stderr,"LEX: Unknown symbol \n'%c'",op);
-			errorLeave(SEMANTIC_ERROR);
+			errorLeave(LEXICAL_ERROR);
 			return TOK_ERROR;
 	}		
 	g_lastToken.type = type;
@@ -775,8 +758,7 @@ int	intern_getToken()
 					sungetc(c,fHandle);
 					return process_number();
 				} else {
-					fprintf(stderr,"lexical Error: No token defined for 0x%X character\n",c);
-					errorLeave(LEXICAL_ERROR);
+					error_and_die(LEXICAL_ERROR,"No token defined for 0x%X character\n",c);
 					return TOK_ERROR;
 				}
 				break;

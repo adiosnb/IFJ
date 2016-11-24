@@ -1,5 +1,9 @@
 #include "scanner.h"
-#include "stable.h"
+#include "ial.h"
+
+void parser_clean()
+{
+}
 
 char* debug_keyword(int type)
 {
