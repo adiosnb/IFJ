@@ -401,10 +401,9 @@ int	process_identifier()
 
 int	process_number()
 {
-	//TODO: improve solution for larger numbers
 	//TODO: a question: is overflow/underflow taken as a scanner error ?
-	char buff[256] = {0, };
-	int c,i = 0;
+	str_reinit(&first);
+	int c; 
 
 	enum numberType {INT, DOT,DOUBLE,EXP,EXP_SIGN,EXP_RADIX};
 	int state = INT;
@@ -415,7 +414,8 @@ int	process_number()
 			case INT:
 				if(isdigit(c) || tolower(c) == 'e' || c == '.')
 				{
-					buff[i++] = c;
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					if(c == '.')
 						state = DOT;
 					else if(tolower(c) == 'e')
@@ -423,14 +423,15 @@ int	process_number()
 				} else {
 					sungetc(c,fHandle);
 					g_lastToken.type = TOK_CONST;
-					g_lastToken.data.integer = atoi(buff);
+					g_lastToken.data.integer = atoi(first.str);
 					return TOK_CONST;
 				}
 				break;
 			case DOT:
 				if(isdigit(c))
 				{
-					buff[i++] = c;
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					state = DOUBLE;
 				} else {
 					// emit error, number ends with '.' without any following digit
@@ -445,10 +446,11 @@ int	process_number()
 					// new float
 					sungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
-					g_lastToken.data.real= atof(buff);
+					g_lastToken.data.real= atof(first.str);
 					return TOK_DOUBLECONST;
 				} else {
-					buff[i++] = c;	
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					if(tolower(c) == 'e')
 						state = EXP;
 				}
@@ -456,11 +458,13 @@ int	process_number()
 			case EXP:
 				if(c == '+' || c == '-')
 				{
-					buff[i++] = c;
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					state = EXP_SIGN;
 				} else if(isdigit(c))
 				{
-					buff[i++] = c;
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					state = EXP_RADIX;
 				} else {
 					fprintf(stderr,"LEX: Expected +- or digit after e \n");
@@ -471,7 +475,8 @@ int	process_number()
 			case EXP_SIGN:
 				if(isdigit(c))
 				{
-					buff[i++] = c;
+					//buff[i++] = c;
+					ADD_CHAR(first,c);
 					state = EXP_RADIX;
 				} else {
 					fprintf(stderr,"LEX: Expected a digit after +- \n");
@@ -481,13 +486,14 @@ int	process_number()
 				break;
 			case EXP_RADIX:
 				if(isdigit(c) || c == '+' || c == '-')
-					buff[i++] = c;
-				else 
+				{
+					ADD_CHAR(first,c);
+				} else 
 				{
 					//new float
 					sungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
-					g_lastToken.data.real= atof(buff);
+					g_lastToken.data.real= atof(first.str);
 					return TOK_DOUBLECONST;
 				}
 				break;
@@ -495,22 +501,22 @@ int	process_number()
 		}
 	}
 
-	if (i) {
+	if (first.len) {
 		switch (state){
 			case INT:
 				g_lastToken.type = TOK_CONST;
-				g_lastToken.data.integer = atoi(buff);
+				g_lastToken.data.integer = atoi(first.str);
 				return TOK_CONST;
 				break;
 			case DOUBLE:
 				g_lastToken.type = TOK_DOUBLECONST;
-				g_lastToken.data.real= atof(buff);
+				g_lastToken.data.real= atof(first.str);
 				return TOK_DOUBLECONST;
 				break;
 
 			case EXP_RADIX:
 				g_lastToken.type = TOK_DOUBLECONST;
-				g_lastToken.data.real= atof(buff);
+				g_lastToken.data.real= atof(first.str);
 				return TOK_DOUBLECONST;
 				break;
 		}
