@@ -57,6 +57,9 @@ argument_var_t stack_pop(stack_t *stack) {
     argument_var_t pop_var;
     if(stack->used > 0) {
         pop_var = stack->data[stack->used - 1];
+        if (pop_var.arg_type == STRING) {
+            str_destroy(&pop_var.data.s);
+        }
         stack->used--;
     } else {
         error_and_die(RUNTIME_ERROR, "Empty stack pop");
