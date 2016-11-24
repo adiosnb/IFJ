@@ -43,6 +43,21 @@ int	isTokenTypeSpecifier()
 /******************************************************************************
  			SEMANTIC UTILS
 ******************************************************************************/
+// Create and return 
+argument_var_t* getStackTop()
+{
+	argument_var_t* top = NULL;
+	if(top)
+		return top;
+	data_t stackTop;
+	stackTop.data.arg_type = ON_TOP; 	
+	stackTop.data.data.i = 0;
+	
+	data_t* dttop = stable_add_variadic(staticSym,stackTop, 1,"ifj16.on_top");
+	if(dttop)
+		top = &dttop->data;
+	return top;
+}
 void generateIntro()
 {
 	data_t* run = stable_search_variadic(staticSym, 1, "Main.run");
@@ -224,7 +239,6 @@ void addBuiltInToTable(stab_t* table)
 	data.next_param = ptr;
 	stable_add_variadic(table,data,2,"ifj16","length");
 
-	// TODO: substr, compare, find
 	// substr
 	fillLocalVarData(&data,INTEGER, -2);
 	ptr =  stable_add_variadic(table,data,3,"ifj16","substr","n");
@@ -417,10 +431,9 @@ int more_next(data_t* var)
 
 			if(getToken() != TOK_RIGHT_PAR)
 				error_and_die(SYNTAX_ERROR,"Expected )");
-			// generate function call
 			if(isSecondPass)
 			{
-				// TODO switch for built in
+				// generate function call
 				generateFunctionCall(func,var);
 			}
 		}
@@ -606,8 +619,8 @@ int jump_statement()
 		{
 			create_and_add_instruction(insProgram,INST_RET, 0,0,0);
 		} else {
-			//TODO 
-			create_and_add_instruction(insProgram,INST_RET, 0xDEAFBEEF,0,0);
+			//TODO: use expression
+			create_and_add_instruction(insProgram,INST_RET, getStackTop() ,0,0);
 		}
 	}
 
@@ -647,7 +660,7 @@ int iteration_statement()
 
 	if(isSecondPass)
 	{
-		skipJump = create_and_add_instruction(insProgram, INST_JZ, NULL, 0xDEADBEEF,NULL); 
+		skipJump = create_and_add_instruction(insProgram, INST_JZ,0,getStackTop(),0); 
 		GEN("Generate COMPARE and JUMP test"); 
 	}
 	if(compound_statement() == SYN_ERR)
@@ -684,7 +697,7 @@ int selection_statement()
 		if(isSecondPass)
 		{
 			GEN("Generate a CMP and JUMP.");
-			selection = create_and_add_instruction(insProgram, INST_JNZ, 0,0,0);
+			selection = create_and_add_instruction(insProgram, INST_JZ, 0,getStackTop(),0);
 		}
 		if(getToken() != TOK_RIGHT_PAR)
 			error_and_die(SYNTAX_ERROR,"Expected )");
@@ -1320,6 +1333,7 @@ int main(int argc, char ** argv)
 		if(run->type != VOID || run->next_param != NULL)
 			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
 
+		inst_list_print(insProgram);
 #ifndef NOINTERPRET
 		// run it
 		interpret(insProgram, staticSym);
