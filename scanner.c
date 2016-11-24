@@ -358,50 +358,7 @@ int	process_identifier()
 			
 			// the last character is probably a part of another token->return back
 			sungetc(c,fHandle);
-
-			// if we captured only a single word, it migh be a keyword
-			if(state != SECOND)
-			{
-				// verify if string isn't a keyword
-				if(!isNonAlpha)
-				{
-					int typeOfKeyword;
-					// if ID is in set of keywords
-					if(isKeyword(first.str,&typeOfKeyword))
-					{
-						g_lastToken.type = TOK_KEYWORD;
-						g_lastToken.data.integer = typeOfKeyword; 
-						return TOK_KEYWORD;
-					}
-					
-				}
-			}
-			// otherwise, it's an ID
-			g_lastToken.type = TOK_ID;
-			
-			// if it's a special ID (ID.ID)
-			if(state == SECOND)
-			{
-				// if the second part of ID fullfills requirements
-				if((first.len && second.len))
-				{
-					int kw; 
-					if(isKeyword(first.str,&kw) || isKeyword(second.str,&kw))
-					{
-						error_and_die(LEXICAL_ERROR, "Reserved keyword in fully qualified identifier.");
-					}
-					g_lastToken.data.string = createString2(first.str,second.str);
-					g_lastToken.type = TOK_SPECIAL_ID;
-				}
-				else {
-					// error in the second part of ID
-					fprintf(stderr,"Error: the second part doesn't full fill requirements\n");  
-					errorLeave(LEXICAL_ERROR);
-					return TOK_ERROR;
-				}
-			} else 
-				g_lastToken.data.string = createString(first.str);
-				return g_lastToken.type;
+			break;
 		}
 	}
 
@@ -419,12 +376,19 @@ int	process_identifier()
 				return TOK_ID;
 			}
 		} else {
+			int type;
 			if (second.len){
-				g_lastToken.type = TOK_ID;
-				g_lastToken.data.string = createString(second.str);
-				return TOK_ID;
+				if(isdigit(second.str[0]))
+					error_and_die(LEXICAL_ERROR, "The second part is invalid.");
+				if(isKeyword(first.str,&type) || isKeyword(second.str,&type))
+				{
+					error_and_die(LEXICAL_ERROR, "Reserved word in fully qualified identifier");
+				}
+				g_lastToken.type = TOK_SPECIAL_ID;
+				g_lastToken.data.string = createString2(first.str,second.str);
+				return TOK_SPECIAL_ID;
 			} else {
-				errorLeave(INTERNAL_ERROR);
+				error_and_die(LEXICAL_ERROR, "Second part of fully qualified ID is empty");
 				return TOK_ERROR;
 			}
 		}
@@ -551,7 +515,7 @@ int	process_number()
 				break;
 		}
 	}
-	errorLeave(SEMANTIC_ERROR);
+	errorLeave(LEXICAL_ERROR);
 	return TOK_ERROR;
 }
 
@@ -604,7 +568,7 @@ int	process_relation(char c)
 					g_lastToken.type = TOK_NOTEQ;
 				else {
 					fprintf(stderr,"LEX: ! itself is not an operator, missing =");
-					errorLeave(SEMANTIC_ERROR);
+					errorLeave(LEXICAL_ERROR);
 					return TOK_ERROR;
 				}
 				return g_lastToken.type;
@@ -631,7 +595,7 @@ int	process_relation(char c)
 				break;	
 		}
 	}
-	errorLeave(SEMANTIC_ERROR);
+	errorLeave(LEXICAL_ERROR);
 	return TOK_ERROR;
 }
 // maps ASCII symbols to token types
@@ -660,7 +624,7 @@ int	process_symbol(char op)
 			break;
 		default:
 			fprintf(stderr,"LEX: Unknown symbol \n'%c'",op);
-			errorLeave(SEMANTIC_ERROR);
+			errorLeave(LEXICAL_ERROR);
 			return TOK_ERROR;
 	}		
 	g_lastToken.type = type;
@@ -780,8 +744,7 @@ int	intern_getToken()
 					sungetc(c,fHandle);
 					return process_number();
 				} else {
-					fprintf(stderr,"lexical Error: No token defined for 0x%X character\n",c);
-					errorLeave(LEXICAL_ERROR);
+					error_and_die(LEXICAL_ERROR,"No token defined for 0x%X character\n",c);
 					return TOK_ERROR;
 				}
 				break;
