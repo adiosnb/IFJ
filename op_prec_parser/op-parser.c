@@ -244,37 +244,47 @@ int parse_expression(bool is_assign, bool is_condition)
                                     case TOK_EQ:
                                         // do action
                                         expr_data_type = BOOL; 
-
+					create_and_add_instruction(insProgram, INST_EXPR_EQUAL,0,0,0);
 
                                         break;
                                     case TOK_NOTEQ:
                                         expr_data_type = BOOL; 
+					create_and_add_instruction(insProgram, INST_EXPR_NOT_EQ,0,0,0);
                                         break;
                                     case TOK_LESS:
                                         expr_data_type = BOOL; 
+					create_and_add_instruction(insProgram, INST_EXPR_LOWER,0,0,0);
                                         break;
                                     case TOK_GREATER:
                                         expr_data_type = BOOL; 
+					create_and_add_instruction(insProgram, INST_EXPR_HIGHER,0,0,0);
                                         break;
                                     case TOK_LE:
                                         expr_data_type = BOOL; 
+					create_and_add_instruction(insProgram, INST_EXPR_LOW_EQ,0,0,0);
                                         break;
                                     case TOK_GE:
                                         expr_data_type = BOOL; 
+					create_and_add_instruction(insProgram, INST_EXPR_HIG_EQ,0,0,0);
                                         break;
                                     case TOK_PLUS:
+					create_and_add_instruction(insProgram, INST_EXPR_STR_ADD,0,0,0);
                                         // if one of the operands is string, concatenate (second operand is converted to string too, using ifj16.print)
                                         break;
                                     case TOK_MINUS:
+					create_and_add_instruction(insProgram, INST_EXPR_SUB,0,0,0);
                                         break;
                                     case TOK_MUL:
+					create_and_add_instruction(insProgram, INST_EXPR_MUL,0,0,0);
                                         break;
                                     case TOK_DIV:
                                         // accept only integer or double operands
                                         // int op int = integer division
                                         // otherwise default division and result is double
+					create_and_add_instruction(insProgram, INST_EXPR_DIV,0,0,0);
                                         break;
                                     case TOK_ID:
+                                    case TOK_SPECIAL_ID: 
                                         ;
                                         // get token with attributes (TOK_ID, TOK_SPECIAL_ID, TOK_DOUBLECONST, TOK_LITERAL, TOK_CONST)
                                         t_token var = handle.elem[0]; 
@@ -287,7 +297,7 @@ int parse_expression(bool is_assign, bool is_condition)
                                         //getNextToken
                                         getToken();
 
-                                        if (var.type == TOK_ID)
+                                        if (var.type == TOK_ID || var.type == TOK_SPECIAL_ID)
                                         {
                                             char *var_name = tok_string;
 
@@ -298,33 +308,28 @@ int parse_expression(bool is_assign, bool is_condition)
                                          // ^^^^^^^^^^^^^^^^^^^^^^^^^^
                                             data_t *var_data;
 
-                                            var_data = stable_search_variadic(staticSym,3, parser_class, parser_fun, var_name);
+                                            if(var.type == TOK_ID)
+                                            {
+                                                var_data = stable_search_variadic(staticSym,3, parser_class, parser_fun, var_name);
+                                                if(!var_data)
+                                                      var_data = stable_search_variadic(staticSym,2, parser_class,var_name);
+						    
+                                            } else if(var.type == TOK_SPECIAL_ID) {
+                                                var_data = stable_search_variadic(staticSym,1, var_name);
+					    }
 
                                             if (var_data == NULL)
                                                 error_and_die(SEMANTIC_ERROR, "Expression: Undefined variable '%s'\n", var_name);
+
+					    if (var_data->data.arg_type == INSTRUCTION)
+                                                error_and_die(SEMANTIC_TYPE_ERROR, "Expected variable, got function'%s'\n", var_name);
                                             
                                             // TODO: Check if variable is uninitialized
                                             //
                                             // push on stack
-                                            create_and_add_instruction(insProgram, INST_PUSH, var_data, 0, 0);
+                                            create_and_add_instruction(insProgram, INST_PUSH, &var_data->data, 0, 0);
                                         }
-                                            
-                                        if (var.type == TOK_SPECIAL_ID)
-                                        {
-                                            char *special_var_name = tok_string;
-                                            data_t *var_data;
-                                              
-                                            var_data = stable_search_variadic(insProgram, 1, special_var_name);
-
-                                            if (var_data == NULL)
-                                                error_and_die(SEMANTIC_ERROR, "Expression: Undefined special variable '%s'\n", special_var_name);
-                                           // 
-                                            // TODO: Check if variable is uninitialized
-
-                                            // push on stack
-                                            create_and_add_instruction(insProgram, INST_PUSH, var_data, 0, 0);
-                                        }
-                                        break;
+					break;
                                 }
                             }
                             else
@@ -486,8 +491,11 @@ t_token get_top_terminal(stack_t *stack)
 
 stab_t* staticSym = NULL;
 
+instruction_list_t* insProgram = NULL;
 int main(void)
 {
+
+    insProgram = init_inst_list();
     fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(false, false));
 	return 0;
 }
