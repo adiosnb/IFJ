@@ -162,7 +162,7 @@ const char *tokens[] =
     "==", "!=", "<", ">", "<=", ">=", "+", "-", "*", "/", "i", "(", ")", "$", [100] = "E", [60] = "<"
 };
 
-void print_stack(stack_t *stack)
+void print_dstack(dstack_t *stack)
 {
     for (int i = 0; i <= stack->top; i++)
         if (stack->elem[i].type != BOTTOM)
@@ -198,8 +198,8 @@ int parse_expression(bool should_generate, bool is_condition)
     bool end_of_expr = false;
     int expr_data_type = ERROR;
 
-    stack_t     handle = stack_ctor(); // dynamic allocation
-    stack_t     pda = stack_ctor();    // dynamic allocation
+    dstack_t     handle = dstack_ctor(); // dynamic allocation
+    dstack_t     pda = dstack_ctor();    // dynamic allocation
 
     expr_t     top_terminal;
     expr_t     top_terminal_tmp;
@@ -208,7 +208,7 @@ int parse_expression(bool should_generate, bool is_condition)
     // HACK HACK: BOTTOM equals to TOK_SPECIAL_ID, adding dollar to find out BOTTOM
     expr_t     bottom = {.type = BOTTOM, NULL};
 
-    stack_push(&pda, bottom);
+    dstack_push(&pda, bottom);
     do
     {
         top_terminal = get_top_terminal(&pda);
@@ -232,17 +232,17 @@ int parse_expression(bool should_generate, bool is_condition)
                         if (is_it_condition) 
                             end_of_expr = false;
                         
-                        handle = stack_clear(&handle);
+                        handle = dstack_clear(&handle);
                         handle = get_reduce_symbols(&pda, &handle);
 
-                        if (!stack_empty(&handle))
+                        if (!dstack_empty(&handle))
                         {
                                if (find_right_side(&handle) == -1)
-                                   if (stack_top(&pda)->type == TOK_LEFT_PAR && ins.type == TOK_RIGHT_PAR)
+                                   if (dstack_top(&pda)->type == TOK_LEFT_PAR && ins.type == TOK_RIGHT_PAR)
                                        error_and_die(SYNTAX_ERROR, "Expression: no expression between parentheses"); 
                         }
                         // push input symbol 
-                        stack_push(&pda, validate_ins(g_lastToken));
+                        dstack_push(&pda, validate_ins(g_lastToken));
 
 
                         // read next token
@@ -251,20 +251,20 @@ int parse_expression(bool should_generate, bool is_condition)
                         break;
                 case '<':
                         // replacement of top terminal with top terminal and '<' (beginning of handle)
-                        stack_add_handle_symbol(&pda, top_terminal.type);
+                        dstack_add_handle_symbol(&pda, top_terminal.type);
 
                         // push input symbol
-                        stack_push(&pda, validate_ins(g_lastToken));
+                        dstack_push(&pda, validate_ins(g_lastToken));
 
                         // read next token
                         ins = get_next_token();
 
                         break;
                 case '>':
-                        handle = stack_clear(&handle);
+                        handle = dstack_clear(&handle);
                         handle = get_reduce_symbols(&pda, &handle);
 
-                        if (!stack_empty(&handle))
+                        if (!dstack_empty(&handle))
                         {
                             int res = find_right_side(&handle);
 
@@ -273,7 +273,7 @@ int parse_expression(bool should_generate, bool is_condition)
                                 const int *left_side = get_rule(res);
 
                                 // switch topmost pda rule string with left side
-                                stack_reduce_rule(&pda, *left_side); 
+                                dstack_reduce_rule(&pda, *left_side); 
                                 // postfix actions
                                 //if (res != 11)
                                     printf("%s ", tokens[res]);
@@ -330,7 +330,9 @@ int parse_expression(bool should_generate, bool is_condition)
 					create_and_add_instruction(insProgram, INST_EXPR_HIG_EQ,0,0,0);
                                         break;
                                     case TOK_PLUS:
-					create_and_add_instruction(insProgram, INST_EXPR_STR_ADD,0,0,0);
+					
+					//TODO choose correct operation
+					create_and_add_instruction(insProgram, INST_EXPR_ADD,0,0,0);
                                         // if one of the operands is string, concatenate (second operand is converted to string too, using ifj16.print)
                                         break;
                                     case TOK_MINUS:
@@ -357,7 +359,7 @@ int parse_expression(bool should_generate, bool is_condition)
                                 }
                             }
                             else
-                               generate_reduction_error(*stack_top(&pda), ins);
+                               generate_reduction_error(*dstack_top(&pda), ins);
                         }
                         else    
                             error_and_die(SYNTAX_ERROR, "Expression: Handle does not exist!\n");
@@ -368,7 +370,7 @@ int parse_expression(bool should_generate, bool is_condition)
                             error_and_die(SYNTAX_ERROR, "Expression: Missing right parenthesis!");
                         if (top_terminal.type == BOTTOM && ins.type == TOK_RIGHT_PAR) 
                             error_and_die(SYNTAX_ERROR, "Expression: Unbalanced '('");
-                        generate_syntax_error(*stack_top(&pda), ins); 
+                        generate_syntax_error(*dstack_top(&pda), ins); 
                 case 'E':
                         error_and_die(SYNTAX_ERROR, "Expression: Logical operators are not associative!");
             }
@@ -377,8 +379,8 @@ int parse_expression(bool should_generate, bool is_condition)
     while (ins.type != BOTTOM || (int)top_terminal_tmp.type != BOTTOM);
 
     putchar('\n');
-    handle = stack_dtor(&handle);
-    pda = stack_dtor(&pda);
+    handle = dstack_dtor(&handle);
+    pda = dstack_dtor(&pda);
 
     scanner_closeFile();
 
@@ -389,25 +391,25 @@ int parse_expression(bool should_generate, bool is_condition)
     return expr_data_type;
 }
 
-static inline bool is_stack_bottom(const stack_t *const stack)
+static inline bool is_dstack_bottom(const dstack_t *const stack)
 {
     if (stack != NULL)
         return stack->top == 0 && stack->elem[0].type == BOTTOM;
     return true;
 }
 
-stack_t get_reduce_symbols(const stack_t *const stack, stack_t *const handle)
+dstack_t get_reduce_symbols(const dstack_t *const stack, dstack_t *const handle)
 {
-    stack_t string = *handle; 
+    dstack_t string = *handle; 
 
     if (stack == NULL )
         return string;
 
-    for (long end = stack->top; !is_stack_bottom(stack); end--)
+    for (long end = stack->top; !is_dstack_bottom(stack); end--)
     {
         if (stack->elem[end].type != '<')
         {
-            stack_push(&string, stack->elem[end]);
+            dstack_push(&string, stack->elem[end]);
         }
         else
         {
@@ -427,14 +429,14 @@ stack_t get_reduce_symbols(const stack_t *const stack, stack_t *const handle)
     return string;
 }
 
-void stack_reduce_rule(stack_t *const stack, int left_side)
+void dstack_reduce_rule(dstack_t *const stack, int left_side)
 {
     if (stack == NULL)
         return;
 
     long end; 
 
-    for (end = stack->top; !is_stack_bottom(stack); end--)
+    for (end = stack->top; !is_dstack_bottom(stack); end--)
     {
        if (stack->elem[end].type == '<')
           break; 
@@ -444,11 +446,11 @@ void stack_reduce_rule(stack_t *const stack, int left_side)
     {
        expr_t left = {.type = left_side}; 
        stack->top = end-1;
-       stack_push(stack, left); 
+       dstack_push(stack, left); 
     }
 }
 
-int find_right_side(const stack_t *const handle)
+int find_right_side(const dstack_t *const handle)
 {
     if (handle == NULL)
         return -1;
@@ -463,7 +465,7 @@ int find_right_side(const stack_t *const handle)
         // rule len without left side
         left_side_len = rule_len[i]-1;
 
-        if (stack_elem_count(handle) != left_side_len) 
+        if (dstack_elem_count(handle) != left_side_len) 
             continue;
 
         // skip first symbol, it is left hand side!
@@ -497,7 +499,7 @@ const int *get_rule(int rule_idx)
     return &rule_table[rule_idx][0];
 }
 
-expr_t get_top_terminal(stack_t *stack) 
+expr_t get_top_terminal(dstack_t *stack) 
 { 
 
     long top = stack->top;
@@ -529,12 +531,15 @@ int main(void)
     stable_add_var(staticSym, "test.a", dt);
     stable_add_var(staticSym, "test.b", dt);
 
+    dt.data.arg_type = ON_TOP;
+    data_t* top = stable_add_var(staticSym, "ifj16.top", dt);
+
     insProgram = init_inst_list();
 
     stable_print(staticSym);
     fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(true, false));
 
-create_and_add_instruction(insProgram, INST_WRITE, 0,0,0);
+create_and_add_instruction(insProgram, INST_WRITE, &top->data,0,0);
 create_and_add_instruction(insProgram, INST_HALT, 0,0,0);
 // -------------------------------
     inst_list_print(insProgram);
