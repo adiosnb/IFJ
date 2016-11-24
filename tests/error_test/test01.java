@@ -1,4 +1,4 @@
-//too few arguments
+//too few arguments #4
 class Main
 {
 	static void run()

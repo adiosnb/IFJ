@@ -1,4 +1,4 @@
-//too many arguments
+//too many arguments #4
 class Main {
     static void run(){
         String a = "asdf";
