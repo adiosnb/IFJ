@@ -1317,7 +1317,7 @@ int main(int argc, char ** argv)
 		data_t* run = stable_search_variadic(staticSym,1, "Main.run");
 		if(!isSymbolFunction(run))
 			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
-		if(run->type != VOID)
+		if(run->type != VOID || run->next_param != NULL)
 			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
 
 #ifndef NOINTERPRET
