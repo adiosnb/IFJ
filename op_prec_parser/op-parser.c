@@ -3,16 +3,16 @@
 #include "../scanner.h"
 #include "utils/dynamic_stack.h"
 #include "../error.h"
-//#include "error_op/error_op.h"
 #include "op-parser.h"
-
-#include "../stable.h"
+#include "../ial.h"
 
 //#define NDEBUG
 
 extern const char op_table[][MAX_TERMINALS];
 extern const int rule_table[][MAX_RULES];
 extern const int rule_len[MAX_RULES];
+
+void parser_clean(void) { }
 
 bool is_it_assign = false;
 
@@ -115,10 +115,11 @@ void print_input(int a, int b)
 static inline t_token get_next_token(void)
 {
     getToken();
-    return validate_ins(g_lastToken);
+    t_token token = validate_ins(g_lastToken);
+    if (token.type == TOK_ID)
+        printf("String: %s\n", getTokString());
+    return token; 
 }
-
-
 
 enum data_type parse_expression(bool is_assign, bool is_condition)
 {
@@ -154,7 +155,8 @@ enum data_type parse_expression(bool is_assign, bool is_condition)
             ins.type = BOTTOM;
             ins.data.op = '$';
         }
-        
+
+
         if (is_it_condition && ins.type == TOK_LEFT_PAR)
             end_of_expr = true;
 
@@ -178,6 +180,7 @@ enum data_type parse_expression(bool is_assign, bool is_condition)
                         }
                         // push input symbol 
                         stack_push(&pda, g_lastToken);
+
 
                         // read next token
                         ins = get_next_token();
@@ -243,6 +246,10 @@ enum data_type parse_expression(bool is_assign, bool is_condition)
                                         // otherwise default division and result is double
                                         break;
                                     case TOK_ID:
+                                        ;
+                                        t_token var = get_top_terminal(&handle); 
+
+
                                         // type conversions
                                         // int op int = int
                                         //
@@ -408,6 +415,7 @@ t_token get_top_terminal(stack_t *stack)
 }
 
 stab_t* staticSym = NULL;
+
 int main(void)
 {
     fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(false, true));
