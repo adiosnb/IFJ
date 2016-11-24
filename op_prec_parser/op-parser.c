@@ -19,44 +19,49 @@ void parser_clean(void) { }
 
 bool is_it_assign = false;
 
-static inline t_token validate_ins(t_token s)
+static inline expr_t validate_ins(t_token s)
 {
+    expr_t exp;
+    exp.type = s.type;
     // just for now to see where is end of input tokens string
    
-    if (is_it_assign && s.type == TOK_DELIM)
+    if (is_it_assign && exp.type == TOK_DELIM)
     {
-        s.data.op = '$';
-        s.type = BOTTOM;
+        exp.type = BOTTOM;
         ungetToken();
-        return s;
+        return exp;
     }
 
-    if (s.type == TOK_EOF)
+    int op = 0;
+    if (exp.type == TOK_EOF)
     {
-        s.data.op = '$';
-        s.type = BOTTOM;
+        op = '$';
+        exp.type = BOTTOM;
     }
 
-    switch (s.type)
+    switch (exp.type)
     {
         case TOK_SPECIAL_ID:
         case TOK_LITERAL:
         case TOK_CONST:
-        case TOK_DOUBLECONST: if (s.data.op != '$') s.type = TOK_ID;
+        case TOK_DOUBLECONST: 
+		if (op != '$') 
+			exp.type = TOK_ID;
     }
 
-    if (!(((int)s.type >= TOK_EQ && s.type <= BOTTOM) || s.type == C))
+    if (!(((int)exp.type >= TOK_EQ && exp.type <= BOTTOM) || exp.type == C))
     // TODO: validate input symbol and print its string....how? scanner is not capable of doing that
-        error_and_die(SYNTAX_ERROR, "Expression: invalid input symbol %i", s.type);
-    return s;
+        error_and_die(SYNTAX_ERROR, "Expression: invalid input symbol %i", exp.type);
+
+    return exp;
 }
 
 
 // top is top terminal of pushdown automaton and ins is input symbol
-static void generate_syntax_error(t_token topt, t_token inst)
+static void generate_syntax_error(expr_t topt, expr_t inst)
 {
-    topt = validate_ins(topt);
-    inst = validate_ins(inst);
+    //topt = validate_ins(topt);
+    //inst = validate_ins(inst);
     
     int top = topt.type;
     int ins = inst.type; 
@@ -76,10 +81,10 @@ static void generate_syntax_error(t_token topt, t_token inst)
 #define IS_OPERATOR(op)    (op == TOK_NOTEQ || op == TOK_LESS || op == TOK_GREATER || op == TOK_LE || op == TOK_GE || op == TOK_PLUS || op == TOK_MINUS || op == TOK_MUL || op == TOK_DIV)    
 
 
-static void generate_reduction_error(t_token topt, t_token inst)
+static void generate_reduction_error(expr_t topt, expr_t inst)
 {
-    topt = validate_ins(topt);
-    inst = validate_ins(inst);
+    //topt = validate_ins(topt);
+    //inst = validate_ins(inst);
     
     int top = topt.type;
     int ins = inst.type; 
@@ -115,10 +120,10 @@ void print_input(int a, int b)
 }
 // TODO: symbol table checking data types
 
-static inline t_token get_next_token(void)
+static inline expr_t get_next_token(void)
 {
     getToken();
-    t_token token = validate_ins(g_lastToken);
+    expr_t token = validate_ins(g_lastToken);
     return token; 
 }
 
@@ -139,12 +144,12 @@ int parse_expression(bool is_assign, bool is_condition)
     stack_t     handle = stack_ctor(); // dynamic allocation
     stack_t     pda = stack_ctor();    // dynamic allocation
 
-    t_token     top_terminal;
-    t_token     top_terminal_tmp;
-    t_token     ins = get_next_token();
+    expr_t     top_terminal;
+    expr_t     top_terminal_tmp;
+    expr_t     ins = get_next_token();
 
     // HACK HACK: BOTTOM equals to TOK_SPECIAL_ID, adding dollar to find out BOTTOM
-    t_token     bottom = {.type = BOTTOM, .data.op = '$'};
+    expr_t     bottom = {.type = BOTTOM, NULL};
 
     stack_push(&pda, bottom);
     do
@@ -154,7 +159,7 @@ int parse_expression(bool is_assign, bool is_condition)
         if (is_it_condition && !end_of_expr && ins.type == TOK_RIGHT_PAR)
         {
             ins.type = BOTTOM;
-            ins.data.op = '$';
+            //ins.data.op = '$';
         }
 
 
@@ -180,7 +185,7 @@ int parse_expression(bool is_assign, bool is_condition)
                                        error_and_die(SYNTAX_ERROR, "Expression: no expression between parentheses"); 
                         }
                         // push input symbol 
-                        stack_push(&pda, g_lastToken);
+                        stack_push(&pda, validate_ins(g_lastToken));
 
 
                         // read next token
@@ -192,7 +197,7 @@ int parse_expression(bool is_assign, bool is_condition)
                         stack_add_handle_symbol(&pda, top_terminal.type);
 
                         // push input symbol
-                        stack_push(&pda, g_lastToken);
+                        stack_push(&pda, validate_ins(g_lastToken));
 
                         // read next token
                         ins = get_next_token();
@@ -284,51 +289,13 @@ int parse_expression(bool is_assign, bool is_condition)
 					create_and_add_instruction(insProgram, INST_EXPR_DIV,0,0,0);
                                         break;
                                     case TOK_ID:
-                                    case TOK_SPECIAL_ID: 
-                                        ;
-                                        // get token with attributes (TOK_ID, TOK_SPECIAL_ID, TOK_DOUBLECONST, TOK_LITERAL, TOK_CONST)
-                                        t_token var = handle.elem[0]; 
+					{
+						// get token with attributes (TOK_ID, TOK_SPECIAL_ID, TOK_DOUBLECONST, TOK_LITERAL, TOK_CONST)
+						expr_t var = handle.elem[0]; 
 
-                                        //HACK HACK: Need to get previsou identigier string:
-                                        //Unget token:
-                                        ungetToken();
-                                        // next identifier string!
-                                        char *tok_string = getTokString();
-                                        //getNextToken
-                                        getToken();
-
-                                        if (var.type == TOK_ID || var.type == TOK_SPECIAL_ID)
-                                        {
-                                            char *var_name = tok_string;
-
-                                            // TODO:
-                                            // Line 272: Message for Roman: I love you! (just kidding xD but u r a great man!) just connect parser_class and parser_fun:                                            
-                                            char *parser_class = NULL;
-                                            char *parser_fun = NULL;
-                                         // ^^^^^^^^^^^^^^^^^^^^^^^^^^
-                                            data_t *var_data;
-
-                                            if(var.type == TOK_ID)
-                                            {
-                                                var_data = stable_search_variadic(staticSym,3, parser_class, parser_fun, var_name);
-                                                if(!var_data)
-                                                      var_data = stable_search_variadic(staticSym,2, parser_class,var_name);
-						    
-                                            } else if(var.type == TOK_SPECIAL_ID) {
-                                                var_data = stable_search_variadic(staticSym,1, var_name);
-					    }
-
-                                            if (var_data == NULL)
-                                                error_and_die(SEMANTIC_ERROR, "Expression: Undefined variable '%s'\n", var_name);
-
-					    if (var_data->data.arg_type == INSTRUCTION)
-                                                error_and_die(SEMANTIC_TYPE_ERROR, "Expected variable, got function'%s'\n", var_name);
-                                            
-                                            // TODO: Check if variable is uninitialized
-                                            //
-                                            // push on stack
-                                            create_and_add_instruction(insProgram, INST_PUSH, &var_data->data, 0, 0);
-                                        }
+						// generate push
+						create_and_add_instruction(insProgram, INST_PUSH,&var.symbol->data,0,0);
+					}
 					break;
                                 }
                             }
@@ -383,7 +350,7 @@ stack_t get_reduce_symbols(const stack_t *const stack, stack_t *const handle)
     {
         if (stack->elem[end].type != '<')
         {
-            stack_push(&string, validate_ins(stack->elem[end]));
+            stack_push(&string, stack->elem[end]);
         }
         else
         {
@@ -392,7 +359,7 @@ stack_t get_reduce_symbols(const stack_t *const stack, stack_t *const handle)
 
             for (; str_start < str_end; str_end--, str_start++)
             {
-                t_token tmp = string.elem[str_start];
+                expr_t tmp = string.elem[str_start];
                 string.elem[str_start] = string.elem[str_end];
                 string.elem[str_end] = tmp;
             }
@@ -418,7 +385,7 @@ void stack_reduce_rule(stack_t *const stack, int left_side)
 
     if (stack->elem[end].type == '<')
     {
-       t_token left = {.type = left_side}; 
+       expr_t left = {.type = left_side}; 
        stack->top = end-1;
        stack_push(stack, left); 
     }
@@ -430,7 +397,7 @@ int find_right_side(const stack_t *const handle)
         return -1;
 
     const int   *rule;
-    t_token     *top_terminal;
+    expr_t     *top_terminal;
     int          left_side_len;
     bool         is_rule;
 
@@ -473,7 +440,7 @@ const int *get_rule(int rule_idx)
     return &rule_table[rule_idx][0];
 }
 
-t_token get_top_terminal(stack_t *stack) 
+expr_t get_top_terminal(stack_t *stack) 
 { 
 
     long top = stack->top;
@@ -481,7 +448,7 @@ t_token get_top_terminal(stack_t *stack)
 
     for (; top != -1; top--)
     {
-        cur_token = validate_ins(stack->elem[top]);
+        cur_token = stack->elem[top];
 
         if ((int)cur_token.type >= TOK_EQ && cur_token.type <= BOTTOM)
             return cur_token;
@@ -497,5 +464,6 @@ int main(void)
 
     insProgram = init_inst_list();
     fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(false, false));
+    inst_list_print(insProgram);
 	return 0;
 }

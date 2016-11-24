@@ -4,6 +4,10 @@
 #define MAX_TERMINALS   14
 #define MAX_RULES       12
 
+#include "../ial.h"
+#include "../scanner.h"
+#include "utils/dynamic_stack.h"
+
 enum 
 {
     UNDEF  = -1,
@@ -68,6 +72,6 @@ int         find_right_side(const stack_t *const);
 stack_t     get_reduce_symbols(const stack_t const*, stack_t *const);
 const int*  get_rule(int);
 void        stack_reduce_rule(stack_t *const, int);
-t_token     get_top_terminal(stack_t *);
+expr_t get_top_terminal(stack_t *);
 
 #endif
