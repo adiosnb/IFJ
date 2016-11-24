@@ -14,10 +14,64 @@ extern const int rule_table[][MAX_RULES];
 extern const int rule_len[MAX_RULES];
 extern stab_t* staticSym;
 extern instruction_list_t* insProgram;
+extern char* parser_class;
+extern char* parser_fun;
 
 void parser_clean(void) { }
 
 bool is_it_assign = false;
+
+bool shouldGenerate = false;
+
+data_t* token2symbol()
+{
+	data_t* res = NULL;
+	data_t dt;
+	switch(getLastToken())
+	{
+		case TOK_ID:
+			res = stable_search_variadic(staticSym, 3, parser_class,parser_fun, getTokString());
+			if(!res)
+				res = stable_search_variadic(staticSym, 2, parser_class,getTokString());
+			if(!res)
+				error_and_die(SEMANTIC_ERROR, "Missing symbol '%s'", getTokString());
+			break;
+		case TOK_SPECIAL_ID:
+			res = stable_search_variadic(staticSym, 1,getTokString());
+			if(!res)
+				error_and_die(SEMANTIC_ERROR, "Missing symbol '%s'", getTokString());
+			break;
+		default:
+			switch(getLastToken())
+			{
+				case TOK_CONST:
+					dt.type = INTEGER;
+					dt.data.arg_type = INTEGER;
+					dt.data.data.i = getTokInt();
+					break;
+				case TOK_DOUBLECONST:
+					dt.type = DOUBLE;
+					dt.data.arg_type = DOUBLE;
+					dt.data.data.d = getTokDouble();
+					break;
+				case TOK_LITERAL:
+					dt.type = STRING;
+					dt.data.arg_type = STRING;
+					dt.data.data.s = str_init();
+					str_append_chars(&dt.data.data.s, getTokString());
+					break;
+				default:
+					return NULL;
+			}
+			static int counter = 0;
+			char buff[100];
+			sprintf(buff,"%u", counter++);
+			res = stable_add_variadic(staticSym, dt, 2, "ifj16.op_const",buff);
+			if(res == NULL)
+				error_and_die(INTERNAL_ERROR, "Failed to create constant");
+	}
+	return res;
+}
 
 static inline expr_t validate_ins(t_token s)
 {
@@ -53,6 +107,8 @@ static inline expr_t validate_ins(t_token s)
     // TODO: validate input symbol and print its string....how? scanner is not capable of doing that
         error_and_die(SYNTAX_ERROR, "Expression: invalid input symbol %i", exp.type);
 
+    if(shouldGenerate)
+	exp.symbol = token2symbol();
     return exp;
 }
 
@@ -127,7 +183,7 @@ static inline expr_t get_next_token(void)
     return token; 
 }
 
-int parse_expression(bool is_assign, bool is_condition)
+int parse_expression(bool should_generate, bool is_condition)
 {
     if (!scanner_openFile("input_test.txt"))
     {
@@ -135,7 +191,8 @@ int parse_expression(bool is_assign, bool is_condition)
         return 0;
     }
 
-    is_it_assign = is_assign;
+    shouldGenerate = should_generate;
+    is_it_assign = !is_condition;
     bool is_it_condition = is_condition;
 
     bool end_of_expr = false;
@@ -219,7 +276,7 @@ int parse_expression(bool is_assign, bool is_condition)
                                 stack_reduce_rule(&pda, *left_side); 
                                 // postfix actions
                                 //if (res != 11)
-                                //    printf("%s ", tokens[res]);
+                                    printf("%s ", tokens[res]);
 
                                 //TODO: DONT FORGET FIRST WALK!
                                 // types:
@@ -457,13 +514,24 @@ expr_t get_top_terminal(stack_t *stack)
 }
 
 stab_t* staticSym = NULL;
+char* parser_class = "test";
+char* parser_fun = "fun";
 
 instruction_list_t* insProgram = NULL;
 int main(void)
 {
+    staticSym = stable_init(1024);
+
+    data_t dt;
+    dt.type = INTEGER;
+    dt.data.arg_type = INTEGER;
+    dt.data.data.i = 666;
+    stable_add_var(staticSym, "test.a", dt);
+
+    stable_add_var(staticSym, "test.b", dt);
 
     insProgram = init_inst_list();
-    fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(false, false));
+    fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(true, false));
     inst_list_print(insProgram);
 	return 0;
 }
