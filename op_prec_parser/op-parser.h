@@ -4,6 +4,10 @@
 #define MAX_TERMINALS   14
 #define MAX_RULES       12
 
+#include "../ial.h"
+#include "../scanner.h"
+#include "utils/dynamic_stack.h"
+
 enum 
 {
     UNDEF  = -1,
@@ -64,10 +68,10 @@ const int rule_len[MAX_RULES] =
     4
 };
 
-int         find_right_side(const stack_t *const);
-stack_t     get_reduce_symbols(const stack_t const*, stack_t *const);
+int         find_right_side(const dstack_t *const);
+dstack_t     get_reduce_symbols(const dstack_t const*, dstack_t *const);
 const int*  get_rule(int);
-void        stack_reduce_rule(stack_t *const, int);
-t_token     get_top_terminal(stack_t *);
+void        dstack_reduce_rule(dstack_t *const, int);
+expr_t get_top_terminal(dstack_t *);
 
 #endif

@@ -4,38 +4,38 @@
 
 int main(void)
 {
-   stack_t stack = stack_ctor(); 
+   dstack_t stack = dstack_ctor(); 
 
-   assert(stack_empty(&stack));
+   assert(dstack_empty(&stack));
 
-   stack_push(&stack, 10);
-   stack_push(&stack, 20);
-   stack_push(&stack, 30);
+   dstack_push(&stack, 10);
+   dstack_push(&stack, 20);
+   dstack_push(&stack, 30);
    
-   assert(stack_top(&stack) == 30);    
+   assert(dstack_top(&stack) == 30);    
 
-   stack_pop(&stack);
+   dstack_pop(&stack);
 
-   assert(stack_top(&stack) == 20);    
+   assert(dstack_top(&stack) == 20);    
 
-   stack_pop(&stack);
+   dstack_pop(&stack);
 
-   assert(stack_top(&stack) == 10);    
+   assert(dstack_top(&stack) == 10);    
 
-   stack_pop(&stack);
+   dstack_pop(&stack);
 
-   assert(stack_empty(&stack));
+   assert(dstack_empty(&stack));
 
    // now lets try dynamic allocation
    for (size_t i = 0; i != 4096*100; i++)
-      stack_push(&stack, i+1); 
+      dstack_push(&stack, i+1); 
 
-   assert(stack_top(&stack) == 4096*100);
+   assert(dstack_top(&stack) == 4096*100);
 
    for (size_t i = 0; i != 4096*100; i++)
-      stack_pop(&stack); 
+      dstack_pop(&stack); 
 
-   stack = stack_dtor(&stack);
+   stack = dstack_dtor(&stack);
 
    assert(stack.elem == NULL && stack.top == -1 && stack.size == 0);
 

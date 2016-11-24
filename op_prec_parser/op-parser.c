@@ -14,49 +14,112 @@ extern const int rule_table[][MAX_RULES];
 extern const int rule_len[MAX_RULES];
 extern stab_t* staticSym;
 extern instruction_list_t* insProgram;
+extern char* parser_class;
+extern char* parser_fun;
 
 void parser_clean(void) { }
 
 bool is_it_assign = false;
 
-static inline t_token validate_ins(t_token s)
+bool shouldGenerate = false;
+
+int global_type = INTEGER;
+
+data_t* token2symbol()
 {
+	data_t* res = NULL;
+	data_t dt;
+	switch(getLastToken())
+	{
+		case TOK_ID:
+			res = stable_search_variadic(staticSym, 3, parser_class,parser_fun, getTokString());
+			if(!res)
+				res = stable_search_variadic(staticSym, 2, parser_class,getTokString());
+			if(!res)
+				error_and_die(SEMANTIC_ERROR, "Missing symbol '%s'", getTokString());
+			break;
+		case TOK_SPECIAL_ID:
+			res = stable_search_variadic(staticSym, 1,getTokString());
+			if(!res)
+				error_and_die(SEMANTIC_ERROR, "Missing symbol '%s'", getTokString());
+			break;
+		default:
+			switch(getLastToken())
+			{
+				case TOK_CONST:
+					dt.type = INTEGER;
+					dt.data.arg_type = INTEGER;
+					dt.data.data.i = getTokInt();
+					break;
+				case TOK_DOUBLECONST:
+					dt.type = DOUBLE;
+					dt.data.arg_type = DOUBLE;
+					dt.data.data.d = getTokDouble();
+					break;
+				case TOK_LITERAL:
+					dt.type = STRING;
+					dt.data.arg_type = STRING;
+					dt.data.data.s = str_init();
+					str_append_chars(&dt.data.data.s, getTokString());
+					break;
+				default:
+					return NULL;
+			}
+			static int counter = 0;
+			char buff[100];
+			sprintf(buff,"%u", counter++);
+			res = stable_add_variadic(staticSym, dt, 2, "ifj16.op_const",buff);
+			if(res == NULL)
+				error_and_die(INTERNAL_ERROR, "Failed to create constant");
+	}
+	return res;
+}
+
+static inline expr_t validate_ins(t_token s)
+{
+    expr_t exp;
+    exp.type = s.type;
     // just for now to see where is end of input tokens string
    
-    if (is_it_assign && s.type == TOK_DELIM)
+    if (is_it_assign && exp.type == TOK_DELIM)
     {
-        s.data.op = '$';
-        s.type = BOTTOM;
+        exp.type = BOTTOM;
         ungetToken();
-        return s;
+        return exp;
     }
 
-    if (s.type == TOK_EOF)
+    int op = 0;
+    if (exp.type == TOK_EOF)
     {
-        s.data.op = '$';
-        s.type = BOTTOM;
+        op = '$';
+        exp.type = BOTTOM;
     }
 
-    switch (s.type)
+    switch (exp.type)
     {
         case TOK_SPECIAL_ID:
         case TOK_LITERAL:
         case TOK_CONST:
-        case TOK_DOUBLECONST: if (s.data.op != '$') s.type = TOK_ID;
+        case TOK_DOUBLECONST: 
+		if (op != '$') 
+			exp.type = TOK_ID;
     }
 
-    if (!(((int)s.type >= TOK_EQ && s.type <= BOTTOM) || s.type == C))
+    if (!(((int)exp.type >= TOK_EQ && exp.type <= BOTTOM) || exp.type == C))
     // TODO: validate input symbol and print its string....how? scanner is not capable of doing that
-        error_and_die(SYNTAX_ERROR, "Expression: invalid input symbol %i", s.type);
-    return s;
+        error_and_die(SYNTAX_ERROR, "Expression: invalid input symbol %i", exp.type);
+
+    if(shouldGenerate)
+	exp.symbol = token2symbol();
+    return exp;
 }
 
 
 // top is top terminal of pushdown automaton and ins is input symbol
-static void generate_syntax_error(t_token topt, t_token inst)
+static void generate_syntax_error(expr_t topt, expr_t inst)
 {
-    topt = validate_ins(topt);
-    inst = validate_ins(inst);
+    //topt = validate_ins(topt);
+    //inst = validate_ins(inst);
     
     int top = topt.type;
     int ins = inst.type; 
@@ -76,10 +139,10 @@ static void generate_syntax_error(t_token topt, t_token inst)
 #define IS_OPERATOR(op)    (op == TOK_NOTEQ || op == TOK_LESS || op == TOK_GREATER || op == TOK_LE || op == TOK_GE || op == TOK_PLUS || op == TOK_MINUS || op == TOK_MUL || op == TOK_DIV)    
 
 
-static void generate_reduction_error(t_token topt, t_token inst)
+static void generate_reduction_error(expr_t topt, expr_t inst)
 {
-    topt = validate_ins(topt);
-    inst = validate_ins(inst);
+    //topt = validate_ins(topt);
+    //inst = validate_ins(inst);
     
     int top = topt.type;
     int ins = inst.type; 
@@ -101,7 +164,7 @@ const char *tokens[] =
     "==", "!=", "<", ">", "<=", ">=", "+", "-", "*", "/", "i", "(", ")", "$", [100] = "E", [60] = "<"
 };
 
-void print_stack(stack_t *stack)
+void print_dstack(dstack_t *stack)
 {
     for (int i = 0; i <= stack->top; i++)
         if (stack->elem[i].type != BOTTOM)
@@ -115,14 +178,14 @@ void print_input(int a, int b)
 }
 // TODO: symbol table checking data types
 
-static inline t_token get_next_token(void)
+static inline expr_t get_next_token(void)
 {
     getToken();
-    t_token token = validate_ins(g_lastToken);
+    expr_t token = validate_ins(g_lastToken);
     return token; 
 }
 
-int parse_expression(bool is_assign, bool is_condition)
+int parse_expression(bool should_generate, bool is_condition)
 {
     if (!scanner_openFile("input_test.txt"))
     {
@@ -130,23 +193,24 @@ int parse_expression(bool is_assign, bool is_condition)
         return 0;
     }
 
-    is_it_assign = is_assign;
+    shouldGenerate = should_generate;
+    is_it_assign = !is_condition;
     bool is_it_condition = is_condition;
 
     bool end_of_expr = false;
     int expr_data_type = ERROR;
 
-    stack_t     handle = stack_ctor(); // dynamic allocation
-    stack_t     pda = stack_ctor();    // dynamic allocation
+    dstack_t     handle = dstack_ctor(); // dynamic allocation
+    dstack_t     pda = dstack_ctor();    // dynamic allocation
 
-    t_token     top_terminal;
-    t_token     top_terminal_tmp;
-    t_token     ins = get_next_token();
+    expr_t     top_terminal;
+    expr_t     top_terminal_tmp;
+    expr_t     ins = get_next_token();
 
     // HACK HACK: BOTTOM equals to TOK_SPECIAL_ID, adding dollar to find out BOTTOM
-    t_token     bottom = {.type = BOTTOM, .data.op = '$'};
+    expr_t     bottom = {.type = BOTTOM, NULL};
 
-    stack_push(&pda, bottom);
+    dstack_push(&pda, bottom);
     do
     {
         top_terminal = get_top_terminal(&pda);
@@ -154,7 +218,7 @@ int parse_expression(bool is_assign, bool is_condition)
         if (is_it_condition && !end_of_expr && ins.type == TOK_RIGHT_PAR)
         {
             ins.type = BOTTOM;
-            ins.data.op = '$';
+            //ins.data.op = '$';
         }
 
 
@@ -170,17 +234,17 @@ int parse_expression(bool is_assign, bool is_condition)
                         if (is_it_condition) 
                             end_of_expr = false;
                         
-                        handle = stack_clear(&handle);
+                        handle = dstack_clear(&handle);
                         handle = get_reduce_symbols(&pda, &handle);
 
-                        if (!stack_empty(&handle))
+                        if (!dstack_empty(&handle))
                         {
                                if (find_right_side(&handle) == -1)
-                                   if (stack_top(&pda)->type == TOK_LEFT_PAR && ins.type == TOK_RIGHT_PAR)
+                                   if (dstack_top(&pda)->type == TOK_LEFT_PAR && ins.type == TOK_RIGHT_PAR)
                                        error_and_die(SYNTAX_ERROR, "Expression: no expression between parentheses"); 
                         }
                         // push input symbol 
-                        stack_push(&pda, g_lastToken);
+                        dstack_push(&pda, validate_ins(g_lastToken));
 
 
                         // read next token
@@ -189,20 +253,20 @@ int parse_expression(bool is_assign, bool is_condition)
                         break;
                 case '<':
                         // replacement of top terminal with top terminal and '<' (beginning of handle)
-                        stack_add_handle_symbol(&pda, top_terminal.type);
+                        dstack_add_handle_symbol(&pda, top_terminal.type);
 
                         // push input symbol
-                        stack_push(&pda, g_lastToken);
+                        dstack_push(&pda, validate_ins(g_lastToken));
 
                         // read next token
                         ins = get_next_token();
 
                         break;
                 case '>':
-                        handle = stack_clear(&handle);
+                        handle = dstack_clear(&handle);
                         handle = get_reduce_symbols(&pda, &handle);
 
-                        if (!stack_empty(&handle))
+                        if (!dstack_empty(&handle))
                         {
                             int res = find_right_side(&handle);
 
@@ -211,10 +275,10 @@ int parse_expression(bool is_assign, bool is_condition)
                                 const int *left_side = get_rule(res);
 
                                 // switch topmost pda rule string with left side
-                                stack_reduce_rule(&pda, *left_side); 
+                                dstack_reduce_rule(&pda, *left_side); 
                                 // postfix actions
                                 //if (res != 11)
-                                //    printf("%s ", tokens[res]);
+                                    printf("%s ", tokens[res]);
 
                                 //TODO: DONT FORGET FIRST WALK!
                                 // types:
@@ -227,6 +291,8 @@ int parse_expression(bool is_assign, bool is_condition)
 
 
                                 // other combinations then these for semantic typing are ERR_SEMANTIC_TYPE
+                                //
+                                printf("Typ: %d\n",global_type);
                                 switch (res)
                                 {
                                     // logical operators if one operand is int and second double, int is converted to double
@@ -244,91 +310,62 @@ int parse_expression(bool is_assign, bool is_condition)
                                     case TOK_EQ:
                                         // do action
                                         expr_data_type = BOOL; 
-
+					create_and_add_instruction(insProgram, INST_EXPR_EQUAL,0,0,0);
 
                                         break;
                                     case TOK_NOTEQ:
                                         expr_data_type = BOOL; 
+					create_and_add_instruction(insProgram, INST_EXPR_NOT_EQ,0,0,0);
                                         break;
                                     case TOK_LESS:
                                         expr_data_type = BOOL; 
+					create_and_add_instruction(insProgram, INST_EXPR_LOWER,0,0,0);
                                         break;
                                     case TOK_GREATER:
                                         expr_data_type = BOOL; 
+					create_and_add_instruction(insProgram, INST_EXPR_HIGHER,0,0,0);
                                         break;
                                     case TOK_LE:
                                         expr_data_type = BOOL; 
+					create_and_add_instruction(insProgram, INST_EXPR_LOW_EQ,0,0,0);
                                         break;
                                     case TOK_GE:
                                         expr_data_type = BOOL; 
+					create_and_add_instruction(insProgram, INST_EXPR_HIG_EQ,0,0,0);
                                         break;
                                     case TOK_PLUS:
+					
+					//TODO choose correct operation
+					create_and_add_instruction(insProgram, INST_EXPR_ADD,0,0,0);
                                         // if one of the operands is string, concatenate (second operand is converted to string too, using ifj16.print)
                                         break;
                                     case TOK_MINUS:
+					create_and_add_instruction(insProgram, INST_EXPR_SUB,0,0,0);
                                         break;
                                     case TOK_MUL:
+					create_and_add_instruction(insProgram, INST_EXPR_MUL,0,0,0);
                                         break;
                                     case TOK_DIV:
                                         // accept only integer or double operands
                                         // int op int = integer division
                                         // otherwise default division and result is double
+					create_and_add_instruction(insProgram, INST_EXPR_DIV,0,0,0);
                                         break;
                                     case TOK_ID:
-                                        ;
-                                        // get token with attributes (TOK_ID, TOK_SPECIAL_ID, TOK_DOUBLECONST, TOK_LITERAL, TOK_CONST)
-                                        t_token var = handle.elem[0]; 
+					{
+						// get token with attributes (TOK_ID, TOK_SPECIAL_ID, TOK_DOUBLECONST, TOK_LITERAL, TOK_CONST)
+						expr_t var = handle.elem[0]; 
 
-                                        //HACK HACK: Need to get previsou identigier string:
-                                        //Unget token:
-                                        ungetToken();
-                                        // next identifier string!
-                                        char *tok_string = getTokString();
-                                        //getNextToken
-                                        getToken();
-
-                                        if (var.type == TOK_ID)
-                                        {
-                                            char *var_name = tok_string;
-
-                                            // TODO:
-                                            // Line 272: Message for Roman: I love you! (just kidding xD but u r a great man!) just connect parser_class and parser_fun:                                            
-                                            char *parser_class = NULL;
-                                            char *parser_fun = NULL;
-                                         // ^^^^^^^^^^^^^^^^^^^^^^^^^^
-                                            data_t *var_data;
-
-                                            var_data = stable_search_variadic(staticSym,3, parser_class, parser_fun, var_name);
-
-                                            if (var_data == NULL)
-                                                error_and_die(SEMANTIC_ERROR, "Expression: Undefined variable '%s'\n", var_name);
-                                            
-                                            // TODO: Check if variable is uninitialized
-                                            //
-                                            // push on stack
-                                            create_and_add_instruction(insProgram, INST_PUSH, var_data, 0, 0);
-                                        }
-                                            
-                                        if (var.type == TOK_SPECIAL_ID)
-                                        {
-                                            char *special_var_name = tok_string;
-                                            data_t *var_data;
-                                              
-                                            var_data = stable_search_variadic(insProgram, 1, special_var_name);
-
-                                            if (var_data == NULL)
-                                                error_and_die(SEMANTIC_ERROR, "Expression: Undefined special variable '%s'\n", special_var_name);
-                                           // 
-                                            // TODO: Check if variable is uninitialized
-
-                                            // push on stack
-                                            create_and_add_instruction(insProgram, INST_PUSH, var_data, 0, 0);
-                                        }
-                                        break;
+						// generate push
+						create_and_add_instruction(insProgram, INST_PUSH,&var.symbol->data,0,0);
+						if(global_type < var.symbol->type)
+							global_type = var.symbol->type;
+					}
+					break;
                                 }
                             }
                             else
-                               generate_reduction_error(*stack_top(&pda), ins);
+                               generate_reduction_error(*dstack_top(&pda), ins);
                         }
                         else    
                             error_and_die(SYNTAX_ERROR, "Expression: Handle does not exist!\n");
@@ -339,7 +376,7 @@ int parse_expression(bool is_assign, bool is_condition)
                             error_and_die(SYNTAX_ERROR, "Expression: Missing right parenthesis!");
                         if (top_terminal.type == BOTTOM && ins.type == TOK_RIGHT_PAR) 
                             error_and_die(SYNTAX_ERROR, "Expression: Unbalanced '('");
-                        generate_syntax_error(*stack_top(&pda), ins); 
+                        generate_syntax_error(*dstack_top(&pda), ins); 
                 case 'E':
                         error_and_die(SYNTAX_ERROR, "Expression: Logical operators are not associative!");
             }
@@ -348,8 +385,8 @@ int parse_expression(bool is_assign, bool is_condition)
     while (ins.type != BOTTOM || (int)top_terminal_tmp.type != BOTTOM);
 
     putchar('\n');
-    handle = stack_dtor(&handle);
-    pda = stack_dtor(&pda);
+    handle = dstack_dtor(&handle);
+    pda = dstack_dtor(&pda);
 
     scanner_closeFile();
 
@@ -360,25 +397,25 @@ int parse_expression(bool is_assign, bool is_condition)
     return expr_data_type;
 }
 
-static inline bool is_stack_bottom(const stack_t *const stack)
+static inline bool is_dstack_bottom(const dstack_t *const stack)
 {
     if (stack != NULL)
         return stack->top == 0 && stack->elem[0].type == BOTTOM;
     return true;
 }
 
-stack_t get_reduce_symbols(const stack_t *const stack, stack_t *const handle)
+dstack_t get_reduce_symbols(const dstack_t *const stack, dstack_t *const handle)
 {
-    stack_t string = *handle; 
+    dstack_t string = *handle; 
 
     if (stack == NULL )
         return string;
 
-    for (long end = stack->top; !is_stack_bottom(stack); end--)
+    for (long end = stack->top; !is_dstack_bottom(stack); end--)
     {
         if (stack->elem[end].type != '<')
         {
-            stack_push(&string, validate_ins(stack->elem[end]));
+            dstack_push(&string, stack->elem[end]);
         }
         else
         {
@@ -387,7 +424,7 @@ stack_t get_reduce_symbols(const stack_t *const stack, stack_t *const handle)
 
             for (; str_start < str_end; str_end--, str_start++)
             {
-                t_token tmp = string.elem[str_start];
+                expr_t tmp = string.elem[str_start];
                 string.elem[str_start] = string.elem[str_end];
                 string.elem[str_end] = tmp;
             }
@@ -398,14 +435,14 @@ stack_t get_reduce_symbols(const stack_t *const stack, stack_t *const handle)
     return string;
 }
 
-void stack_reduce_rule(stack_t *const stack, int left_side)
+void dstack_reduce_rule(dstack_t *const stack, int left_side)
 {
     if (stack == NULL)
         return;
 
     long end; 
 
-    for (end = stack->top; !is_stack_bottom(stack); end--)
+    for (end = stack->top; !is_dstack_bottom(stack); end--)
     {
        if (stack->elem[end].type == '<')
           break; 
@@ -413,19 +450,19 @@ void stack_reduce_rule(stack_t *const stack, int left_side)
 
     if (stack->elem[end].type == '<')
     {
-       t_token left = {.type = left_side}; 
+       expr_t left = {.type = left_side}; 
        stack->top = end-1;
-       stack_push(stack, left); 
+       dstack_push(stack, left); 
     }
 }
 
-int find_right_side(const stack_t *const handle)
+int find_right_side(const dstack_t *const handle)
 {
     if (handle == NULL)
         return -1;
 
     const int   *rule;
-    t_token     *top_terminal;
+    expr_t     *top_terminal;
     int          left_side_len;
     bool         is_rule;
 
@@ -434,7 +471,7 @@ int find_right_side(const stack_t *const handle)
         // rule len without left side
         left_side_len = rule_len[i]-1;
 
-        if (stack_elem_count(handle) != left_side_len) 
+        if (dstack_elem_count(handle) != left_side_len) 
             continue;
 
         // skip first symbol, it is left hand side!
@@ -468,7 +505,7 @@ const int *get_rule(int rule_idx)
     return &rule_table[rule_idx][0];
 }
 
-t_token get_top_terminal(stack_t *stack) 
+expr_t get_top_terminal(dstack_t *stack) 
 { 
 
     long top = stack->top;
@@ -476,7 +513,7 @@ t_token get_top_terminal(stack_t *stack)
 
     for (; top != -1; top--)
     {
-        cur_token = validate_ins(stack->elem[top]);
+        cur_token = stack->elem[top];
 
         if ((int)cur_token.type >= TOK_EQ && cur_token.type <= BOTTOM)
             return cur_token;
@@ -485,9 +522,34 @@ t_token get_top_terminal(stack_t *stack)
 }
 
 stab_t* staticSym = NULL;
+char* parser_class = "test";
+char* parser_fun = "fun";
 
+instruction_list_t* insProgram = NULL;
 int main(void)
 {
-    fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(false, false));
+    staticSym = stable_init(1024);
+
+    data_t dt;
+    dt.type = INTEGER;
+    dt.data.arg_type = INTEGER;
+    dt.data.data.i = 666;
+    stable_add_var(staticSym, "test.a", dt);
+    stable_add_var(staticSym, "test.b", dt);
+
+    dt.data.arg_type = ON_TOP;
+    data_t* top = stable_add_var(staticSym, "ifj16.top", dt);
+
+    insProgram = init_inst_list();
+
+    stable_print(staticSym);
+    fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(true, false));
+
+create_and_add_instruction(insProgram, INST_WRITE, &top->data,0,0);
+create_and_add_instruction(insProgram, INST_HALT, 0,0,0);
+// -------------------------------
+    inst_list_print(insProgram);
+
+	interpret(insProgram);
 	return 0;
 }
