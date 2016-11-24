@@ -210,6 +210,8 @@ int	process_literal()
 		switch(state)
 		{
 			case NORMAL:
+				if(c <= 31)
+					error_and_die(LEXICAL_ERROR, "Invalid character in text literal");
 				if(c == '\"')
 				{
 					// when the end of terminal is reached
@@ -260,7 +262,9 @@ int	process_literal()
 					// convert ASCII char to a number of <0,9>
 					int digit = c-'0';
 					if(digit > 7)
-						return TOK_ERROR;
+					{
+						error_and_die(LEXICAL_ERROR, "Octal number out of range");
+					}
 					// and multiply it with N power of 8
 					// => conversing octal-to-decal with one buffer sum 
 					sum += octBase*digit;
@@ -268,6 +272,10 @@ int	process_literal()
 					// if we have read 3 numbers
 					if(octBase == 0)
 					{
+						if(sum == 0)
+						{
+							error_and_die(LEXICAL_ERROR, "Octal number out of range");
+						}
 						//concatenate a new char
 						ADD_CHAR(literal,sum);
 						octBase= 64;
