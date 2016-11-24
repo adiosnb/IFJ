@@ -527,11 +527,18 @@ int main(void)
     dt.data.arg_type = INTEGER;
     dt.data.data.i = 666;
     stable_add_var(staticSym, "test.a", dt);
-
     stable_add_var(staticSym, "test.b", dt);
 
     insProgram = init_inst_list();
+
+    stable_print(staticSym);
     fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(true, false));
+
+create_and_add_instruction(insProgram, INST_WRITE, 0,0,0);
+create_and_add_instruction(insProgram, INST_HALT, 0,0,0);
+// -------------------------------
     inst_list_print(insProgram);
+
+	interpret(insProgram);
 	return 0;
 }
