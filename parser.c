@@ -901,7 +901,7 @@ int argument_definition(data_t** fun)
 			create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);	
 
 		if(var->type != (*fun)->type)
-			error_and_die(SYNTAX_ERROR,"SEM - argument type dismatch.");
+			error_and_die(SEMANTIC_TYPE_ERROR,"SEM - argument type dismatch.");
 		*fun = (*fun)->next_param;
 	} else {
 		switch(getToken())
