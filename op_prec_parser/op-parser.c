@@ -23,6 +23,8 @@ bool is_it_assign = false;
 
 bool shouldGenerate = false;
 
+int global_type = INTEGER;
+
 data_t* token2symbol()
 {
 	data_t* res = NULL;
@@ -289,6 +291,8 @@ int parse_expression(bool should_generate, bool is_condition)
 
 
                                 // other combinations then these for semantic typing are ERR_SEMANTIC_TYPE
+                                //
+                                printf("Typ: %d\n",global_type);
                                 switch (res)
                                 {
                                     // logical operators if one operand is int and second double, int is converted to double
@@ -354,6 +358,8 @@ int parse_expression(bool should_generate, bool is_condition)
 
 						// generate push
 						create_and_add_instruction(insProgram, INST_PUSH,&var.symbol->data,0,0);
+						if(global_type < var.symbol->type)
+							global_type = var.symbol->type;
 					}
 					break;
                                 }
