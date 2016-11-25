@@ -24,7 +24,7 @@ int main(){
 
 
     printf("\n################### TEST_INIT ####################\n");
-    stab_t *sym_table = stable_init(1024);
+    stab_t *sym_table = stable_init(2);
     if(sym_table == NULL)
         printf("\nstable_init FAILED (calloc)!\n");
      else
@@ -93,6 +93,9 @@ int main(){
 
     printf("\n################### TEST_REMOVE_VAR ##################\n");
     printf("\nRemoving: %s\n", string1);
+    stable_remove_var(sym_table, "2");
+    stable_remove_var(sym_table, "!");
+
     if(stable_remove_var(sym_table, string1) == false)
         printf("\nstable_remove_var FAILED !\n");
     else {
