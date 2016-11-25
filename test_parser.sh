@@ -4,19 +4,12 @@
 pass="\033[1;32mPASS\033[1;39m"
 error="\033[1;31mFAIL\033[1;39m"
 
-#backup makefile
-if [ "`ls Makefile`" != "" ]
-then
-    mv Makefile  tmp_make_file
-fi
-
 #variables for statistics
 error_num=0
 pass_num=0
 
 #init
-cmake CMakeLists.txt
-make parser
+make
 
 #start with error tests
 cd tests/error_test
@@ -30,7 +23,7 @@ do
     echo
     echo "Expected error:" `cat $i | grep //`
     expected_ret=`cat $i | grep // | cut -f2 -d'#'`
-    ./../../parser $i > /dev/null
+    ./../../parser-test $i > /dev/null
     ret=$?
     if [ $ret -eq 0 ]
         then
@@ -59,7 +52,7 @@ echo "Tests for good code"
 for i in `ls`
 do
     echo
-    ./../../parser $i > /dev/null
+    ./../../parser-test $i > /dev/null
     ret=$?
     if [ $ret -eq 0 ]
         then
@@ -80,14 +73,6 @@ echo
 
 #destroy
 make clean
-echo "rm -r CMakeFiles"
-rm -r CMakeFiles/
-rm -v  cmake_install.cmake CMakeCache.txt Makefile
-
-if [ "`ls tmp_make_file`" != "" ]
-then
-    mv tmp_make_file Makefile
-fi
 echo
 echo
 echo "Num of errors : $error_num"

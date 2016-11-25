@@ -396,7 +396,7 @@ void store() {
                 dest->data.d = src->data.i;
                 break;
             default:
-                error_and_die(RUNTIME_ERROR, "Co to kurwa je ? String do double");
+                error_and_die(RUNTIME_ERROR, "Co to kurwa je ? String do double ? Jebe ti?");
                 break;
         }
         return;
@@ -593,6 +593,11 @@ void expr_add(){
     op2 = stack_pop(glob_stack);
     op1 = stack_pop(glob_stack);
 
+    if (op1.arg_type == STRING || op2.arg_type == STRING){
+        error_and_die(SEMANTIC_ERROR,"INTERPRET semantic error");
+    }
+
+
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER){
         dest.arg_type = INTEGER;
         dest.data.i = op1.data.i + op2.data.i;
@@ -621,6 +626,10 @@ void expr_sub() {
     op2 = stack_pop(glob_stack);
     op1 = stack_pop(glob_stack);
 
+    if (op1.arg_type == STRING || op2.arg_type == STRING){
+        error_and_die(SEMANTIC_ERROR,"INTERPRET semantic error");
+    }
+
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
         dest.data.i = op1.data.i - op2.data.i;
@@ -648,6 +657,10 @@ void expr_mul() {
     op2 = stack_pop(glob_stack);
     op1 = stack_pop(glob_stack);
 
+    if (op1.arg_type == STRING || op2.arg_type == STRING){
+        error_and_die(SEMANTIC_ERROR,"INTERPRET semantic error");
+    }
+
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
         dest.data.i = op1.data.i * op2.data.i;
@@ -674,6 +687,11 @@ void expr_div() {
 
     op2 = stack_pop(glob_stack);
     op1 = stack_pop(glob_stack);
+
+
+    if (op1.arg_type == STRING || op2.arg_type == STRING){
+        error_and_die(SEMANTIC_ERROR,"INTERPRET semantic error");
+    }
 
     if (op2.arg_type == INTEGER) {
         if (!op2.data.i) { //division by zero error
@@ -712,6 +730,10 @@ void compare(){
     dest.arg_type = INTEGER;
     op2 = stack_pop(glob_stack);
     op1 = stack_pop(glob_stack);
+
+    if (op1.arg_type == STRING || op2.arg_type == STRING){
+        error_and_die(SEMANTIC_ERROR,"INTERPRET semantic error");
+    }
 
     switch (glob_ins_list->active->instruction.type){
         case INST_EXPR_LOWER:
