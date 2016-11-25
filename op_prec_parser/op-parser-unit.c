@@ -24,8 +24,8 @@ int main(void)
     stable_print(staticSym);
     fprintf(stderr, "\n==========\nResult type: %i\n", parse_expression(true, true));
 
-create_and_add_instruction(insProgram, INST_WRITE, &top->data,0,0);
-create_and_add_instruction(insProgram, INST_HALT, 0,0,0);
+    create_and_add_instruction(insProgram, INST_WRITE, &top->data,0,0);
+    create_and_add_instruction(insProgram, INST_HALT, 0,0,0);
 // -------------------------------
     inst_list_print(insProgram);
 

@@ -294,6 +294,10 @@ int parse_expression(bool should_generate, bool is_condition)
                                 // other combinations then these for semantic typing are ERR_SEMANTIC_TYPE
                                 //
                                 printf("Typ: %d\n",global_type);
+
+				// if code generation is switched off, then continue
+                                if(!shouldGenerate)
+					break;
                                 switch (res)
                                 {
                                     // logical operators if one operand is int and second double, int is converted to double
@@ -392,9 +396,13 @@ int parse_expression(bool should_generate, bool is_condition)
     scanner_closeFile();
 
     // if bool is evaluated and top-down parser does not process condition, set error as resulting type
-    if (expr_data_type == BOOL && !is_condition)
-        expr_data_type = ERROR;
-
+    if( shouldGenerate)
+    {
+   	if (expr_data_type == BOOL && !is_condition)
+		error_and_die(SEMANTIC_TYPE_ERROR, "Expected a assign expression");
+    	if (is_condition && expr_data_type != BOOL)
+		error_and_die(SEMANTIC_TYPE_ERROR, "Expected a relation expression");
+    }
     return expr_data_type;
 }
 
