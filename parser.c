@@ -6,6 +6,8 @@
 #include "ial.h"
 #include "error.h"
 
+#include "op_prec_parser/op-parser.h"
+
 
 stab_t	*staticSym = NULL;
 instruction_list_t* insProgram	= NULL;
@@ -46,7 +48,7 @@ int	isTokenTypeSpecifier()
 // Create and return 
 argument_var_t* getStackTop()
 {
-	argument_var_t* top = NULL;
+	static argument_var_t* top = NULL;
 	if(top)
 		return top;
 	data_t stackTop;
@@ -58,6 +60,18 @@ argument_var_t* getStackTop()
 		top = &dttop->data;
 	return top;
 }
+
+// Generates a move operation.
+// src = if src is NULL, the top of stack is taken into account and POP is generated
+void generateStore(data_t* dest, data_t* src)
+{
+	argument_var_t* src_sym = (src != NULL) ? (&src->data) : (getStackTop());
+
+	create_and_add_instruction(insProgram, INST_STORE, &dest->data, src_sym, 0);
+	if(src_sym->arg_type == ON_TOP)
+		create_and_add_instruction(insProgram, INST_POP,0,0,0);
+}
+
 void generateIntro()
 {
 	data_t* run = stable_search_variadic(staticSym, 1, "Main.run");
@@ -391,7 +405,8 @@ int more_next(data_t* var)
 {
 
 	getToken();
-	if(isIdentifier() && getToken() == TOK_LEFT_PAR)
+	int isIdent = isIdentifier();
+	if(getToken() == TOK_LEFT_PAR && isIdent)
 	{
 		ungetToken();
 		int isPrint = !strcmp(getTokString(),"ifj16.print");
@@ -433,7 +448,6 @@ int more_next(data_t* var)
 				error_and_die(SYNTAX_ERROR,"Expected )");
 			if(isSecondPass)
 			{
-				// generate function call
 				generateFunctionCall(func,var);
 			}
 		}
@@ -441,12 +455,12 @@ int more_next(data_t* var)
 	} else {
 		ungetToken();
 		ungetToken();
-		if(expression() == SYN_ERR)
-			return SYN_ERR;
+		int type = parse_expression(isSecondPass, false);
+
+		GEN("Verify if result of expr can be assigned. If do, generate assign");
 		//TODO var->type compare 
 		if(isSecondPass)
-			create_and_add_instruction(insProgram, INST_STORE, &var->data, 0,0);
-		GEN("Verify if result of expr can be assigned. If do, generate assign");
+			generateStore(var, NULL);
 	}	
 	return SYN_OK;
 }

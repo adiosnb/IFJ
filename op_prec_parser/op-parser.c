@@ -18,7 +18,6 @@ extern instruction_list_t* insProgram;
 extern char* parser_class;
 extern char* parser_fun;
 
-void parser_clean(void) { }
 
 bool is_it_assign = false;
 
@@ -188,12 +187,7 @@ static inline expr_t get_next_token(void)
 
 int parse_expression(bool should_generate, bool is_condition)
 {
-    if (!scanner_openFile("input_test.txt"))
-    {
-        fprintf(stderr, "Cannot open file!\n");
-        return 0;
-    }
-
+    
     shouldGenerate = should_generate;
     is_it_assign = !is_condition;
     bool is_it_condition = is_condition;
@@ -393,7 +387,6 @@ int parse_expression(bool should_generate, bool is_condition)
     handle = dstack_dtor(&handle);
     pda = dstack_dtor(&pda);
 
-    scanner_closeFile();
 
     // if bool is evaluated and top-down parser does not process condition, set error as resulting type
     if( shouldGenerate)

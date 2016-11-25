@@ -128,7 +128,7 @@ bool dstack_add_handle_symbol(dstack_t *stack, unsigned symbol)
         if (stack->elem[end].type == symbol)
         {
            // we can hack maybe and add just '<' behind the symbol 
-           t_token left_sharp = {.type = '<'};
+           expr_t left_sharp = {.type = '<'};
            // insert one position behind the symbol in stack left sharp
            dstack_replace(stack, end+1, &left_sharp, 1);
            return true;

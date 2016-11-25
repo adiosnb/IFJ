@@ -7,6 +7,12 @@ char* parser_fun = "fun";
 instruction_list_t* insProgram = NULL;
 int main(void)
 {
+    if (!scanner_openFile("input_test.txt"))
+    {
+        fprintf(stderr, "Cannot open file!\n");
+        return 0;
+    }
+
     staticSym = stable_init(1024);
 
     data_t dt;
@@ -29,6 +35,10 @@ int main(void)
 // -------------------------------
     inst_list_print(insProgram);
 
-	interpret(insProgram,staticSym);
-	return 0;
+    scanner_closeFile();
+    interpret(insProgram,staticSym);
+    return 0;
 }
+
+void parser_clean()
+{} 
