@@ -10,6 +10,7 @@ BUILD=build
 INS=instruction_list
 ITR=interpret
 STC=stack
+UNIT=op-parser-unit
 
 DIR=op_prec_praser
 
@@ -27,7 +28,8 @@ all:
 	gcc -std=c11 -Wall -g -Wextra -pedantic -o ${BUILD}/${INS}.o ../${INS}.c -c
 	gcc -std=c11 -Wall -g -Wextra -pedantic -o ${BUILD}/${ITR}.o ../${ITR}.c -c
 	gcc -std=c11 -Wall -g -Wextra -pedantic -o ${BUILD}/${STC}.o ../${STC}.c -c
-	gcc -std=c11 -o ${PROGRAM}  ${BUILD}/${INS}.o ${BUILD}/${ITR}.o ${BUILD}/${STC}.o ${BUILD}/${IAL}.o ${BUILD}/${STACK}.o ${BUILD}/${ERROR}.o ${BUILD}/${STRING}.o ${BUILD}/${LEX}.o ${BUILD}/${PARSER}.o
+	gcc -std=c11 -Wall -g -Wextra -pedantic -o ${BUILD}/${UNIT}.o ${UNIT}.c -c
+	gcc -std=c11 -o ${PROGRAM}  ${BUILD}/${UNIT}.o ${BUILD}/${INS}.o ${BUILD}/${ITR}.o ${BUILD}/${STC}.o ${BUILD}/${IAL}.o ${BUILD}/${STACK}.o ${BUILD}/${ERROR}.o ${BUILD}/${STRING}.o ${BUILD}/${LEX}.o ${BUILD}/${PARSER}.o
 
 
 clean:

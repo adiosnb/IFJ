@@ -17,6 +17,7 @@ enum
 
 #define BOOL    1000
 
+#ifdef OP_PARSER
 const char op_table[][MAX_TERMINALS] =
 {   //        0     1    2    3   4    5     6    7    8    9   10   11   12   13
     //        ==   !=    <    >   <=   >=    +    -    *    /   ID    (    )    $
@@ -67,11 +68,15 @@ const int rule_len[MAX_RULES] =
     2,
     4
 };
+#endif
+int parse_expression(bool should_generate, bool is_condition);
 
 int         find_right_side(const dstack_t *const);
 dstack_t     get_reduce_symbols(const dstack_t const*, dstack_t *const);
 const int*  get_rule(int);
 void        dstack_reduce_rule(dstack_t *const, int);
 expr_t get_top_terminal(dstack_t *);
+
+
 
 #endif
