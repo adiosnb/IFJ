@@ -25,6 +25,9 @@ bool shouldGenerate = false;
 
 int global_type = INTEGER;
 
+// the count of )
+int rightParentCount = 0;
+
 data_t* token2symbol()
 {
 	data_t* res = NULL;
@@ -81,12 +84,19 @@ static inline expr_t validate_ins(t_token s)
     exp.type = s.type;
     // just for now to see where is end of input tokens string
    
-    if (is_it_assign && exp.type == TOK_DELIM)
+    if (s.type == TOK_RIGHT_PAR)
+	rightParentCount--;	
+    if (s.type == TOK_LEFT_PAR) 
+	rightParentCount++;
+
+    if ((is_it_assign && exp.type == TOK_DELIM)
+	|| (!is_it_assign && exp.type == TOK_RIGHT_PAR && rightParentCount == -1))
     {
         exp.type = BOTTOM;
         ungetToken();
         return exp;
     }
+
 
     int op = 0;
     if (exp.type == TOK_EOF)
@@ -187,7 +197,7 @@ static inline expr_t get_next_token(void)
 
 int parse_expression(bool should_generate, bool is_condition)
 {
-    
+    rightParentCount = 0;
     shouldGenerate = should_generate;
     is_it_assign = !is_condition;
     bool is_it_condition = is_condition;

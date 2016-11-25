@@ -626,9 +626,10 @@ int jump_statement()
 		} 
 	}
 
-	if(expression() == SYN_ERR)
-		return SYN_ERR;
-
+	if(hasExpression)
+	{
+		int type = parse_expression(isSecondPass, false);
+	}
 	if(isSecondPass)
 	{
 		if(fn->type == VOID)
@@ -668,8 +669,7 @@ int iteration_statement()
 	if(getToken() != TOK_LEFT_PAR)
 		error_and_die(SYNTAX_ERROR,"Expected (");
 
-	if(expression() == SYN_ERR)
-		return SYN_ERR;
+	int type = parse_expression(isSecondPass, true);
 
 	if(getToken() != TOK_RIGHT_PAR)
 		error_and_die(SYNTAX_ERROR,"Expected )");
@@ -707,8 +707,7 @@ int selection_statement()
 		if(getToken() != TOK_LEFT_PAR)
 			error_and_die(SYNTAX_ERROR,"Expected (");
 		
-		if(expression() == SYN_ERR)
-			return SYN_ERR;
+		int type = parse_expression(isSecondPass, true);
 
 		if(isSecondPass)
 		{
@@ -1188,13 +1187,13 @@ int more_definition(data_t* sym)
 		break;
 		case TOK_ASSIGN:
 			GEN("Assign value");
-			if(expression() == SYN_ERR)
-				return SYN_ERR;
+
+			int type = parse_expression(isSecondPass, false);
+
 			// TODO: checkout expression type
 			
-			// TODO: assign const value to symbol table
 			if(isSecondPass)
-				create_and_add_instruction(insInit,INST_STORE,&sym->data,0,0);
+				generateStore(sym, NULL);
 
 			if(getToken() != TOK_DELIM)
 				error_and_die(SYNTAX_ERROR,"Missing ';' in definition");
