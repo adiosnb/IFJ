@@ -186,28 +186,33 @@ data_t *stable_get_var(stab_t *p_stable, char *id) {
 int stable_remove_var(stab_t *p_stable, char *id) {
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t *pom = p_stable->arr[index];
-    stab_element_t *vymaz;
+    stab_element_t *vymaz, *previous;
 
-    if (pom == NULL)
-        return false;
-
-    //ak je to 1. polozka
-    if (!strcmp(pom->stab_key, id)) {
-        p_stable->arr[index] = pom->stab_next;
-        vymaz = pom;
-    } else {
-        //ak je to 2. az n polozka
-        //najde polozku pred polozkou s id
-        while (strcmp(pom->stab_next->stab_key, id)) //todo skontroluj
-            if ((pom = pom->stab_next) == NULL) //TODO bug TODO fix
-                return false;
-        vymaz = pom->stab_next;
-        pom->stab_next = pom->stab_next->stab_next;
+    if (pom) {
+        //ak je to 1. polozka
+        if (!strcmp(pom->stab_key, id)) {
+            p_stable->arr[index] = pom->stab_next;
+            vymaz = pom;
+            free(vymaz->stab_key);
+            free(vymaz);
+            return true;
+        } else {
+            //ak je to 2. az n polozka
+            //najde polozku pred polozkou s id
+            previous = pom;
+            pom = pom->stab_next;
+            while (pom != NULL) {
+                if (!strcmp(pom->stab_key, id)) {
+                    previous->stab_next = pom->stab_next;
+                    free(pom->stab_key);
+                    free(pom);
+                    return true;
+                }
+                pom = pom->stab_next;
+            }
+        }
     }
-    free(vymaz->stab_key);
-    free(vymaz);
-
-    return true;
+    return false;
 }
 
 int stable_search(stab_t *p_stable, char *srch_el) {

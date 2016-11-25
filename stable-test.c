@@ -97,6 +97,8 @@ int main(){
         printf("\nstable_remove_var FAILED !\n");
     else {
         stable_remove_var(sym_table, string2);
+        stable_remove_var(sym_table, string2);
+        stable_remove_var(sym_table, string2);
         printf("Removing: %s\n", string2);
         stable_remove_var(sym_table, string3);
         printf("Removing: %s\n", string3);
