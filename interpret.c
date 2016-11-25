@@ -357,7 +357,7 @@ void push() {
 
 void store() {
     argument_var_t *arg1,*arg2;
-
+//TODO type conversion
     arg1 = glob_ins_list->active->instruction.addr1;
     arg2 = glob_ins_list->active->instruction.addr2;
 
@@ -786,7 +786,7 @@ void compare(){
     stack_push(&glob_stack,dest);
 }
 
-void expr_str_add(){ //TODO test
+void expr_str_add(){
     argument_var_t dest, *op1, *op2;
     char str_op1[1024] = {0,};
     char str_op2[1024] = {0,};
@@ -814,10 +814,10 @@ void expr_str_add(){ //TODO test
 
 
         if (op2->arg_type == INTEGER) {
-            sprintf(str_op2, "%d", op1->data.i);
+            sprintf(str_op2, "%d", op2->data.i);
         } else {
             if (op2->arg_type == DOUBLE) {
-                sprintf(str_op2, "%g", op1->data.d);
+                sprintf(str_op2, "%g", op2->data.d);
             }
         }
         if (op2->arg_type == STRING) {

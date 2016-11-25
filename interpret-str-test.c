@@ -853,6 +853,100 @@ int main() {
     dest_inst_list(&i_list);
     stable_destroy(&sym_tab);
 
+    printf("\n\n"
+                   "TEST16\n"
+                   "volanie INST_EXPR_ADD_STR nad globalnymi premennymi\n"
+                   "nachadzju sa tu aj datove typy double a int\n");
+    i_list = init_inst_list();
+    sym_tab = stable_init(10);
+
+    tmp_var.data.arg_type = ON_TOP;
+    tmp_var.data.data.i = 0;
+    ptr_to_table3 = stable_add_var(sym_tab, "top", tmp_var);
+
+    tmp_var.data.arg_type = STRING;
+    tmp_var.data.data.s = str_init();
+    str_append_chars(&tmp_var.data.data.s, "toto je string a za nim int : ");
+    ptr_to_table1 = stable_add_var(sym_tab, "lit1", tmp_var);
+    tmp_var.data.arg_type = STRING;
+    tmp_var.data.data.s = str_init();
+    str_append_chars(&tmp_var.data.data.s, " !! toto je string a za nim double : ");
+    ptr_to_table2 = stable_add_var(sym_tab, "lit2", tmp_var);
+
+    tmp_var.data.arg_type = INTEGER;
+    tmp_var.data.data.i = 5678;
+    ptr_to_table3 = stable_add_var(sym_tab, "int", tmp_var);
+    tmp_var.data.arg_type = DOUBLE;
+    tmp_var.data.data.d = 36.436456;
+    ptr_to_table4 = stable_add_var(sym_tab, "double", tmp_var);
+
+
+    create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table1->data, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table3->data, 0, 0);
+    create_and_add_instruction(i_list, INST_EXPR_STR_ADD, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table2->data, 0, 0);
+    create_and_add_instruction(i_list, INST_EXPR_STR_ADD, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table4->data, 0, 0);
+    create_and_add_instruction(i_list, INST_EXPR_STR_ADD, 0, 0, 0);
+
+
+    ptr_to_table3 = stable_get_var(sym_tab,"top");
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table3->data, 0, 0);
+
+
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
+    interpret(i_list, sym_tab);
+    dest_inst_list(&i_list);
+    stable_destroy(&sym_tab);
+
+
+    printf("\n\n"
+                   "TEST17\n"
+                   "volanie INST_EXPR_ADD_STR nad globalnymi premennymi\n"
+                   "nachadzju sa tu aj datove typy double a int\n");
+    i_list = init_inst_list();
+    sym_tab = stable_init(10);
+
+    tmp_var.data.arg_type = ON_TOP;
+    tmp_var.data.data.i = 0;
+    ptr_to_table3 = stable_add_var(sym_tab, "top", tmp_var);
+
+    tmp_var.data.arg_type = STRING;
+    tmp_var.data.data.s = str_init();
+    str_append_chars(&tmp_var.data.data.s, " toto je int; ");
+    ptr_to_table1 = stable_add_var(sym_tab, "lit1", tmp_var);
+    tmp_var.data.arg_type = STRING;
+    tmp_var.data.data.s = str_init();
+    str_append_chars(&tmp_var.data.data.s, " : a toto je double ;");
+    ptr_to_table2 = stable_add_var(sym_tab, "lit2", tmp_var);
+
+    tmp_var.data.arg_type = INTEGER;
+    tmp_var.data.data.i = 5678;
+    ptr_to_table3 = stable_add_var(sym_tab, "int", tmp_var);
+    tmp_var.data.arg_type = DOUBLE;
+    tmp_var.data.data.d = 36.436456;
+    ptr_to_table4 = stable_add_var(sym_tab, "double", tmp_var);
+
+
+    create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table3->data, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table1->data, 0, 0);
+    create_and_add_instruction(i_list, INST_EXPR_STR_ADD, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table4->data, 0, 0);
+    create_and_add_instruction(i_list, INST_EXPR_STR_ADD, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table2->data, 0, 0);
+    create_and_add_instruction(i_list, INST_EXPR_STR_ADD, 0, 0, 0);
+
+
+    ptr_to_table3 = stable_get_var(sym_tab,"top");
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table3->data, 0, 0);
+
+
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
+    interpret(i_list, sym_tab);
+    dest_inst_list(&i_list);
+    stable_destroy(&sym_tab);
+
+
 
     return 0;
 }
