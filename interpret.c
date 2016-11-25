@@ -356,36 +356,61 @@ void push() {
 }
 
 void store() {
-    argument_var_t *arg1,*arg2;
-//TODO type conversion
-    arg1 = glob_ins_list->active->instruction.addr1;
-    arg2 = glob_ins_list->active->instruction.addr2;
+    argument_var_t *dest, *src;
+    dest = glob_ins_list->active->instruction.addr1;
+    src = glob_ins_list->active->instruction.addr2;
 
-    if (arg1->arg_type == STACK_EBP) {
-        arg1 = stack_ebp_relative_ptr(glob_stack,arg1->data.i);
+    if (dest->arg_type == STACK_EBP) {
+        dest = stack_ebp_relative_ptr(glob_stack, dest->data.i);
     } else {
-        if (arg1->arg_type == ON_TOP) {
-            arg1 = stack_top_ptr(glob_stack);
+        if (dest->arg_type == ON_TOP) {
+            dest = stack_top_ptr(glob_stack);
         }
     }
 
-    if (arg2->arg_type == STACK_EBP) {
-        arg2 = stack_ebp_relative_ptr(glob_stack,arg1->data.i);
+    if (src->arg_type == STACK_EBP) {
+        src = stack_ebp_relative_ptr(glob_stack, dest->data.i);
     } else {
-        if (arg2->arg_type == ON_TOP) {
-            arg2 = stack_top_ptr(glob_stack);
+        if (src->arg_type == ON_TOP) {
+            src = stack_top_ptr(glob_stack);
         }
     }
 
     //ulozenie hodnoty do ciela
-    if (arg1->arg_type == STRING) {
-        str_reinit(&arg1->data.s);
-        str_append_str(&arg1->data.s, &arg2->data.s);
-    } else {
-        *arg1 = *arg2;
+    if (dest->arg_type == STRING) {
+        if (src->arg_type == STRING) {
+            str_reinit(&dest->data.s);
+            str_append_str(&dest->data.s, &src->data.s);
+        } else {
+            error_and_die(RUNTIME_ERROR, "Tato konverzia nie je mozna :P");
+        }
+        return;
+    }
+
+    if (dest->arg_type == DOUBLE) {
+        switch (src->arg_type) {
+            case DOUBLE:
+                *dest = *src;
+                break;
+            case INTEGER:
+                dest->data.d = src->data.i;
+                break;
+            default:
+                error_and_die(RUNTIME_ERROR, "Co to kurwa je ? String do double");
+                break;
+        }
+        return;
+    }
+
+    if (dest->arg_type == INTEGER) {
+        if (src->arg_type == INTEGER) {
+            dest->data = src->data;
+        } else {
+            error_and_die(RUNTIME_ERROR, "STORE error , semantic");
+        }
+        return;
     }
 }
-
 void add(){
     argument_var_t  *arg1,*arg2,*arg3;
 
