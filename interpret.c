@@ -787,16 +787,48 @@ void compare(){
 }
 
 void expr_str_add(){ //TODO test
-    argument_var_t dest, op1, op2;
+    argument_var_t dest, *op1, *op2;
+    char str_op1[1024] = {0,};
+    char str_op2[1024] = {0,};
 
-    op2 = stack_pop(glob_stack);
-    op1 = stack_pop(glob_stack);
+    op2 = stack_top_ptr(glob_stack);
+    op1 = stack_from_top_ptr(glob_stack, 1);
 
     dest.arg_type = STRING;
     dest.data.s = str_init();
+    if (op2->arg_type == STRING && op1->arg_type == STRING) {
+        str_concatenate(&dest.data.s, &op1->data.s, &op2->data.s);
+    } else {
+        if (op1->arg_type == INTEGER) {
+            sprintf(str_op1, "%d", op1->data.i);
+        } else {
+            if (op1->arg_type == DOUBLE) {
+                sprintf(str_op1, "%g", op1->data.d);
+            }
+        }
+        if (op1->arg_type == STRING) {
+            str_append_str(&dest.data.s, &op1->data.s);
+        } else {
+            str_append_chars(&dest.data.s, str_op1);
+        }
 
-    str_concatenate(&dest.data.s,&op1.data.s,&op2.data.s);
 
+        if (op2->arg_type == INTEGER) {
+            sprintf(str_op2, "%d", op1->data.i);
+        } else {
+            if (op2->arg_type == DOUBLE) {
+                sprintf(str_op2, "%g", op1->data.d);
+            }
+        }
+        if (op2->arg_type == STRING) {
+            str_append_str(&dest.data.s, &op2->data.s);
+        } else {
+            str_append_chars(&dest.data.s, str_op2);
+        }
+    }
+
+    stack_pop(glob_stack);
+    stack_pop(glob_stack);
     stack_push(&glob_stack,dest);
 }
 

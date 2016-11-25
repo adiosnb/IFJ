@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "stable.h"
+#include "ial.h"
 #include "interpret.h"
 #include "instruction_list.h"
 
@@ -800,6 +800,59 @@ int main() {
     interpret(i_list, sym_tab);
     dest_inst_list(&i_list);
     stable_destroy(&sym_tab);
+
+
+    printf("\n\n"
+                   "TEST15\n"
+                   "volanie INST_EXPR_ADD_STR nad lokalnymi premennymi\n");
+    i_list = init_inst_list();
+    sym_tab = stable_init(10);
+
+    tmp_var.data.arg_type = STACK_EBP;
+    tmp_var.data.data.i = 1;
+    stable_add_var(sym_tab, "str1", tmp_var);
+    tmp_var.data.arg_type = STACK_EBP;
+    tmp_var.data.data.i = 2;
+    stable_add_var(sym_tab, "str2", tmp_var);
+    tmp_var.data.arg_type = ON_TOP;
+    tmp_var.data.data.i = 0;
+    ptr_to_table3 = stable_add_var(sym_tab, "top", tmp_var);
+
+    tmp_var.data.arg_type = STRING;
+    tmp_var.data.data.s = str_init();
+    str_append_chars(&tmp_var.data.data.s, "qwertyuiopasdf8348y5u438h;l3;t43ecfc/w"
+            "['llkjghdslkhlkdhoi79843ytpoireuhkf j;noiervtw3o98trp98bewvt79438v7btp9ghjkl");
+    stable_add_var(sym_tab, "lit1", tmp_var);
+    tmp_var.data.arg_type = STRING;
+    tmp_var.data.data.s = str_init();
+    str_append_chars(&tmp_var.data.data.s, "q321321654984965132165498469513216519846413203218563516");
+    stable_add_var(sym_tab, "lit2", tmp_var);
+
+
+    create_and_add_instruction(i_list, INST_PUSH_STRING, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH_STRING, 0, 0, 0);
+
+    ptr_to_table1 = stable_get_var(sym_tab, "str1");
+    ptr_to_table2 = stable_get_var(sym_tab, "lit1");
+    create_and_add_instruction(i_list, INST_STORE, &ptr_to_table1->data, &ptr_to_table2->data, 0);
+
+    ptr_to_table1 = stable_get_var(sym_tab, "str2");
+    ptr_to_table2 = stable_get_var(sym_tab, "lit2");
+    create_and_add_instruction(i_list, INST_STORE, &ptr_to_table1->data, &ptr_to_table2->data, 0);
+
+    ptr_to_table1 = stable_get_var(sym_tab, "str1");
+    ptr_to_table2 = stable_get_var(sym_tab, "str2");
+    create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table1->data, 0, 0);
+    create_and_add_instruction(i_list, INST_PUSH, &ptr_to_table2->data, 0, 0);
+    create_and_add_instruction(i_list, INST_EXPR_STR_ADD, 0, 0, 0);
+    create_and_add_instruction(i_list, INST_WRITE, &ptr_to_table3->data, 0, 0);
+
+
+    create_and_add_instruction(i_list, INST_HALT, 0, 0, 0);
+    interpret(i_list, sym_tab);
+    dest_inst_list(&i_list);
+    stable_destroy(&sym_tab);
+
 
     return 0;
 }
