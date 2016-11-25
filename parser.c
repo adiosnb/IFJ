@@ -456,7 +456,7 @@ int builtin_print()
 {
 	int paramCount = 0;
 	if(getToken() == TOK_RIGHT_PAR)
-		error_and_die(SYNTAX_ERROR,"Expected a term or concatenation");
+		error_and_die(SEMANTIC_TYPE_ERROR,"Expected a term or concatenation");
 	ungetToken();	
 	do {
 		data_t* var = NULL;
@@ -492,6 +492,8 @@ int builtin_print()
 			
 			if(!var)
 				error_and_die(INTERNAL_ERROR,"Failed to create constant");
+			if(var->data.arg_type == INSTRUCTION)
+				error_and_die(SEMANTIC_TYPE_ERROR, "Expected variable, got function symbol");
 
 			// now generate PUSH
 			create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);
@@ -866,7 +868,7 @@ int argument_definition(data_t** fun)
 	if(isSecondPass)
 	{
 		if(!(*fun))
-			error_and_die(SYNTAX_ERROR,"Semantic error: too many arguments");
+			error_and_die(SEMANTIC_TYPE_ERROR,"Too many arguments");
 		switch(getToken())
 		{
 			case TOK_ID:
@@ -875,11 +877,15 @@ int argument_definition(data_t** fun)
 					var = stable_search_variadic(staticSym,2, parser_class,getTokString());
 				if(!var)
 					error_and_die(SEMANTIC_ERROR," '%s' is missing.", getTokString());
+				if(var->data.arg_type == INSTRUCTION)
+					error_and_die(SEMANTIC_TYPE_ERROR, "Expected variable, got function symbol");
 				break;
 			case TOK_SPECIAL_ID:
 				var = stable_search_variadic(staticSym, 2, parser_class ,getTokString());
 				if(!var)
 					error_and_die(SEMANTIC_ERROR,"'%s' is an undefined symbol.", getTokString());
+				if(var->data.arg_type == INSTRUCTION)
+					error_and_die(SEMANTIC_TYPE_ERROR, "Expected variable, got function symbol");
 				break;
 			case TOK_LITERAL:
 				var = createConstant(STRING, 0,0, getTokString());
