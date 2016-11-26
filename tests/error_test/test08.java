@@ -1,4 +1,4 @@
-//void cannot return value #4
+//void cannot return value #8
 class Trol {
     static void trol (int a){
         Trol.trol(a);

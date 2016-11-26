@@ -618,7 +618,7 @@ int jump_statement()
 			error_and_die(INTERNAL_ERROR,"Can't get the handle of function");
 		if(fn->type == VOID && hasExpression)
 		{
-			error_and_die(SEMANTIC_TYPE_ERROR, "Void function can't return an expr");
+			error_and_die(RUNTIME_UNINITIALIZED, "Void function can't return an expr");
 		}
 		if(fn->type != VOID && !hasExpression)
 		{

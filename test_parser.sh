@@ -22,7 +22,7 @@ for i in `ls`
 do
     echo
     echo "Expected error:" `cat $i | grep //`
-    expected_ret=`cat $i | grep // | cut -f2 -d'#'`
+    expected_ret=`cat $i | grep // | cut -f2 -d'#' | head -n1`
     ./../../parser-test $i > /dev/null
     ret=$?
     if [ $ret -eq 0 ]
