@@ -25,10 +25,13 @@
 #define INTEGER         0
 #define DOUBLE          1
 #define STRING          2
-#define ON_TOP        3
+#define ON_TOP            3
 #define STACK_EBP       4
 #define INSTRUCTION     5
-#define VOID		6
+#define VOID            6
+#define INTEGER_UNINIT  7
+#define DOUBLE_UNINIT   8
+#define STRING_UNINIT   9
 
 enum buitInCodes { BUILTIN_INVALID, BUILTIN_PRINT, BUILTIN_CMP, BUILTIN_FIND, BUILTIN_SORT,
 	 BUILTIN_SUBSTR, BUILTIN_LEN,BUILTIN_READ};

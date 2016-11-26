@@ -283,11 +283,13 @@ void read_int(){
 
     tmp_ptr = glob_ins_list->active->instruction.addr1;
 
-    if (tmp_ptr->arg_type == STACK_EBP){
+    if (tmp_ptr->arg_type == STACK_EBP){ //TODO bolo by dobre to nejako skraslit
         tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
         tmp_var.data.i = readed_int;
+        tmp_var.arg_type = INTEGER;
         stack_actualize_from_ebp(glob_stack,tmp_var,tmp_ptr->data.i);
     } else {
+        tmp_ptr->arg_type = INTEGER;
         tmp_ptr->data.i = readed_int;
     }
 }
@@ -308,6 +310,7 @@ void read_double(){
     } else {
         tmp_ptr->data.d = readed_double;
     }
+    tmp_ptr->arg_type = DOUBLE;
 }
 
 void read_string() {
@@ -316,6 +319,7 @@ void read_string() {
         arg_ptr = stack_ebp_relative_ptr(glob_stack, arg_ptr->data.i);
     }
     str_read_str_stdin(&arg_ptr->data.s);
+    arg_ptr->arg_type = STRING;
 }
 
 void push() {
@@ -339,13 +343,13 @@ void push() {
             }
             break;
         case INST_PUSH_INT:
-            tmp_var.arg_type = INTEGER;
+            tmp_var.arg_type = INTEGER_UNINIT;
             break;
         case INST_PUSH_DOUBLE:
-            tmp_var.arg_type = DOUBLE;
+            tmp_var.arg_type = DOUBLE_UNINIT;
             break;
         case INST_PUSH_STRING:
-            tmp_var.arg_type = STRING;
+            tmp_var.arg_type = STRING_UNINIT;
             tmp_var.data.s = str_init();
             break;
 	default:
@@ -376,8 +380,16 @@ void store() {
         }
     }
 
+    if (src->arg_type == INTEGER_UNINIT ||
+        src->arg_type == DOUBLE_UNINIT ||
+        src->arg_type == STRING_UNINIT
+            ) {
+        error_and_die(RUNTIME_UNINITIALIZED, "Uninicialized variable error store");
+    }
+
     //ulozenie hodnoty do ciela
-    if (dest->arg_type == STRING) {
+    if (dest->arg_type == STRING || dest->arg_type == STRING_UNINIT) {
+        dest->arg_type = STRING;
         if (src->arg_type == STRING) {
             str_reinit(&dest->data.s);
             str_append_str(&dest->data.s, &src->data.s);
@@ -387,7 +399,8 @@ void store() {
         return;
     }
 
-    if (dest->arg_type == DOUBLE) {
+    if (dest->arg_type == DOUBLE || dest->arg_type == DOUBLE_UNINIT) {
+        dest->arg_type = DOUBLE;
         switch (src->arg_type) {
             case DOUBLE:
                 *dest = *src;
@@ -402,8 +415,9 @@ void store() {
         return;
     }
 
-    if (dest->arg_type == INTEGER) {
+    if (dest->arg_type == INTEGER || dest->arg_type == INTEGER_UNINIT) {
         if (src->arg_type == INTEGER) {
+            dest->arg_type = INTEGER;
             dest->data = src->data;
         } else {
             error_and_die(RUNTIME_ERROR, "STORE error , semantic");
@@ -411,6 +425,7 @@ void store() {
         return;
     }
 }
+
 void add(){
     argument_var_t  *arg1,*arg2,*arg3;
 
@@ -597,6 +612,14 @@ void expr_add(){
         error_and_die(SEMANTIC_ERROR,"INTERPRET add semantic error");
     }
 
+    if (op1.arg_type == INTEGER_UNINIT ||
+        op1.arg_type == DOUBLE_UNINIT ||
+        op2.arg_type == INTEGER_UNINIT ||
+        op2.arg_type == DOUBLE_UNINIT
+            ) {
+        error_and_die(RUNTIME_UNINITIALIZED, "Uninicialized variable error add");
+    }
+
 
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER){
         dest.arg_type = INTEGER;
@@ -630,6 +653,14 @@ void expr_sub() {
         error_and_die(SEMANTIC_ERROR,"INTERPRET sub semantic error");
     }
 
+    if (op1.arg_type == INTEGER_UNINIT ||
+        op1.arg_type == DOUBLE_UNINIT ||
+        op2.arg_type == INTEGER_UNINIT ||
+        op2.arg_type == DOUBLE_UNINIT
+            ) {
+        error_and_die(RUNTIME_UNINITIALIZED, "Uninicialized variable error sub");
+    }
+
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
         dest.arg_type = INTEGER;
         dest.data.i = op1.data.i - op2.data.i;
@@ -659,6 +690,14 @@ void expr_mul() {
 
     if (op1.arg_type == STRING || op2.arg_type == STRING){
         error_and_die(SEMANTIC_ERROR,"INTERPRET mul semantic error");
+    }
+
+    if (op1.arg_type == INTEGER_UNINIT ||
+        op1.arg_type == DOUBLE_UNINIT ||
+        op2.arg_type == INTEGER_UNINIT ||
+        op2.arg_type == DOUBLE_UNINIT
+            ) {
+        error_and_die(RUNTIME_UNINITIALIZED, "Uninicialized variable error mul");
     }
 
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
@@ -691,6 +730,14 @@ void expr_div() {
 
     if (op1.arg_type == STRING || op2.arg_type == STRING){
         error_and_die(SEMANTIC_ERROR,"INTERPRET div semantic error");
+    }
+
+    if (op1.arg_type == INTEGER_UNINIT ||
+        op1.arg_type == DOUBLE_UNINIT ||
+        op2.arg_type == INTEGER_UNINIT ||
+        op2.arg_type == DOUBLE_UNINIT
+            ) {
+        error_and_die(RUNTIME_UNINITIALIZED, "Uninicialized variable error div");
     }
 
     if (op2.arg_type == INTEGER) {
@@ -733,6 +780,14 @@ void compare(){
 
     if (op1.arg_type == STRING || op2.arg_type == STRING){
         error_and_die(SEMANTIC_ERROR,"INTERPRET cmp semantic error");
+    }
+
+    if (op1.arg_type == INTEGER_UNINIT ||
+        op1.arg_type == DOUBLE_UNINIT ||
+        op2.arg_type == INTEGER_UNINIT ||
+        op2.arg_type == DOUBLE_UNINIT
+            ) {
+        error_and_die(RUNTIME_UNINITIALIZED, "Uninicialized variable error");
     }
 
     switch (glob_ins_list->active->instruction.type){

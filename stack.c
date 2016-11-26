@@ -101,7 +101,7 @@ argument_var_t *stack_from_top_ptr(stack_t *stack, int position) {
 
 void print_stack(stack_t *stack) {
     printf("\n--------------- STACK ------------------\n");
-    for (int i = 0; i < stack->used - 1; i++) {
+    for (int i = 0; i < stack->used ; i++) {
         if (i == stack->base){
             printf("----------------   <-- BASE\n");
         }
@@ -117,6 +117,15 @@ void print_stack(stack_t *stack) {
                 break;
             case INSTRUCTION:
                 printf("%d : %p\n", i, stack->data[i].data.instruction);
+                break;
+            case INTEGER_UNINIT:
+                printf("%d : \n", i);
+                break;
+            case DOUBLE_UNINIT:
+                printf("%d : \n", i);
+                break;
+            case STRING_UNINIT:
+                printf("%d : \n", i);
                 break;
         }
     }
@@ -135,6 +144,15 @@ void print_stack(stack_t *stack) {
             break;
         case INSTRUCTION:
             printf("%d : %p\n", stack->used - 1, stack->data[stack->used - 1].data.instruction);
+            break;
+        case INTEGER_UNINIT:
+            printf("%d : \n",stack->used - 1);
+            break;
+        case DOUBLE_UNINIT:
+            printf("%d : \n",stack->used - 1);
+            break;
+        case STRING_UNINIT:
+            printf("%d : \n", stack->used - 1);
             break;
     }
 
