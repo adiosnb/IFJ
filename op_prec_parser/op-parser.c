@@ -75,6 +75,7 @@ data_t* token2symbol()
 			if(res == NULL)
 				error_and_die(INTERNAL_ERROR, "Failed to create constant");
 	}
+
 	return res;
 }
 
@@ -365,6 +366,10 @@ int parse_expression(bool should_generate, bool is_condition)
 						// get token with attributes (TOK_ID, TOK_SPECIAL_ID, TOK_DOUBLECONST, TOK_LITERAL, TOK_CONST)
 						expr_t var = handle.elem[0]; 
 
+						if(var.symbol == NULL)
+							error_and_die(INTERNAL_ERROR, "Missing symbol.");
+						if(var.symbol->data.arg_type == INSTRUCTION)
+							error_and_die(SEMANTIC_TYPE_ERROR, "Expected a variable symbol in expression.");
 						// generate push
 						create_and_add_instruction(insProgram, INST_PUSH,&var.symbol->data,0,0);
 						if(global_type < var.symbol->type)

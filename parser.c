@@ -94,7 +94,7 @@ void generateFunctionCall(data_t* func,data_t* retSym)
 	// memory address to receive the return value
 	argument_var_t* retVal = (retSym != NULL)?(&retSym->data):NULL;
 	argument_var_t* callType = NULL; 
-	if(func->type)
+	if(func->type == VOID)
 		callType = (argument_var_t*) VOID;
 	if(!func)
 		return;
@@ -1188,11 +1188,11 @@ int more_definition(data_t* sym)
 		case TOK_ASSIGN:
 			GEN("Assign value");
 
-			int type = parse_expression(isSecondPass, false);
+			int type = parse_expression(!isSecondPass, false);
 
 			// TODO: checkout expression type
 			
-			if(isSecondPass)
+			if(!isSecondPass)
 				generateStore(sym, NULL);
 
 			if(getToken() != TOK_DELIM)
@@ -1352,7 +1352,6 @@ int main(int argc, char ** argv)
 		if(run->type != VOID || run->next_param != NULL)
 			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
 
-		inst_list_print(insProgram);
 #ifndef NOINTERPRET
 		// run it
 		interpret(insProgram, staticSym);
