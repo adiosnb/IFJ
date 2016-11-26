@@ -49,10 +49,10 @@ pwd
 echo
 echo
 echo "Tests for good code"
-for i in `ls`
+for i in `ls | grep -v 'in'`
 do
     echo
-    ./../../parser-test $i > /dev/null
+    ./../../parser $i > /dev/null < $i.in
     ret=$?
     if [ $ret -eq 0 ]
         then

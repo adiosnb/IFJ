@@ -115,7 +115,13 @@ void print_stack(stack_t *stack) {
             case STRING:
                 printf("%d : %s\n", i, stack->data[i].data.s.str);
                 break;
+            case INSTRUCTION:
+                printf("%d : %p\n", i, stack->data[i].data.instruction);
+                break;
         }
+    }
+    if (stack->used - 1 == stack->base){
+        printf("----------------   <-- BASE\n");
     }
     switch (stack->data[stack->used - 1].arg_type) {
         case INTEGER:
@@ -127,9 +133,9 @@ void print_stack(stack_t *stack) {
         case STRING:
             printf("%d : %s\n", stack->used - 1, stack->data[stack->used - 1].data.s.str);
             break;
-    }
-    if (stack->used == stack->base){
-        printf("----------------   <-- BASE\n");
+        case INSTRUCTION:
+            printf("%d : %p\n", stack->used - 1, stack->data[stack->used - 1].data.instruction);
+            break;
     }
 
     printf("\n---------------- STACK END ---------------\n");
