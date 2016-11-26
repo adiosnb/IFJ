@@ -1,4 +1,4 @@
-//a lot ")"  #2
+//one more ")"  #2
 class Main
 {
 	static void run()

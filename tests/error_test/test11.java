@@ -1,4 +1,4 @@
-//expr error, unknow a #3
+//expr error, unknown a #3
 class Main {
     static void run(){
     int a = 5;
