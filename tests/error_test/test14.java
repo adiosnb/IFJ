@@ -2,7 +2,7 @@
 class Main{
     static void run(){
         int a;
-        a = A.a + A.B + B.b + B.a;
+        a = A.a + A.b + B.b + B.a;
 
     }
 }
