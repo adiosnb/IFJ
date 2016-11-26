@@ -713,6 +713,7 @@ int	intern_getToken()
 			case ' ':
 			case '\t': 
 			case '\n':
+			case 0xD:
 				break;
 			// start of commentaries or / operator
 			case '/':
