@@ -282,6 +282,12 @@ int parse_expression(bool should_generate, bool is_condition)
 
                                 // switch topmost pda rule string with left side
                                 dstack_reduce_rule(&pda, *left_side); 
+
+
+				expr_t top = get_top_terminal(&pda);
+                                if (expr_data_type == BOOL && top.type != BOTTOM)
+					error_and_die(SEMANTIC_TYPE_ERROR, "Conversion of bool to int");
+
                                 // postfix actions
                                 //if (res != 11)
                                     printf("%s ", tokens[res]);
@@ -392,7 +398,7 @@ int parse_expression(bool should_generate, bool is_condition)
                             error_and_die(SYNTAX_ERROR, "Expression: Unbalanced '('");
                         generate_syntax_error(*dstack_top(&pda), ins); 
                 case 'E':
-                        error_and_die(SYNTAX_ERROR, "Expression: Logical operators are not associative!");
+                        error_and_die(SEMANTIC_TYPE_ERROR, "Expression: Logical operators are not associative!");
             }
             top_terminal_tmp = get_top_terminal(&pda);
     }
