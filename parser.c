@@ -245,7 +245,7 @@ void addBuiltInToTable(stab_t* table)
 	stable_add_variadic(table,data,2,"ifj16","readString");
 	 
 	// length 
-	fillLocalVarData(&data,INTEGER, -2);
+	fillLocalVarData(&data,STRING, -2);
 	ptr =  stable_add_variadic(table,data,3,"ifj16","length","s");
 
 	fillFunctionData(&data,INTEGER);
