@@ -594,7 +594,7 @@ void expr_add(){
     op1 = stack_pop(glob_stack);
 
     if (op1.arg_type == STRING || op2.arg_type == STRING){
-        error_and_die(SEMANTIC_ERROR,"INTERPRET semantic error");
+        error_and_die(SEMANTIC_ERROR,"INTERPRET add semantic error");
     }
 
 
@@ -627,7 +627,7 @@ void expr_sub() {
     op1 = stack_pop(glob_stack);
 
     if (op1.arg_type == STRING || op2.arg_type == STRING){
-        error_and_die(SEMANTIC_ERROR,"INTERPRET semantic error");
+        error_and_die(SEMANTIC_ERROR,"INTERPRET sub semantic error");
     }
 
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
@@ -658,7 +658,7 @@ void expr_mul() {
     op1 = stack_pop(glob_stack);
 
     if (op1.arg_type == STRING || op2.arg_type == STRING){
-        error_and_die(SEMANTIC_ERROR,"INTERPRET semantic error");
+        error_and_die(SEMANTIC_ERROR,"INTERPRET mul semantic error");
     }
 
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
@@ -690,7 +690,7 @@ void expr_div() {
 
 
     if (op1.arg_type == STRING || op2.arg_type == STRING){
-        error_and_die(SEMANTIC_ERROR,"INTERPRET semantic error");
+        error_and_die(SEMANTIC_ERROR,"INTERPRET div semantic error");
     }
 
     if (op2.arg_type == INTEGER) {
@@ -732,7 +732,7 @@ void compare(){
     op1 = stack_pop(glob_stack);
 
     if (op1.arg_type == STRING || op2.arg_type == STRING){
-        error_and_die(SEMANTIC_ERROR,"INTERPRET semantic error");
+        error_and_die(SEMANTIC_ERROR,"INTERPRET cmp semantic error");
     }
 
     switch (glob_ins_list->active->instruction.type){
