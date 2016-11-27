@@ -592,6 +592,7 @@ data_t* semantic_transform(dstack_t* symbols, int res)
 			if(typeB > typeA)
 				rule= opB.symbol;
 			break;	
+		case 11:
 		case TOK_ID:
 			break;
 		default:
