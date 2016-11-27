@@ -24,7 +24,7 @@ void ial_qsort(char *arr, int left, int right){
         int pom = left;
 
         for (int i = left + 1; i <= right; i++)
-            if (arr[left] < arr[i])
+            if (arr[left] > arr[i])
                 swap(&arr[++pom], &arr[i]);
         swap(&arr[left], &arr[pom]);
         //volanie qsortu pre ľavú časť

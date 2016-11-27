@@ -5,7 +5,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic -std=c99 -DDEBUG=0 -DTEST ")
 set(SOURCE_FILES instruction_list.c instruction_list.h instructions.h interpret.c interpret.h
         stack.c stack.h)
 
-set(str_test str.c str.h str_test.c ial.c)
+set(str_test str.c str.h str_test.c ial.c error.c)
 
 
 set(scanner scanner.c scanner-unit.c str.c)

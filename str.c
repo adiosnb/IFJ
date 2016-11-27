@@ -71,7 +71,7 @@ int str_find(string_t *str,string_t *search) {
 }
 
 void str_sort(string_t *str) {
-    ial_qsort(str->str,0,str->len);
+    ial_qsort(str->str, 0, str->len - 1);
 }
 
 string_t str_sub_str(string_t str, int i, int n) {
