@@ -28,6 +28,10 @@ int global_type = INTEGER;
 // the count of )
 int rightParentCount = 0;
 
+
+dstack_t     handle;
+dstack_t     pda;
+
 data_t* semantic_transform(dstack_t* symbols, int res);
 
 data_t* token2symbol()
@@ -212,8 +216,9 @@ int parse_expression(bool should_generate, bool is_condition)
     bool end_of_expr = false;
     int expr_data_type = ERROR;
 
-    dstack_t     handle = dstack_ctor(); // dynamic allocation
-    dstack_t     pda = dstack_ctor();    // dynamic allocation
+
+    pda = dstack_ctor();
+    handle = dstack_ctor();
 
     expr_t     top_terminal;
     expr_t     top_terminal_tmp;
@@ -608,4 +613,9 @@ data_t* semantic_transform(dstack_t* symbols, int res)
 			fprintf(stderr,"Unk operation in op parser\n");
 	}
 	return rule;
+}
+void opparser_clean()
+{
+	dstack_dtor(&pda);
+	dstack_dtor(&handle);
 }

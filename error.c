@@ -7,6 +7,7 @@
 #ifndef TEST
 #include "scanner.h"
 #include "parser.h"
+#include "op_prec_parser/op-parser.h"
 #endif
 extern stab_t* staticSym; 
 
@@ -20,6 +21,8 @@ void clean_up()
 	scanner_closeFile();
 	// parser clean up
 	parser_clean();
+	
+	opparser_clean();
 #endif
 }
 
