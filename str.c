@@ -1,3 +1,18 @@
+/*********************************************
+ *   Program :   str.c
+ *   Authors :   Roman Dobiáš     - xdobia11
+ *               Adrián Tomašov   - xtomas32
+ *               Jozef Urbanovský - xurban66
+ *               Adam Šulc        - xsulca00
+ *               Kristián Barna   - xbarna02
+ *   Skupina :   2BIB(2016)
+ *   Created :   01.10.2016
+ *   Compiled:   gcc 4.9.2
+ *   Project :   IFJ16
+ *
+ *   Notes   :   Implementation of string functions
+ ********************************************/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
