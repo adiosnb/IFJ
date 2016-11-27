@@ -311,7 +311,7 @@ void read_int(){
             tmp_ptr->arg_type = INTEGER;
             break;
         default:
-            error_and_die(RUNTIME_ERROR, "read int unknown read");
+            error_and_die(SEMANTIC_ERROR, "read int unknown read");
             break;
     }
 }
@@ -326,13 +326,15 @@ void read_double(){
     tmp_ptr = glob_ins_list->active->instruction.addr1;
 
     if (tmp_ptr->arg_type == STACK_EBP){
-        tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
-        tmp_var.data.d = readed_double;
-        stack_actualize_from_ebp(glob_stack,tmp_var,tmp_ptr->data.i);
-    } else {
-        tmp_ptr->data.d = readed_double;
+        tmp_ptr = stack_ebp_relative_ptr(glob_stack, tmp_ptr->data.i);
     }
+
+    if (!(tmp_ptr->arg_type == DOUBLE || tmp_ptr->arg_type == DOUBLE_UNINIT)){
+        error_and_die(SEMANTIC_ERROR,"wrong value return type");
+    }
+
     tmp_ptr->arg_type = DOUBLE;
+    tmp_ptr->data.d = readed_double;
 }
 
 void read_string() {
