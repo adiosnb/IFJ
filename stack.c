@@ -113,7 +113,7 @@ void print_stack(stack_t *stack) {
                 printf("%d : %g\n", i, stack->data[i].data.d);
                 break;
             case STRING:
-                printf("%d : %s\n", i, stack->data[i].data.s.str);
+                printf("%d : %s \t %p\n", i, stack->data[i].data.s.str, stack->data[i].data.s.str);
                 break;
             case INSTRUCTION:
                 printf("%d : %p\n", i, stack->data[i].data.instruction);
@@ -128,32 +128,6 @@ void print_stack(stack_t *stack) {
                 printf("%d : \n", i);
                 break;
         }
-    }
-    if (stack->used - 1 == stack->base){
-        printf("----------------   <-- BASE\n");
-    }
-    switch (stack->data[stack->used - 1].arg_type) {
-        case INTEGER:
-            printf("%d : %d\n", stack->used - 1, stack->data[stack->used - 1].data.i);
-            break;
-        case DOUBLE:
-            printf("%d : %g\n", stack->used - 1, stack->data[stack->used - 1].data.d);
-            break;
-        case STRING:
-            printf("%d : %s\n", stack->used - 1, stack->data[stack->used - 1].data.s.str);
-            break;
-        case INSTRUCTION:
-            printf("%d : %p\n", stack->used - 1, stack->data[stack->used - 1].data.instruction);
-            break;
-        case INTEGER_UNINIT:
-            printf("%d : \n",stack->used - 1);
-            break;
-        case DOUBLE_UNINIT:
-            printf("%d : \n",stack->used - 1);
-            break;
-        case STRING_UNINIT:
-            printf("%d : \n", stack->used - 1);
-            break;
     }
 
     printf("\n---------------- STACK END ---------------\n");

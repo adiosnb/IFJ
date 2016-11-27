@@ -206,7 +206,6 @@ void ret(){
         tmp_var = stack_ebp_relative(glob_stack, -1);
         glob_ins_list->active = tmp_var.data.instruction;
 
-        for (int i = glob_stack->used;i>prev_base;i--)
 
         //upratanie zasobnik apo volani funckie
         glob_stack->used = glob_stack->base;
@@ -218,9 +217,21 @@ void ret(){
         //ak nechecme nikam ulozit navratovau hodnotu funkcie tak zapis preskocime
         if (destination != NULL) {
             if (destination->arg_type == STACK_EBP) {
-                stack_actualize_from_ebp(glob_stack, *return_value, destination->data.i);
+                destination = stack_ebp_relative_ptr(glob_stack, destination->data.i);
+                if (destination->arg_type == STRING || destination->arg_type == STRING_UNINIT) {
+                    destination->arg_type = STRING;
+                    str_reinit(&destination->data.s);
+                    str_append_str(&destination->data.s, &return_value->data.s);
+                } else {
+                    *destination = *return_value;
+                }
             } else {
-                *destination = *return_value;
+                if (destination->arg_type == STRING) {
+                    str_reinit(&destination->data.s);
+                    str_append_str(&destination->data.s, &return_value->data.s);
+                } else {
+                    *destination = *return_value;
+                }
             }
         }
     } else {
