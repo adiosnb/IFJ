@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include "interpret.h"
 #include "error.h"
+#include "instruction_list.h"
 
 stack_t *glob_stack;
 stab_t *glob_stable;
@@ -1353,6 +1354,9 @@ void call_str_substr() {
 
     //vycistenie stringu a ulozenie vysledku
     str_destroy(&ret->data.s);
+    if (str->data.s.len < (i->data.i + n->data.i)){
+        error_and_die(RUNTIME_ERROR,"Substr error");
+    }
     ret->data.s = str_sub_str(str->data.s,i->data.i,n->data.i);
     ret->arg_type = STRING;
 }
