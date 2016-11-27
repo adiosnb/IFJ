@@ -8,6 +8,9 @@ error="\033[1;31mFAIL\033[1;39m"
 error_num=0
 pass_num=0
 
+#nazov programu
+run=run
+
 #init
 make
 
@@ -23,7 +26,7 @@ do
     echo
     echo "Expected error:" `cat $i | grep //`
     expected_ret=`cat $i | grep // | cut -f2 -d'#' | head -n1`
-    ./../../parser-test $i > /dev/null
+    ./../../$run $i > /dev/null
     ret=$?
     if [ $ret -eq 0 ]
         then
@@ -55,7 +58,7 @@ do
     echo
     echo "Expected error:" `cat $i | grep //`
     expected_ret=`cat $i | grep // | cut -f2 -d'#' | head -n1`
-    ./../../parser $i > /dev/null < $i.in
+    ./../../$run $i > /dev/null < $i.in
     ret=$?
     if [ $ret -eq 0 ]
         then
@@ -88,7 +91,7 @@ echo
 for i in `ls | grep -v 'in'`
 do
     echo
-    ./../../parser $i > /dev/null < $i.in
+    ./../../$run $i > /dev/null < $i.in
     ret=$?
     if [ $ret -eq 0 ]
         then

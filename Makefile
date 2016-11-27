@@ -1,16 +1,13 @@
-all: parser parser-test
-bin= parser parser-test
-CFLAGS_TEST=-Wall -pedantic -std=c99 -DDEBUG=0 -DTEST -DNOINTERPRET
+all: run
+bin= run
 CFLAGS= -std=c99 -Wall -pedantic
 CC=gcc
 
 src=str.c ial.c scanner.c parser.c error.c instruction_list.c interpret.c stack.c op-parser.c dynamic_stack.c
 obj=$(src:.c=.o)
 
-parser-test: $(obj)
-	$(CC)  $(src) $(CFLAGS_TEST) -o $@
 
-parser : $(obj)
+run : $(obj)
 	$(CC) $(obj) $(CFLAGS) -o $@
 
 .cpp.o:
