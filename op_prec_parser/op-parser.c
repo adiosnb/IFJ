@@ -80,6 +80,8 @@ data_t* token2symbol()
 
 	if(!res)
 		error_and_die(INTERNAL_ERROR,"Cyka blyat");
+	if(res->data.arg_type == INSTRUCTION)
+		error_and_die(SEMANTIC_ERROR_REST, "Function in expression");
 	return res;
 }
 
