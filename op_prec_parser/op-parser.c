@@ -422,7 +422,12 @@ int parse_expression(bool should_generate, bool is_condition)
     }
     while (ins.type != BOTTOM || (int)top_terminal_tmp.type != BOTTOM);
 
-    //putchar('\n');
+    int expr_glob_type = 0;
+    if(shouldGenerate)
+    {
+	expr_glob_type = pda.elem[pda.top].symbol->type;
+    }
+    
     handle = dstack_dtor(&handle);
     pda = dstack_dtor(&pda);
 
@@ -435,7 +440,9 @@ int parse_expression(bool should_generate, bool is_condition)
     	if (is_condition && expr_data_type != BOOL)
 		error_and_die(SEMANTIC_TYPE_ERROR, "Expected a relation expression");
     }
-    return expr_data_type;
+    if(is_condition)
+	return expr_data_type;
+    return expr_glob_type;
 }
 
 static inline bool is_dstack_bottom(const dstack_t *const stack)

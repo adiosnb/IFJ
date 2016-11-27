@@ -45,6 +45,21 @@ int	isTokenTypeSpecifier()
 /******************************************************************************
  			SEMANTIC UTILS
 ******************************************************************************/
+// 0 = fail
+// Allowed conversions:
+// type -> same type
+// int -> double
+int implicitConversion(int src, int dest)
+{
+	if(src == dest)
+		return 1;
+	// int -> double
+	if(src == INTEGER && dest == DOUBLE)
+		return 1;
+	// the rest is incorrect
+	return 0;
+}
+
 // Create and return 
 argument_var_t* getStackTop()
 {
@@ -460,7 +475,11 @@ int more_next(data_t* var)
 		GEN("Verify if result of expr can be assigned. If do, generate assign");
 		//TODO var->type compare 
 		if(isSecondPass)
+		{
+			if(implicitConversion(type,var->type) == 0)
+				error_and_die(SEMANTIC_TYPE_ERROR, "Invalid conversion");
 			generateStore(var, NULL);
+		}
 	}	
 	return SYN_OK;
 }
@@ -626,9 +645,10 @@ int jump_statement()
 		} 
 	}
 
+	int type = 0;
 	if(hasExpression)
 	{
-		int type = parse_expression(isSecondPass, false);
+		type = parse_expression(isSecondPass, false);
 	}
 	if(isSecondPass)
 	{
@@ -637,6 +657,8 @@ int jump_statement()
 			create_and_add_instruction(insProgram,INST_RET, 0,0,0);
 		} else {
 			//TODO: use expression
+			if(implicitConversion(type,fn->type) == 0)
+				error_and_die(SEMANTIC_TYPE_ERROR, "Invalid conversion");
 			create_and_add_instruction(insProgram,INST_RET, getStackTop() ,0,0);
 		}
 	}
@@ -919,7 +941,7 @@ int argument_definition(data_t** fun)
 		if(isSecondPass)
 			create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);	
 
-		if(var->type != (*fun)->type)
+		if(implicitConversion(var->type,(*fun)->type) == 0)
 			error_and_die(SEMANTIC_TYPE_ERROR,"SEM - argument type dismatch.");
 		*fun = (*fun)->next_param;
 	} else {
@@ -1193,8 +1215,11 @@ int more_definition(data_t* sym)
 			// TODO: checkout expression type
 			
 			if(!isSecondPass)
+			{
+				if(implicitConversion(type, sym->type) == 0)
+					error_and_die(SEMANTIC_TYPE_ERROR, "Invalid conversion");
 				generateStore(sym, NULL);
-
+			}
 			if(getToken() != TOK_DELIM)
 				error_and_die(SYNTAX_ERROR,"Missing ';' in definition");
 		case TOK_DELIM:
