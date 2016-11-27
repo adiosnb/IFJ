@@ -22,7 +22,7 @@
 #include "ial.h"
 #include "error.h"
 
-#include "op_prec_parser/op-parser.h"
+#include "op-parser.h"
 
 
 stab_t	*staticSym = NULL;

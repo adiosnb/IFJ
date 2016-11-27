@@ -22,7 +22,7 @@
 #ifndef TEST
 #include "scanner.h"
 #include "parser.h"
-#include "op_prec_parser/op-parser.h"
+#include "op-parser.h"
 #endif
 extern stab_t* staticSym; 
 

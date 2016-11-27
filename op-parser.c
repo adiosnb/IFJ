@@ -17,11 +17,11 @@
 #include "op-parser.h"
 #include <stdio.h>
 
-#include "../scanner.h"
-#include "utils/dynamic_stack.h"
-#include "../error.h"
-#include "../instruction_list.h"
-#include "../ial.h"
+#include "scanner.h"
+#include "dynamic_stack.h"
+#include "error.h"
+#include "instruction_list.h"
+#include "ial.h"
 
 //#define NDEBUG
 

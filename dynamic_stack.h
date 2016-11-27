@@ -4,7 +4,7 @@
 #include <sys/types.h> 
 #include <stdbool.h>
 
-#include "../../ial.h"
+#include "ial.h"
 
 typedef struct 
 {
