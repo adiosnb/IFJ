@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "dynamic_stack.h"
-#include "../../scanner.h"
+#include "scanner.h"
 
 const size_t INIT_SIZE = 512;
 const double RESIZE_FACTOR = 0.7;

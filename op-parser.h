@@ -19,9 +19,9 @@
 #define MAX_TERMINALS   14
 #define MAX_RULES       12
 
-#include "../ial.h"
-#include "../scanner.h"
-#include "utils/dynamic_stack.h"
+#include "ial.h"
+#include "scanner.h"
+#include "dynamic_stack.h"
 
 enum 
 {
