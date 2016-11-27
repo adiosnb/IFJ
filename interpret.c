@@ -250,9 +250,8 @@ void ret(){
     }
 
     //vycistenie stringov zo zasobnika
-    //TODO test it
     for (int i = current_base; i < current_used ; i++){
-        if (glob_stack->data[i].arg_type == STRING){
+        if (glob_stack->data[i].arg_type == STRING || glob_stack->data[i].arg_type == STRING_UNINIT){
             str_destroy(&glob_stack->data[i].data.s);
         }
     }
@@ -299,7 +298,7 @@ void read_int(){
         if (isspace(c)) {
             break;
         }
-        str_add_char(&input, c);
+        str_add_char(&input, (char)c);
     }
 
     tmp_readed = strtol(input.str, &end, 10);
@@ -348,7 +347,7 @@ void read_double(){
         if (isspace(c)) {
             break;
         }
-        str_add_char(&input, c);
+        str_add_char(&input, (char)c);
     }
 
     readed_double = strtod(input.str,&end);
@@ -1330,6 +1329,7 @@ void call_str_sort() {
     str_reinit(&destination->data.s);
     str_append_str(&destination->data.s,&source->data.s);
     str_sort(&destination->data.s);
+    destination->arg_type = STRING;
 }
 
 void call_str_substr() {
