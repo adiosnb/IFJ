@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "interpret.h"
 #include "instruction_list.h"
 #include "error.h"
@@ -287,10 +288,27 @@ void write() {
 
 void read_int(){
     int readed_int;
-    //nacita premennu do docasnej premennej
-    if (scanf("%d", &readed_int) == EOF) {
-        error_and_die(RUNTIME_READ_ERROR, "read integer");
+    long tmp_readed;
+    char *end = NULL;
+
+    int c;
+    string_t input;
+    input = str_init();
+
+    while ((c = fgetc(stdin)) != EOF) {
+        if (isspace(c)) {
+            break;
+        }
+        str_add_char(&input, c);
     }
+
+    tmp_readed = strtol(input.str, &end, 10);
+
+    if (end[0] != '\0') {
+        error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
+    }
+
+    readed_int = (int) tmp_readed;
 
     tmp_ptr = glob_ins_list->active->instruction.addr1;
 

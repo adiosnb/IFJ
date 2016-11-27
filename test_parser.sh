@@ -50,7 +50,7 @@ echo
 echo "Runtime error tests"
 echo
 
-for i in `ls | grep -v 'in'`
+for i in `ls | grep -v '\.in'`
 do
     echo
     echo "Expected error:" `cat $i | grep //`
