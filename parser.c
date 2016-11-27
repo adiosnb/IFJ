@@ -1208,6 +1208,13 @@ int more_definition(data_t* sym)
 			return SYN_OK;
 		break;
 		case TOK_ASSIGN:
+			if(!isSecondPass)
+			{
+				inicializeData(sym);	
+				if(sym->type == VOID)
+					error_and_die(SYNTAX_ERROR,"Void variable definition");
+			}
+			
 			GEN("Assign value");
 
 			int type = parse_expression(!isSecondPass, false);
@@ -1222,6 +1229,8 @@ int more_definition(data_t* sym)
 			}
 			if(getToken() != TOK_DELIM)
 				error_and_die(SYNTAX_ERROR,"Missing ';' in definition");
+			
+			return SYN_OK;
 		case TOK_DELIM:
 			if(!isSecondPass)
 			{
