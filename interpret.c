@@ -1,6 +1,5 @@
 #include <ctype.h>
 #include "interpret.h"
-#include "instruction_list.h"
 #include "error.h"
 
 stack_t *glob_stack;
@@ -304,7 +303,8 @@ void read_int(){
 
     tmp_readed = strtol(input.str, &end, 10);
 
-    if (end[0] != '\0') {
+    if (end[0] != '\0' || input.str[input.len - 1] == '.') {
+        str_destroy(&input);
         error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
     }
 
@@ -332,14 +332,31 @@ void read_int(){
             error_and_die(SEMANTIC_ERROR, "read int unknown read");
             break;
     }
+    str_destroy(&input);
 }
 
 void read_double(){
     double readed_double;
-    //nacita premennu do docasnej premennej
-    if (scanf("%lf", &readed_double) == EOF) {
-        error_and_die(RUNTIME_READ_ERROR, "read double");
+
+    int c;
+    char *end;
+    string_t input;
+    input = str_init();
+
+    while ((c = fgetc(stdin)) != EOF) {
+        if (isspace(c)) {
+            break;
+        }
+        str_add_char(&input, c);
     }
+
+    readed_double = strtod(input.str,&end);
+
+    if (end[0] != '\0' || input.str[input.len - 1] == '.'){
+        str_destroy(&input);
+        error_and_die(RUNTIME_READ_ERROR,"Read double error");
+    }
+
 
     tmp_ptr = glob_ins_list->active->instruction.addr1;
 
@@ -353,6 +370,7 @@ void read_double(){
 
     tmp_ptr->arg_type = DOUBLE;
     tmp_ptr->data.d = readed_double;
+    str_destroy(&input);
 }
 
 void read_string() {
