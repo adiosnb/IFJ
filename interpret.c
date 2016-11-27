@@ -339,11 +339,20 @@ void push() {
     switch (glob_ins_list->active->instruction.type) {
         case INST_PUSH:
             if (tmp_ptr != NULL) {
+
+
                 if (tmp_ptr->arg_type == STACK_EBP) {
                     tmp_var = stack_ebp_relative(glob_stack, tmp_ptr->data.i);
                 } else {
                     tmp_var = *tmp_ptr;
                 }
+
+                if (tmp_var.arg_type == INTEGER_UNINIT ||
+                    tmp_var.arg_type == STRING_UNINIT ||
+                    tmp_var.arg_type == DOUBLE_UNINIT) {
+                    error_and_die(RUNTIME_UNINITIALIZED, "PUSH uninitialized variable");
+                }
+
                 if (tmp_var.arg_type == STRING) {
                     argument_var_t local_var;
                     local_var.arg_type = STRING;
@@ -1222,6 +1231,7 @@ void call_str_cmp() {
     }
 
     ret->data.i = str_cmp(str1.data.s, str2.data.s);
+    ret->arg_type = INTEGER;
 }
 
 void call_str_find() {
@@ -1251,6 +1261,7 @@ void call_str_find() {
             ret->data.i = tmp;
         }
     }
+    ret->arg_type = INTEGER;
 }
 
 void call_str_sort() {
@@ -1294,6 +1305,7 @@ void call_str_substr() {
     //vycistenie stringu a ulozenie vysledku
     str_destroy(&ret->data.s);
     ret->data.s = str_sub_str(str->data.s,i->data.i,n->data.i);
+    ret->arg_type = STRING;
 }
 
 void call_str_len(){
@@ -1310,4 +1322,5 @@ void call_str_len(){
     }
 
     destination->data.i = source->data.s.len;
+    destination->arg_type = INTEGER;
 }
