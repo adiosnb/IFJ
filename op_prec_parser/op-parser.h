@@ -56,20 +56,19 @@ const int rule_table[][MAX_RULES] =
 // position of semantic information in rule symbols
 const int rule_sempos[][2] =
 {
-    0,2,
-    0,2,
-    0,2,
-    0,2,
-    0,2,
-    0,2,
-    0,2,
-    0,2,
-    0,2,
-    0,2,
-    0,0,
-    1,1,
-    };
-
+   {0,2},
+   {0,2},
+   {0,2},
+   {0,2},
+   {0,2},
+   {0,2},
+   {0,2},
+   {0,2},
+   {0,2},
+   {0,2},
+   {0,0},
+   {1,1}
+};
 const int rule_len[MAX_RULES] =
 {
     4,

@@ -78,6 +78,8 @@ data_t* token2symbol()
 				error_and_die(INTERNAL_ERROR, "Failed to create constant");
 	}
 
+	if(!res)
+		error_and_die(INTERNAL_ERROR,"Cyka blyat");
 	return res;
 }
 
@@ -281,9 +283,11 @@ int parse_expression(bool should_generate, bool is_condition)
                             if (res != -1)
                             {
                                 const int *left_side = get_rule(res);
-
-			       // use symbols to calculate new type
-			       data_t* op_type = semantic_transform(&pda,res);
+                                
+			        // use symbols to calculate new type
+				data_t* op_type = NULL;
+				if(should_generate)
+				       op_type = semantic_transform(&pda,res);
 
                                 // switch topmost pda rule string with left side
                                 dstack_reduce_rule(&pda, *left_side); 
@@ -300,7 +304,7 @@ int parse_expression(bool should_generate, bool is_condition)
 
                                 // postfix actions
                                 //if (res != 11)
-                                    printf("%s ", tokens[res]);
+                                //    printf("%s ", tokens[res]);
 
                                 //TODO: DONT FORGET FIRST WALK!
                                 // types:
@@ -314,7 +318,8 @@ int parse_expression(bool should_generate, bool is_condition)
 
                                 // other combinations then these for semantic typing are ERR_SEMANTIC_TYPE
                                 //
-                                printf("Typ: %d\n",op_type->type);
+				//if(shouldGenerate)
+				//	printf("Typ: %d\n",op_type->type);
 
 				// if code generation is switched off, then continue
                                 if(!shouldGenerate)
@@ -417,7 +422,7 @@ int parse_expression(bool should_generate, bool is_condition)
     }
     while (ins.type != BOTTOM || (int)top_terminal_tmp.type != BOTTOM);
 
-    putchar('\n');
+    //putchar('\n');
     handle = dstack_dtor(&handle);
     pda = dstack_dtor(&pda);
 
@@ -565,12 +570,17 @@ data_t* semantic_transform(dstack_t* symbols, int res)
 
 	int typeA = opA.symbol->type;
 	int typeB = opB.symbol->type;
-	printf("A: %d B: %d\n",typeA, typeB);
+	//printf("A: %d B: %d\n",typeA, typeB);
 
 	data_t* rule = opA.symbol;
 	switch(res)
 	{
-		case TOK_EQ: 
+		case TOK_EQ:
+		case TOK_LE:	
+		case TOK_GE:	
+		case TOK_GREATER:
+		case TOK_LESS:
+		case TOK_NOTEQ:
 		case TOK_MINUS:
 		case TOK_DIV:
 		case TOK_MUL:
@@ -582,6 +592,10 @@ data_t* semantic_transform(dstack_t* symbols, int res)
 			if(typeB > typeA)
 				rule= opB.symbol;
 			break;	
+		case TOK_ID:
+			break;
+		default:
+			fprintf(stderr,"Unk operation in op parser\n");
 	}
 	return rule;
 }
