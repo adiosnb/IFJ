@@ -44,11 +44,47 @@ done
 cd ../..
 echo
 
+cd tests/runtime_error
+echo
+echo
+echo "Runtime error tests"
+echo
+
+for i in `ls | grep -v 'in'`
+do
+    echo
+    echo "Expected error:" `cat $i | grep //`
+    expected_ret=`cat $i | grep // | cut -f2 -d'#' | head -n1`
+    ./../../parser $i > /dev/null < $i.in
+    ret=$?
+    if [ $ret -eq 0 ]
+        then
+        echo -e "TEST ERROR: $i: $error || return code : $ret"
+        error_num=$(( $error_num + 1 ))
+    else
+        if [ $expected_ret -eq $ret ]
+        then
+            echo -e "TEST ERROR: $i: $pass  || return code : $ret"
+            pass_num=$(( $pass_num + 1 ))
+        else
+            echo -e "TEST ERROR: $i: $error || return code : $ret"
+            error_num=$(( $error_num + 1 ))
+        fi
+    fi
+done
+
+
+cd ../..
+echo
+
 cd tests/good_test
 pwd
 echo
 echo
+echo
 echo "Tests for good code"
+echo
+echo
 for i in `ls | grep -v 'in'`
 do
     echo
