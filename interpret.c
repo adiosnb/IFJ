@@ -381,6 +381,7 @@ void read_double(){
     }
 
     if (!(tmp_ptr->arg_type == DOUBLE || tmp_ptr->arg_type == DOUBLE_UNINIT)){
+        str_destroy(&input);
         error_and_die(SEMANTIC_ERROR,"wrong value return type");
     }
 
@@ -1392,4 +1393,10 @@ void call_str_len(){
 
     destination->data.i = source->data.s.len;
     destination->arg_type = INTEGER;
+}
+
+void interpret_clean() {
+    if (glob_stack) {
+        stack_destroy(&glob_stack);
+    }
 }

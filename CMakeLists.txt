@@ -1,6 +1,6 @@
 project(IFJ)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic -std=c99 -DDEBUG=0 -DTEST ")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic -std=c99 -DDEBUG=0 ")
 
 set(SOURCE_FILES instruction_list.c instruction_list.h instructions.h interpret.c interpret.h
         stack.c stack.h)

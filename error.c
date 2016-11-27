@@ -15,10 +15,10 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
-#include "error.h"
 #include <stdio.h>
+#include "error.h"
 #include "ial.h"
-
+#include "interpret.h"
 #ifndef TEST
 #include "scanner.h"
 #include "parser.h"
@@ -36,7 +36,9 @@ void clean_up()
 	scanner_closeFile();
 	// parser clean up
 	parser_clean();
-	
+    //clean interpret
+    interpret_clean();
+
 	opparser_clean();
 #endif
 }

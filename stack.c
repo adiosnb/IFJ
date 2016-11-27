@@ -43,6 +43,7 @@ void stack_destroy(stack_t **stack){
         }
     }
     free(*stack);
+    *stack = NULL;
 }
 
 int stack_push(stack_t **stack, argument_var_t var) {
