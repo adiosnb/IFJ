@@ -294,14 +294,25 @@ void read_int(){
 
     tmp_ptr = glob_ins_list->active->instruction.addr1;
 
-    if (tmp_ptr->arg_type == STACK_EBP){ //TODO bolo by dobre to nejako skraslit
-        tmp_var = stack_ebp_relative(glob_stack,tmp_ptr->data.i);
-        tmp_var.data.i = readed_int;
-        tmp_var.arg_type = INTEGER;
-        stack_actualize_from_ebp(glob_stack,tmp_var,tmp_ptr->data.i);
-    } else {
-        tmp_ptr->arg_type = INTEGER;
-        tmp_ptr->data.i = readed_int;
+    if (tmp_ptr->arg_type == STACK_EBP) {
+        tmp_ptr = stack_ebp_relative_ptr(glob_stack, tmp_ptr->data.i);
+    }
+
+    switch (tmp_ptr->arg_type) {
+        case DOUBLE:
+        case DOUBLE_UNINIT:
+            tmp_ptr->data.d = readed_int;
+            tmp_ptr->arg_type = DOUBLE;
+            break;
+
+        case INTEGER:
+        case INTEGER_UNINIT:
+            tmp_ptr->data.i = readed_int;
+            tmp_ptr->arg_type = INTEGER;
+            break;
+        default:
+            error_and_die(RUNTIME_ERROR, "read int unknown read");
+            break;
     }
 }
 
