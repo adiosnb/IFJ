@@ -1,4 +1,4 @@
-//string error #10
+//syntax error negative number #2
 class Main {
     static void run() {
         String a = "42";
