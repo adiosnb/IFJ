@@ -447,7 +447,7 @@ int more_next(data_t* var)
 				// TODO: verify ERROR code in this special case
 				if(!isSymbolFunction(func))
 					error_and_die(SEMANTIC_ERROR,"Expecting '%s' to be function", getTokString());
-				if(func->type != var->type)
+				if(implicitConversion(func->type, var->type) == 0)
 					error_and_die(SEMANTIC_TYPE_ERROR,"Function call type dismatch [%s]",callName);
 				data = func->next_param;
 			}

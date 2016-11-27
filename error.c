@@ -65,16 +65,18 @@ const char* getErrorName(enum errorTypes type)
 
 void error_and_die(enum errorTypes type, const char *fmt, ...)
 {
-    va_list valist;
-    
-    va_start(valist, fmt);
-#ifndef TEST
-    fprintf(stderr,"[%s][%d:%d] ",getErrorName(type),getTokLine(),getTokTabs());
-#endif
-    vfprintf(stderr,fmt, valist);
-    fputc('\n',stderr);
-    va_end(valist);
-
+    if(type != SUCCESS_ERROR)
+    {
+	    va_list valist;
+	    
+	    va_start(valist, fmt);
+	#ifndef TEST
+	    fprintf(stderr,"[%s][%d:%d] ",getErrorName(type),getTokLine(),getTokTabs());
+	#endif
+	    vfprintf(stderr,fmt, valist);
+	    fputc('\n',stderr);
+	    va_end(valist);
+    }
     errorLeave(type);
 }
 
