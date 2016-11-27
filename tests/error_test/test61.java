@@ -5,9 +5,9 @@ class Main
 	{
 		int continue;
 		ifj16.print("Zadejte cislo pro vypocet faktorialu: ");
-		a = ifj16.readInt();
+		int a = 5;
 		int vysl;
-		if (a < 0) { // nacitani zaporneho cisla nemusite podporovat
+		if (a < 0) {
 			ifj16.print("Faktorial nelze spocitat!\n");
 		}
 		else {

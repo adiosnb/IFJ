@@ -7,6 +7,9 @@ class Main {
          if(a == b) {
             a = b;
          }
+         else {
+            a = b;
+         }
          ifj16.print(a);
     }
 }
