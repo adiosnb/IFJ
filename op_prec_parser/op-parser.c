@@ -28,6 +28,8 @@ int global_type = INTEGER;
 // the count of )
 int rightParentCount = 0;
 
+data_t* semantic_transform(dstack_t* symbols, int res);
+
 data_t* token2symbol()
 {
 	data_t* res = NULL;
@@ -280,13 +282,21 @@ int parse_expression(bool should_generate, bool is_condition)
                             {
                                 const int *left_side = get_rule(res);
 
+			       // use symbols to calculate new type
+			       data_t* op_type = semantic_transform(&pda,res);
+
                                 // switch topmost pda rule string with left side
                                 dstack_reduce_rule(&pda, *left_side); 
+
+				// set new type
+				pda.elem[pda.top].symbol = op_type;
 
 
 				expr_t top = get_top_terminal(&pda);
                                 if (expr_data_type == BOOL && top.type != BOTTOM)
 					error_and_die(SEMANTIC_TYPE_ERROR, "Conversion of bool to int");
+
+				// use handle to detect types
 
                                 // postfix actions
                                 //if (res != 11)
@@ -304,7 +314,7 @@ int parse_expression(bool should_generate, bool is_condition)
 
                                 // other combinations then these for semantic typing are ERR_SEMANTIC_TYPE
                                 //
-                                printf("Typ: %d\n",global_type);
+                                printf("Typ: %d\n",op_type->type);
 
 				// if code generation is switched off, then continue
                                 if(!shouldGenerate)
@@ -352,7 +362,10 @@ int parse_expression(bool should_generate, bool is_condition)
                                     case TOK_PLUS:
 					
 					//TODO choose correct operation
-					create_and_add_instruction(insProgram, INST_EXPR_ADD,0,0,0);
+					if(op_type->type == STRING)
+						create_and_add_instruction(insProgram, INST_EXPR_STR_ADD,0,0,0);
+					else 
+						create_and_add_instruction(insProgram, INST_EXPR_ADD,0,0,0);
                                         // if one of the operands is string, concatenate (second operand is converted to string too, using ifj16.print)
                                         break;
                                     case TOK_MINUS:
@@ -544,3 +557,31 @@ expr_t get_top_terminal(dstack_t *stack)
     return cur_token;
 }
 
+// try to reduce semantic types and thus prove semantic correctnes
+data_t* semantic_transform(dstack_t* symbols, int res)
+{
+	expr_t opA = symbols->elem[symbols->top - rule_sempos[res][0]];	
+	expr_t opB = symbols->elem[symbols->top - rule_sempos[res][1]];	
+
+	int typeA = opA.symbol->type;
+	int typeB = opB.symbol->type;
+	printf("A: %d B: %d\n",typeA, typeB);
+
+	data_t* rule = opA.symbol;
+	switch(res)
+	{
+		case TOK_EQ: 
+		case TOK_MINUS:
+		case TOK_DIV:
+		case TOK_MUL:
+			if(typeA == STRING || typeB == STRING)
+				error_and_die(SEMANTIC_TYPE_ERROR,"Forbidden conversion of string");				
+			if(typeB == DOUBLE)
+				rule= opB.symbol;
+		case TOK_PLUS:
+			if(typeB > typeA)
+				rule= opB.symbol;
+			break;	
+	}
+	return rule;
+}
