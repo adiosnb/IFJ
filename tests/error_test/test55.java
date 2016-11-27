@@ -8,5 +8,9 @@ class Main {
             a = b;
             ifj16.print(a);
          }
+         else {
+            a = b;
+            ifj16.print(a);
+         }
     }
 }
