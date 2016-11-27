@@ -69,5 +69,5 @@ void concatenate();
 
 void interpret_str_cmp();
 
-
+void interpret_clean();
 #endif //INTERPRET
