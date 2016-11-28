@@ -63,8 +63,6 @@ void KMP_spracovanie_podretazca(char *podretazec, int *Table){
             ret_index = Table[ret_index];
         Table[i] = ret_index + 1;
     }
-
-
 }
 
 int KMP_hladaj(char *retazec, char *podretazec){
@@ -87,7 +85,9 @@ int KMP_hladaj(char *retazec, char *podretazec){
             Podretazec_index = Table[Podretazec_index];
     }
     free(Table);
-    return (Podretazec_index > strlen(podretazec)) ? (Retazec_index - strlen(podretazec)) : (Retazec_index);
+	
+    // 28.11: Roman : _index > strlen changed to _index >= strlen
+    return (Podretazec_index >= strlen(podretazec)) ? (Retazec_index - strlen(podretazec)) : (Retazec_index);
 
 }
 
