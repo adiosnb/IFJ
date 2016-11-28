@@ -1047,9 +1047,14 @@ void jump_zero() {
             break;
     }
 
-    if (tmp_ptr->data.i == 0) {                                                            //ak je operand nulovy takze false, urobi sa skok
+    //kontrola semantiky
+    if (tmp_ptr->arg_type != INTEGER){
+        error_and_die(SEMANTIC_ERROR,"jump not zero no interger value");
+    }
+
+    if (tmp_ptr->data.i == 0) {                              //ak je operand nulovy takze false, urobi sa skok
         tmp_ptr = glob_ins_list->active->instruction.addr1;  //nacita z tabulky symbolov ukazatel na instrukciu
-        glob_ins_list->active = tmp_ptr->data.instruction;                               //priradi ukazatel do listu, takze zmeni tok programu
+        glob_ins_list->active = tmp_ptr->data.instruction;   //priradi ukazatel do listu, takze zmeni tok programu
     }
 }
 
@@ -1067,9 +1072,14 @@ void jump_not_zero(){
             break;
     }
 
-    if (tmp_ptr->data.i) {                                                            //ak je operand nenulovy takze true, urobi sa skok
+    //kontrola semantiky
+    if (tmp_ptr->arg_type != INTEGER){
+        error_and_die(SEMANTIC_ERROR,"jump not zero no interger value");
+    }
+
+    if (tmp_ptr->data.i) {                               //ak je operand nenulovy takze true, urobi sa skok
         tmp_ptr = glob_ins_list->active->instruction.addr1;  //nacita z tabulky symbolov ukazatel na instrukciu
-        glob_ins_list->active = tmp_ptr->data.instruction;                               //priradi ukazatel do listu, takze zmeni tok programu
+        glob_ins_list->active = tmp_ptr->data.instruction;   //priradi ukazatel do listu, takze zmeni tok programu
     }
 }
 

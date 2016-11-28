@@ -88,19 +88,27 @@ echo
 echo "Tests for good code"
 echo
 echo
-for i in `ls | grep -v 'in'`
+for i in `ls | grep -v 'in' | grep -v 'out'`
 do
     echo
-    ./../../$run $i > /dev/null < $i.in
+    ./../../$run $i > stdout < $i.in
     ret=$?
     if [ $ret -eq 0 ]
         then
-        echo -e "TEST GOOD: $i: $pass  || return code : $ret"
-        pass_num=$(( $pass_num + 1 ))
+        diff stdout $i.out > should_be_empty
+        if [ "`cat should_be_empty`" == "" ]
+        then
+            echo -e "TEST GOOD: $i: $pass  || return code : $ret"
+            pass_num=$(( $pass_num + 1 ))
+        else
+            echo -e "TEST GOOD: $i: $error || return code : $ret"
+            error_num=$(( $error_num + 1 ))
+        fi
     else
         echo -e "TEST GOOD: $i: $error || return code : $ret"
         error_num=$(( $error_num + 1 ))
     fi
+    rm -f should_be_empty stdout
 done
 
 cd ../..
