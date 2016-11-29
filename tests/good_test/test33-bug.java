@@ -174,7 +174,7 @@ class drawer
 	static void printLogo()
 	{
 		String row = system.generate("*", 80);
-		/*system.printLine(row);
+		system.printLine(row);
 
 		int i;
 
@@ -196,8 +196,8 @@ class drawer
 			system.print(row);
 			row = system.generate("*",10);
 			system.printLine(row);
-		}*/
-		/*
+		}
+
 		i = 2;
 		while(i > 0)
 		{
@@ -292,7 +292,7 @@ class drawer
 		String tmp = system.generate("*",31);
 		row = string.join(row, tmp);
 		system.printLine(row);
-		system.testPattern(row);*/
+		system.testPattern(row);
 	}
 }
 
