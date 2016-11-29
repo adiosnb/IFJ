@@ -1,4 +1,4 @@
-// Test Nedelenie nulou
+// Test Nedelenie nulou (maybe wrong conversion)
 
 class Main
 {

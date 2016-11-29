@@ -5,7 +5,6 @@ class Main
 	/*
 		Komentar !!! """
 	*/
-	// Este jedne komentar
 
     static void run()
     {
