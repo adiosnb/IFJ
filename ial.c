@@ -156,6 +156,10 @@ void stable_destroy(stab_t **p_table) {
 //pridava polozku do zoznamu
 data_t *stable_add_var(stab_t *p_stable, char *id, data_t p_var) {
 
+    static unsigned int rank = 0;
+    rank++;
+    p_var.rank = rank;
+
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t **pom = &p_stable->arr[index];
 

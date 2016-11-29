@@ -24,6 +24,7 @@ typedef struct dt {
     struct dt *next_param;    // used in function
     int inter_table;
     argument_var_t data;
+    unsigned int rank;
 } data_t;
 
 typedef struct STAB_ELEMENT {
