@@ -171,13 +171,14 @@ class system
 
 class drawer
 {
-
 	static void printLogo()
 	{
-	    int i = 2 ;
 		String row = system.generate("*", 80);
 		system.printLine(row);
 
+		int i;
+
+		i = 2;
 		while(i > 0)
 		{
 			i = i - 1;
@@ -294,3 +295,4 @@ class drawer
 		system.testPattern(row);
 	}
 }
+

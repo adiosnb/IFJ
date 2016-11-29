@@ -4,11 +4,11 @@ class Main
 {
     static void run()
     {
-        double v = voidFunction(2.589);
+       voidFunction(2.5);   
     }
 
-    static void voidFunction(double d)
+    static void voidFunction(double a)
     {
-        return 12.58;
+        return 5;
     }
 }

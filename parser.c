@@ -714,7 +714,8 @@ int iteration_statement()
 
 	if(isSecondPass)
 	{
-		skipJump = create_and_add_instruction(insProgram, INST_JZ,0,getStackTop(),0); 
+		skipJump = create_and_add_instruction(insProgram, INST_JZ,0,getStackTop(),0);
+        create_and_add_instruction(insProgram, INST_POP,0,0,0);
 		GEN("Generate COMPARE and JUMP test"); 
 	}
 	if(compound_statement() == SYN_ERR)
@@ -724,6 +725,8 @@ int iteration_statement()
 		GEN("Generate WHILE_SKIP label and altern CMP jmp addres");
 		create_and_add_instruction(insProgram, INST_JMP, &lblTest->data,0,0);
 		data_t* lblSkip = generateLabel(insProgram);
+        create_and_add_instruction(insProgram, INST_POP,0,0,0);
+
 
 		// now altern compare to jmp to skip
 		skipJump->instruction.addr1 = &lblSkip->data;
@@ -751,7 +754,8 @@ int selection_statement()
 		{
 			GEN("Generate a CMP and JUMP.");
 			selection = create_and_add_instruction(insProgram, INST_JZ, 0,getStackTop(),0);
-		}
+            create_and_add_instruction(insProgram, INST_POP,0,0,0);
+        }
 		if(getToken() != TOK_RIGHT_PAR)
 			error_and_die(SYNTAX_ERROR,"Expected )");
 	
@@ -768,7 +772,9 @@ int selection_statement()
 			lblElse = generateLabel(insProgram);
 			// altern the jmp after condition to jmp to ELSE branch
 			selection->instruction.addr1 = &lblElse->data;
-		}
+            create_and_add_instruction(insProgram, INST_POP,0,0,0);
+
+        }
 
 		getToken();
 		if(!isTokenKeyword(KW_ELSE))

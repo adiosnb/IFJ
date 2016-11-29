@@ -163,7 +163,6 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
                 printf("Interpret: Unnknown intruction\n");
                 break;
         }
-
         //print_stack(glob_stack);
         //stable_print(stable);
         glob_ins_list->active = glob_ins_list->active->next;
@@ -271,6 +270,11 @@ void ret(){
             str_destroy(&glob_stack->data[i].data.s);
         }
     }
+
+    //vymazanie volania funkcii zo zasobnika
+    stack_pop(glob_stack);
+    stack_pop(glob_stack);
+
 }
 
 void write() {
