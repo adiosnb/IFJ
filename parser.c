@@ -33,6 +33,7 @@ int isSecondPass = 0;
 
 char*	parser_class = NULL;
 char*	parser_fun = NULL;
+unsigned int current_rank = 0;
 
 int	localVariablesCount = 0;
 /******************************************************************************
@@ -56,6 +57,37 @@ int	isTokenTypeSpecifier()
 		getTokInt() == KW_INT ||
 		getTokInt() == KW_DOUBLE||
 		getTokInt() == KW_STRING));
+}
+
+// Static expressions are special cases of expressions as their code is
+// generated to insInit instead of insProgram
+int parse_static_expr(data_t* sym, bool generate)
+{
+	// update current symbol lexical order
+	current_rank = sym->rank;
+	instruction_list_t* tmp = NULL; 
+
+	if(generate)
+	{
+		// swap instruction lists
+		tmp = insProgram;
+		insProgram = insInit;
+		insInit = tmp;
+	}
+	int type = parse_expression(generate, false);
+	
+	if(generate)
+	{
+		if(implicitConversion(type, sym->type) == 0)
+			error_and_die(SEMANTIC_TYPE_ERROR, "Invalid conversion");
+		generateStore(sym, NULL);
+
+		// swap instruction lists
+		tmp = insProgram;
+		insProgram = insInit;
+		insInit = tmp;
+	}
+	return type;
 }
 
 /******************************************************************************
@@ -1243,6 +1275,7 @@ int more_definition(data_t* sym)
 			return SYN_OK;
 		break;
 		case TOK_ASSIGN:
+			parser_fun = NULL;
 			if(!isSecondPass)
 			{
 				inicializeData(sym);	
@@ -1252,16 +1285,10 @@ int more_definition(data_t* sym)
 			
 			GEN("Assign value");
 
-			int type = parse_expression(!isSecondPass, false);
+			// rank is used to detect the lexical order of static variables
+			int type = parse_static_expr(sym,isSecondPass);
 
-			// TODO: checkout expression type
 			
-			if(!isSecondPass)
-			{
-				if(implicitConversion(type, sym->type) == 0)
-					error_and_die(SEMANTIC_TYPE_ERROR, "Invalid conversion");
-				generateStore(sym, NULL);
-			}
 			if(getToken() != TOK_DELIM)
 				error_and_die(SYNTAX_ERROR,"Missing ';' in definition");
 			
@@ -1422,6 +1449,8 @@ int main(int argc, char ** argv)
 			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
 
 #ifndef NOINTERPRET
+		// run initialization
+		interpret(insInit, staticSym);
 		// run it
 		interpret(insProgram, staticSym);
 #endif

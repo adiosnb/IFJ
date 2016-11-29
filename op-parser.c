@@ -32,6 +32,7 @@ extern stab_t* staticSym;
 extern instruction_list_t* insProgram;
 extern char* parser_class;
 extern char* parser_fun;
+extern unsigned int current_rank;
 
 
 bool is_it_assign = false;
@@ -56,9 +57,16 @@ data_t* token2symbol()
 	switch(getLastToken())
 	{
 		case TOK_ID:
-			res = stable_search_variadic(staticSym, 3, parser_class,parser_fun, getTokString());
+			if(parser_fun)
+				res = stable_search_variadic(staticSym, 3, parser_class,parser_fun, getTokString());
 			if(!res)
+			{
 				res = stable_search_variadic(staticSym, 2, parser_class,getTokString());
+				// if we are parsing static inits and this static symbol exists
+				if(res && parser_fun == NULL)
+					if(res->rank > current_rank) // if it's declared after current symbol
+						error_and_die(SEMANTIC_ERROR_REST, "Out of lexical order: '%s'", getTokString());
+			}
 			if(!res)
 				error_and_die(SEMANTIC_ERROR, "Missing symbol '%s'", getTokString());
 			break;
@@ -66,6 +74,10 @@ data_t* token2symbol()
 			res = stable_search_variadic(staticSym, 1,getTokString());
 			if(!res)
 				error_and_die(SEMANTIC_ERROR, "Missing symbol '%s'", getTokString());
+			// if we are parsing static inits and this static symbol exists
+			if(res && parser_fun == NULL)
+				if(res->rank > current_rank) // if it's declared after current symbol
+					error_and_die(SEMANTIC_ERROR_REST, "Out of lexical order: '%s'", getTokString());
 			break;
 		default:
 			switch(getLastToken())
