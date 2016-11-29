@@ -1,4 +1,4 @@
-//redefine variable #4
+//redefine variable #3
 class Main {
     static void run() {
         int test = 1;
