@@ -163,12 +163,13 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
                 printf("Interpret: Unnknown intruction\n");
                 break;
         }
-
         //print_stack(glob_stack);
         //stable_print(stable);
         glob_ins_list->active = glob_ins_list->active->next;
     }
 
+    stable_print(glob_stable);
+    inst_list_print(glob_ins_list);
     stack_destroy(&glob_stack);
     return 0;
 }
@@ -480,8 +481,6 @@ void store() {
             str_reinit(&dest->data.s);
             str_append_str(&dest->data.s, &src->data.s);
         } else {
-            stable_print(glob_stable);
-            inst_list_print(glob_ins_list);
             error_and_die(RUNTIME_ERROR, "Tato konverzia nie je mozna :P");
         }
         return;

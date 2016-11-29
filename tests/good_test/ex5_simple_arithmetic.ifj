@@ -2,7 +2,6 @@ class Main {
     static void run() {
         double d1 = 15.006;
         int i1 = 10;
-        //boolean b1 = true;
 	double tmp; //hodnota pretoze nemame rozsirenia	
 
         ifj16.print(i1);
@@ -22,10 +21,14 @@ class Main {
         ifj16.print(tmp);
 	ifj16.print("\n");
 
-        if(d1 != i1) {
+        if(d1 != i1) 
+	{
             ifj16.print(d1);
-        } else {
-		ifj16.print(i1);
+        } 
+	else 
+
+	{
+	   ifj16.print(i1);
 	}
 	ifj16.print("\n");
 
