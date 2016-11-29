@@ -480,6 +480,8 @@ void store() {
             str_reinit(&dest->data.s);
             str_append_str(&dest->data.s, &src->data.s);
         } else {
+            stable_print(glob_stable);
+            inst_list_print(glob_ins_list);
             error_and_die(RUNTIME_ERROR, "Tato konverzia nie je mozna :P");
         }
         return;

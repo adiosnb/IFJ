@@ -65,7 +65,8 @@ class string
 	static String generatedText = "";
 	static int len(String text)
 	{
-		return ifj16.length(text);
+	    int tmp = ifj16.length(text);
+		return tmp;
 	}
 
 	static String join(String text1, String text2)
@@ -76,6 +77,7 @@ class string
 
 	static String generator(String pattern)
 	{
+	    String tmp;
 		int length;
 		if(generateText == 1)
 		{
@@ -88,7 +90,8 @@ class string
 			{
 				generatedText = generatedText + pattern;
 			}
-			return generator(pattern);
+			tmp = generator(pattern);
+			return tmp;
 		}
 		else
 		{
@@ -98,17 +101,23 @@ class string
 
 	static int find(String text, String pattern)
 	{
-		return ifj16.find(text, pattern);
+	    int tmp;
+		tmp = ifj16.find(text, pattern);
+		return tmp;
 	}
 
 	static String substr(String text, int pos, int n)
 	{
-		return ifj16.substr(text, pos, n);
+	    String tmp;
+	    tmp = ifj16.substr(text, pos, n);
+		return tmp;
 	}
 
 	static int compare(String text, String text2)
 	{
-		return ifj16.compare(text, text2);
+	    int tmp;
+		tmp =  ifj16.compare(text, text2);
+		return tmp;
 	}
 }
 
@@ -116,7 +125,9 @@ class system
 {
 	static int len(String text)
 	{
-		return string.len(text);
+	    int tmp;
+		tmp = string.len(text);
+		return tmp;
 	}
 
 	static void printLine(String text)
@@ -132,10 +143,12 @@ class system
 
 	static String generate(String text, int n)
 	{
+	    String tmp;
 		string.generateText = 1;
 		string.generatedText = "";
 		string.maxLen = n;
-		return string.generator(text);
+		tmp = string.generator(text);
+		return tmp;
 	}
 	static void testPattern(String text)
 	{
@@ -166,7 +179,7 @@ class drawer
 		int i;
 
 		i = 2;
-		while(i > 0)
+		/*while(i > 0)
 		{
 			i = i - 1;
 			row = system.generate("*",10);
@@ -183,7 +196,8 @@ class drawer
 			system.print(row);
 			row = system.generate("*",10);
 			system.printLine(row);
-		}
+		}*/
+		/*
 		i = 2;
 		while(i > 0)
 		{
@@ -278,6 +292,6 @@ class drawer
 		String tmp = system.generate("*",31);
 		row = string.join(row, tmp);
 		system.printLine(row);
-		system.testPattern(row);
+		system.testPattern(row);*/
 	}
 }
