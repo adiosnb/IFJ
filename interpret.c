@@ -168,8 +168,6 @@ int interpret(instruction_list_t *instruction_list, stab_t *stable) {
         glob_ins_list->active = glob_ins_list->active->next;
     }
 
-    stable_print(glob_stable);
-    inst_list_print(glob_ins_list);
     stack_destroy(&glob_stack);
     return 0;
 }
@@ -272,6 +270,11 @@ void ret(){
             str_destroy(&glob_stack->data[i].data.s);
         }
     }
+
+    //vymazanie volania funkcii zo zasobnika
+    stack_pop(glob_stack);
+    stack_pop(glob_stack);
+
 }
 
 void write() {
