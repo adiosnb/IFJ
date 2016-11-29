@@ -1,3 +1,9 @@
+[29/11/2016]
+Roman:	1. local variable definition mustn't have the same name as
+		any function in the same class
+	2. verify ifj16.print expression to contain at least one String
+	3. static inicializations -> detect uninitialized vars in 2nd round
+
 [11/11/2016/
 TODO:
 	parser: fix bugs, correctly handle declarations, set up the cooperation with the table of symbols (TOS)
