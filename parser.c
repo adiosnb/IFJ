@@ -1092,6 +1092,15 @@ int parameter_definition()
 		(*last_param) = dt;
 		last_param = &dt->next_param;
 	}
+	
+	if(isSecondPass)
+	{
+		data_t* fun = stable_search_variadic(staticSym, 2,parser_class,getTokString());
+		if(isSymbolFunction(fun))
+			error_and_die(SEMANTIC_ERROR,"Symbol '%s' already defined as function."
+				"Trying to define a local var.", getTokString(), parser_class,parser_fun);	
+		
+	}
 
 	return SYN_OK;
 }
@@ -1128,7 +1137,11 @@ int local_definition()
 		if(stable_search_variadic(staticSym, 3,parser_class, parser_fun,var))
 			error_and_die(SEMANTIC_ERROR,"Local symbol '%s' ['%s.%s'] redef."
 			" already defined.", var, parser_class,parser_fun);	
-		
+
+		data_t* fun = stable_search_variadic(staticSym, 2,parser_class,var);
+		if(isSymbolFunction(fun))
+			error_and_die(SEMANTIC_ERROR,"Symbol '%s' already defined as function."
+				"Trying to define a local var.", var, parser_class,parser_fun);	
 		data_t data;
 		fillLocalVarData(&data, type, ++localVariablesCount);
 		def = stable_add_variadic(staticSym,data,3, parser_class,parser_fun,var);
