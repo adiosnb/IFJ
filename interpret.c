@@ -323,9 +323,22 @@ void read_int(){
 
     tmp_readed = strtol(input.str, &end, 10);
 
-    if (end[0] != '\0' || input.str[input.len - 1] == '.') {
+    if (!input.len){
         str_destroy(&input);
         error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
+    }
+
+    if (end != NULL) {
+        if (end[0] != '\0') {
+            str_destroy(&input);
+            error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
+        }
+        if (input.len){
+            if (input.str[input.len] == '.'){
+                str_destroy(&input);
+                error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
+            }
+        }
     }
 
     readed_int = (int) tmp_readed;
