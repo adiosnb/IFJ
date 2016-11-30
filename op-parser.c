@@ -63,9 +63,12 @@ data_t* token2symbol()
 			{
 				res = stable_search_variadic(staticSym, 2, parser_class,getTokString());
 				// if we are parsing static inits and this static symbol exists
-				if(res && parser_fun == NULL)
+				if(res && parser_fun == NULL && res->data.arg_type != INSTRUCTION)
 					if(res->rank > current_rank) // if it's declared after current symbol
 						error_and_die(SEMANTIC_ERROR_REST, "Out of lexical order: '%s'", getTokString());
+					else if (res->is_inicialized != 1)
+						error_and_die(SEMANTIC_ERROR_REST, "Assign of uninitialized static symbol '%s'.", getTokString());
+						
 			}
 			if(!res)
 				error_and_die(SEMANTIC_ERROR, "Missing symbol '%s'", getTokString());
@@ -75,9 +78,11 @@ data_t* token2symbol()
 			if(!res)
 				error_and_die(SEMANTIC_ERROR, "Missing symbol '%s'", getTokString());
 			// if we are parsing static inits and this static symbol exists
-			if(res && parser_fun == NULL)
+			if(res && parser_fun == NULL && res->data.arg_type != INSTRUCTION)
 				if(res->rank > current_rank) // if it's declared after current symbol
 					error_and_die(SEMANTIC_ERROR_REST, "Out of lexical order: '%s'", getTokString());
+				else if (res->is_inicialized != 1)
+					error_and_die(SEMANTIC_ERROR_REST, "Assign of uninitialized static symbol '%s'.", getTokString());
 			break;
 		default:
 			switch(getLastToken())
@@ -112,7 +117,7 @@ data_t* token2symbol()
 	if(!res)
 		error_and_die(INTERNAL_ERROR,"Cyka blyat");
 	if(res->data.arg_type == INSTRUCTION)
-		error_and_die(SEMANTIC_ERROR_REST, "Function in expression");
+		error_and_die(SEMANTIC_ERROR, "Function in expression");
 	return res;
 }
 

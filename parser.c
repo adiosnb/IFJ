@@ -75,6 +75,9 @@ int parse_static_expr(data_t* sym, bool generate)
 		insInit = tmp;
 	}
 	int type = parse_expression(generate, false);
+
+	if(generate)
+		sym->is_inicialized = 1;
 	
 	if(generate)
 	{
@@ -93,6 +96,37 @@ int parse_static_expr(data_t* sym, bool generate)
 /******************************************************************************
  			SEMANTIC UTILS
 ******************************************************************************/
+void fixStaticVars()
+{
+	stab_element_t *current, *next;
+	if (staticSym!= NULL)
+	{
+		for (unsigned i = 0; i < staticSym->stab_size; i++) {
+			current = staticSym->arr[i];
+			if (current != NULL) {
+				if(current->stab_content.is_inicialized != 1 &&
+					current->stab_content.data.data.i == UNINITIALIZED)
+				{
+					int type = current->stab_content.data.arg_type;
+					switch(type)
+					{
+						case INTEGER:
+						case DOUBLE:
+						case STRING:
+							// SET it to uninit data
+							//printf("Reseting %s\n", current->stab_key);
+							current->stab_content.data.arg_type += 7;	
+							break;
+						default:
+							break;
+					}
+				}		
+		    }
+		    current = next;
+		}
+        }
+}
+
 // 0 = fail
 // Allowed conversions:
 // type -> same type
@@ -225,6 +259,7 @@ void fillStaticVarData(data_t* data,int type)
 	data->type = type;
 	data->data.arg_type = type;	
 	data->data.data.i = UNINITIALIZED;
+	data->is_inicialized = 0;
 	data->next_param = NULL;
 }
 
@@ -1448,6 +1483,8 @@ int main(int argc, char ** argv)
 		if(run->type != VOID || run->next_param != NULL)
 			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
 
+		// HACK: fix static vars
+		fixStaticVars();
 #ifndef NOINTERPRET
 		// run initialization
 		interpret(insInit, staticSym);

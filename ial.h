@@ -20,11 +20,12 @@
 #include "instruction_list.h"
 
 typedef struct dt {
-    int type;            // void, int, ...
-    struct dt *next_param;    // used in function
-    int inter_table;
-    argument_var_t data;
-    unsigned int rank;
+    int type;              // type specifier: void, int, ...
+    struct dt *next_param; // pointer to the next parameter of function
+    int inter_table;       // TODO: useless ?
+    argument_var_t data;   // interpreter data
+    unsigned int rank;     // the order of symbol creation
+    int is_inicialized;    // reserved for static vars
 } data_t;
 
 typedef struct STAB_ELEMENT {
