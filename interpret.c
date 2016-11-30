@@ -334,7 +334,7 @@ void read_int(){
             error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
         }
         if (input.len){
-            if (input.str[input.len] == '.'){
+            if (input.str[input.len - 1] == '.'){
                 str_destroy(&input);
                 error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
             }
@@ -385,9 +385,22 @@ void read_double(){
 
     readed_double = strtod(input.str,&end);
 
-    if (end[0] != '\0' || input.str[input.len - 1] == '.'){
+    if (!input.len){
         str_destroy(&input);
-        error_and_die(RUNTIME_READ_ERROR,"Read double error");
+        error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
+    }
+
+    if (end != NULL) {
+        if (end[0] != '\0') {
+            str_destroy(&input);
+            error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
+        }
+        if (input.len){
+            if (input.str[input.len - 1] == '.'){
+                str_destroy(&input);
+                error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
+            }
+        }
     }
 
 
