@@ -1,18 +1,3 @@
-/*********************************************
- *   Program :   ial.c
- *   Authors :   Roman Dobiáš     - xdobia11
- *               Adrián Tomašov   - xtomas32
- *               Jozef Urbanovský - xurban66
- *               Adam Šulc        - xsulca00
- *               Kristián Barna   - xbarna02
- *   Skupina :   2BIB(2016)
- *   Created :   01.10.2016
- *   Compiled:   gcc 4.9.2
- *   Project :   IFJ16
- *
- *   Notes   :   Implementation of IAL algorithms
- ********************************************/
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -24,35 +9,54 @@
 /*
  * Algoritmy
  */
-void swap(char *arg1, char *arg2){
-    char pom = *arg1;
 
-    *arg1 = *arg2;
-    *arg2 = pom;
+interval separate(char *arr, int left, int right){
+
+    char pom;
+    char pmed = arr[(left + right) / 2];
+    interval limit;
+    limit.i = left;
+    limit.j = right;
+
+    while (limit.i < limit.j) {
+        while (arr[limit.i] < pmed)
+            limit.i++;
+        while (arr[limit.j] > pmed)
+            limit.j--;
+
+        if (limit.i <= limit.j) {
+            pom = arr[limit.i];
+            arr[limit.i] = arr[limit.j];
+            arr[limit.j] = pom;
+            limit.i++;
+            limit.j--;
+        }
+    }
+
+    return limit;
+}
+
+void ial_qsort_valid(char *arr, int left, int right) {
+
+    interval pom = separate(arr, left, right);
+
+    if (left < pom.j)
+        ial_qsort(arr, left, pom.j);
+    if (pom.i < right)
+        ial_qsort(arr, pom.i, right);
 
     return;
 }
 
-void ial_qsort(char *arr, int left, int right){
-
-    if (left < right) {
-        int pom = left;
-
-        for (int i = left + 1; i <= right; i++)
-            if (arr[left] > arr[i])
-                swap(&arr[++pom], &arr[i]);
-        swap(&arr[left], &arr[pom]);
-        //volanie qsortu pre ľavú časť
-        ial_qsort(arr, left, pom - 1);
-        //volanie qsortu pre pravú časť
-        ial_qsort(arr, pom + 1, right);
-    }
+void ial_qsort(char *arr, int left, int right) {
+    if (left < right && arr != NULL)
+        ial_qsort_valid(arr, left, right);
     return;
 }
 
 void KMP_spracovanie_podretazca(char *podretazec, int *Table){
 
-    //index zaciatku porovnavania pri nezhode podretazca s retazcom
+    //index zaciatku opetovneho porovnavania pri nezhode podretazca s retazcom
     int ret_index = 0;
 
     Table[0] = -1;
@@ -63,13 +67,15 @@ void KMP_spracovanie_podretazca(char *podretazec, int *Table){
             ret_index = Table[ret_index];
         Table[i] = ret_index + 1;
     }
+
+
 }
 
-int KMP_hladaj(char *retazec, char *podretazec){
+int KMP_hladaj_valid(char *retazec, char *podretazec){
 
     int *Table;
 
-    if ((Table = malloc(sizeof(Table) * strlen(podretazec))) == NULL)
+    if ((Table = malloc(sizeof(int) * strlen(podretazec))) == NULL)
         return -1;
 
     KMP_spracovanie_podretazca(podretazec, Table);
@@ -77,23 +83,34 @@ int KMP_hladaj(char *retazec, char *podretazec){
     int Retazec_index = 0;
     int Podretazec_index = 0;
     while (Podretazec_index < strlen(podretazec) && Retazec_index < strlen(retazec)){
-        if (Podretazec_index == 0 || retazec[Retazec_index] == podretazec[Podretazec_index]){
-            Retazec_index ++;
-            Podretazec_index ++;
+        if (retazec[Retazec_index] == podretazec[Podretazec_index]) {
+            Retazec_index++;
+            Podretazec_index++;
         }
+        else
+        if (Podretazec_index == 0)
+            Retazec_index++;
         else
             Podretazec_index = Table[Podretazec_index];
     }
     free(Table);
-	
-    // 28.11: Roman : _index > strlen changed to _index >= strlen
-    return (Podretazec_index >= strlen(podretazec)) ? (Retazec_index - strlen(podretazec)) : (Retazec_index);
 
+    return (Podretazec_index >= strlen(podretazec)) ? ((int)(Retazec_index - strlen(podretazec))) : (Retazec_index);
+
+}
+
+int KMP_hladaj(char *retazec, char *podretazec){
+    if (!retazec)
+        return -1;
+    if (!podretazec)
+        return (int)strlen(retazec);
+    return KMP_hladaj_valid(retazec, podretazec);;
 }
 
 /*
  * Tabulka symbolov
  */
+
 unsigned hash_fun_ptr(char *id, unsigned stab_size) {
     int i = 0, pom = 0;
 
@@ -155,10 +172,6 @@ void stable_destroy(stab_t **p_table) {
 
 //pridava polozku do zoznamu
 data_t *stable_add_var(stab_t *p_stable, char *id, data_t p_var) {
-
-    static unsigned int rank = 0;
-    rank++;
-    p_var.rank = rank;
 
     unsigned index = hash_fun_ptr(id, p_stable->stab_size);
     stab_element_t **pom = &p_stable->arr[index];

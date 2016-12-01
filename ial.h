@@ -43,6 +43,11 @@ typedef struct {
     stab_element_t *arr[];
 } stab_t;
 
+typedef struct {
+    int i;
+    int j;
+} interval;
+
 //algorytmy
 //rekurzivna funkcia triediaca pole
 void ial_qsort(char* arr, int left, int right);
