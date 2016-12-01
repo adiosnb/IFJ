@@ -85,6 +85,7 @@ data_t* token2symbol()
 					error_and_die(SEMANTIC_ERROR_REST, "Assign of uninitialized static symbol '%s'.", getTokString());
 			break;
 		default:
+			dt.is_inicialized = 1;
 			switch(getLastToken())
 			{
 				case TOK_CONST:

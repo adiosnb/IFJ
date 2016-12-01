@@ -103,7 +103,7 @@ void fixStaticVars()
 	{
 		for (unsigned i = 0; i < staticSym->stab_size; i++) {
 			current = staticSym->arr[i];
-			if (current != NULL) {
+			while(current) {
 				if(current->stab_content.is_inicialized != 1 &&
 					current->stab_content.data.data.i == UNINITIALIZED)
 				{
@@ -121,8 +121,8 @@ void fixStaticVars()
 							break;
 					}
 				}		
+			    current = current->stab_next;
 		    }
-		    current = next;
 		}
         }
 }
@@ -151,6 +151,7 @@ argument_var_t* getStackTop()
 	data_t stackTop;
 	stackTop.data.arg_type = ON_TOP; 	
 	stackTop.data.data.i = 0;
+	stackTop.is_inicialized = 1;
 	
 	data_t* dttop = stable_add_variadic(staticSym,stackTop, 1,"ifj16.on_top");
 	if(dttop)
@@ -242,6 +243,7 @@ void generateFunctionCall(data_t* func,data_t* retSym)
 
 void fillClassData(data_t* data)
 {
+	data->is_inicialized = 1;
 	data->type = INTEGER;
 	data->data.arg_type = INTEGER;	
 	data->data.data.i = PLACEHOLDER_CLASS;
@@ -249,6 +251,7 @@ void fillClassData(data_t* data)
 
 void fillFunctionData(data_t* data,int type)
 {
+	data->is_inicialized = 1;
 	data->type = type;
 	data->data.arg_type = INSTRUCTION;	
 	data->data.data.instruction = NULL; 
@@ -273,6 +276,7 @@ void inicializeData(data_t* data)
 
 void fillLocalVarData(data_t* data,int type, int stackPos)
 {
+	data->is_inicialized = 1;
 	data->type = type;
 	data->data.arg_type = STACK_EBP;	
 	data->data.data.i = stackPos;
@@ -287,6 +291,7 @@ data_t* createConstant(int type, int iVal, double dVal, char* cVal)
 
 	data_t const_data;
 	fillStaticVarData(&const_data,type);
+	const_data.is_inicialized = 1;
 
 	switch(type)
 	{
