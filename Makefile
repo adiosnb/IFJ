@@ -13,5 +13,8 @@ run : $(obj)
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@
 
+test:
+	./test_parser.sh
+
 clean:
 	rm *.o $(bin)
