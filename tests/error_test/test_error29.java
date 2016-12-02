@@ -1,4 +1,4 @@
-//expr in return of void function #8
+//expr in return of void function #4
 class Main {
     static void run() {
          test(42);

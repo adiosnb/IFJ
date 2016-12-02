@@ -1,4 +1,4 @@
-//test trying to math with function #6
+//test trying to math with function #3
 class Main{
     static void run(){
         int a;

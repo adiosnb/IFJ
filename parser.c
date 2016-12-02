@@ -519,7 +519,7 @@ int more_next(data_t* var)
 			getToken();
 			builtin_print();
 			// NOTE: it's a semantic error in any case, just check syntax
-			error_and_die(SYNTAX_ERROR,"Assigned void function to variable.");
+			error_and_die(RUNTIME_UNINITIALIZED,"Assigned void function to variable.");
 		} else 
 		{
 			char* callName = getTokString();
@@ -725,7 +725,7 @@ int jump_statement()
 			error_and_die(INTERNAL_ERROR,"Can't get the handle of function");
 		if(fn->type == VOID && hasExpression)
 		{
-			error_and_die(RUNTIME_UNINITIALIZED, "Void function can't return an expr");
+			error_and_die(SEMANTIC_TYPE_ERROR, "Void function can't return an expr");
 		}
 		if(fn->type != VOID && !hasExpression)
 		{
