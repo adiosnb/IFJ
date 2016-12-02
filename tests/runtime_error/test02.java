@@ -1,4 +1,4 @@
-//void function return #8
+//void function return FORUM - KRIVKA #4
 
 class Main
 {

@@ -1,4 +1,4 @@
-//wrong construction - function being called in initialization of static variable #6
+//wrong construction - function being called in initialization of static variable #2
 class Main
 {
 	static void run()

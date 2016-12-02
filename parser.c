@@ -729,7 +729,7 @@ int jump_statement()
 		}
 		if(fn->type != VOID && !hasExpression)
 		{
-			error_and_die(RUNTIME_UNINITIALIZED, "Missing return value");
+			error_and_die(SEMANTIC_TYPE_ERROR, "Missing return value");
 		} 
 	}
 
