@@ -864,7 +864,7 @@ int selection_statement()
 			//error_and_die(SYNTAX_ERROR,"Expected else");
 		}
 
-		if(compound_statement() == SYN_ERR)
+		if(statement() == SYN_ERR)
 			return SYN_ERR;		
 		
 		if(isSecondPass)
