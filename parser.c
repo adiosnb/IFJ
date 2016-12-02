@@ -790,7 +790,7 @@ int iteration_statement()
         create_and_add_instruction(insProgram, INST_POP,0,0,0);
 		GEN("Generate COMPARE and JUMP test"); 
 	}
-	if(compound_statement() == SYN_ERR)
+	if(statement() == SYN_ERR)
 		return SYN_ERR;
 	if(isSecondPass)
 	{
@@ -832,7 +832,7 @@ int selection_statement()
 			error_and_die(SYNTAX_ERROR,"Expected )");
 	
 		
-		if(compound_statement() == SYN_ERR)
+		if(statement() == SYN_ERR)
 			return SYN_ERR;		
 
 		if(isSecondPass)
@@ -850,7 +850,19 @@ int selection_statement()
 
 		getToken();
 		if(!isTokenKeyword(KW_ELSE))
-			error_and_die(SYNTAX_ERROR,"Expected else");
+		{
+			ungetToken();
+			// its OK, no ELSE
+			if(isSecondPass)
+			{
+				GEN("Generate a IF_SKIP label and altern JMP.");
+				lblSkip = generateLabel(insProgram);
+				// altern JMP after first compound to jmp to the end
+				endJmp->instruction.addr1 = &lblSkip->data;
+			}
+			return SYN_OK;
+			//error_and_die(SYNTAX_ERROR,"Expected else");
+		}
 
 		if(compound_statement() == SYN_ERR)
 			return SYN_ERR;		
