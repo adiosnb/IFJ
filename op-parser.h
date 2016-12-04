@@ -108,6 +108,8 @@ const int*  get_rule(int);
 void        dstack_reduce_rule(dstack_t *const, int);
 expr_t get_top_terminal(dstack_t *);
 
+void opparser_clean();
+
 
 
 #endif
