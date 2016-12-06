@@ -188,9 +188,9 @@ void call() {
     tmp_var.data.i = glob_stack->base;     //pushig base, similar to push ebp in assemlby
     stack_push(&glob_stack, tmp_var);
     //glob_stack->used += 2;                      //added counter for stack
-    glob_stack->base = glob_stack->used;
+    glob_stack->base = glob_stack->used;            // new EBP is set
     tmp_ptr = glob_ins_list->active->instruction.addr1;
-    glob_ins_list->active = tmp_ptr->data.instruction;
+    glob_ins_list->active = tmp_ptr->data.instruction;  // jmp into function
 }
 
 void ret(){
@@ -278,6 +278,7 @@ void ret(){
 }
 
 void write() {
+    //podla typu zvoli typ vypisu
     switch (tmp_ptr->arg_type) {
         case INTEGER:
             printf("%d",tmp_ptr->data.i);
@@ -314,6 +315,7 @@ void read_int(){
     string_t input;
     input = str_init();
 
+    //nacitanie do stringu kvoli neznamej dlzke
     while ((c = fgetc(stdin)) != EOF) {
         if (isspace(c)) {
             break;
@@ -321,8 +323,10 @@ void read_int(){
         str_add_char(&input, (char)c);
     }
 
+    //pouzita overena standardna funckia
     tmp_readed = strtol(input.str, &end, 10);
 
+    //kontroli vstupu
     if (!input.len){
         str_destroy(&input);
         error_and_die(RUNTIME_READ_ERROR, "ERROR read int");
@@ -345,10 +349,11 @@ void read_int(){
 
     tmp_ptr = glob_ins_list->active->instruction.addr1;
 
+    // nacitanie zo zasobnika
     if (tmp_ptr->arg_type == STACK_EBP) {
         tmp_ptr = stack_ebp_relative_ptr(glob_stack, tmp_ptr->data.i);
     }
-
+    // zapis do premennej podla typu plus kontrola
     switch (tmp_ptr->arg_type) {
         case DOUBLE:
         case DOUBLE_UNINIT:
@@ -376,6 +381,7 @@ void read_double(){
     string_t input;
     input = str_init();
 
+    // zapis do str kvoli neznamej dlzke stringu
     while ((c = fgetc(stdin)) != EOF) {
         if (isspace(c)) {
             break;
@@ -383,6 +389,7 @@ void read_double(){
         str_add_char(&input, (char)c);
     }
 
+    //kontrola vstupu pomocou standradnej funkcie
     readed_double = strtod(input.str,&end);
 
     if (!input.len){
@@ -406,6 +413,7 @@ void read_double(){
 
     tmp_ptr = glob_ins_list->active->instruction.addr1;
 
+    //ziskanie ukazatela na zasobnik
     if (tmp_ptr->arg_type == STACK_EBP){
         tmp_ptr = stack_ebp_relative_ptr(glob_stack, tmp_ptr->data.i);
     }
@@ -425,6 +433,7 @@ void read_string() {
     if (arg_ptr->arg_type == STACK_EBP) {
         arg_ptr = stack_ebp_relative_ptr(glob_stack, arg_ptr->data.i);
     }
+    //nacitanie zo vstupu do stringou volanim funkcie zo str
     str_read_str_stdin(&arg_ptr->data.s);
     arg_ptr->arg_type = STRING;
 }
@@ -434,6 +443,7 @@ void push() {
 
     switch (glob_ins_list->active->instruction.type) {
         case INST_PUSH:
+            //pushnutie inicializovanej premennej plus je vyhladanie na spravnom mieste na zasobniku
             if (tmp_ptr != NULL) {
 
 
@@ -458,6 +468,8 @@ void push() {
                 }
             }
             break;
+
+            //dalej su uz len pushnutia neinicializovanych premennych
         case INST_PUSH_INT:
             tmp_var.arg_type = INTEGER_UNINIT;
             break;
@@ -472,6 +484,7 @@ void push() {
 		error_and_die(INTERNAL_ERROR, "push() unknown");
 
     }
+    //zapis na zasobnik
     stack_push(&glob_stack, tmp_var);
 }
 
@@ -480,6 +493,7 @@ void store() {
     dest = glob_ins_list->active->instruction.addr1;
     src = glob_ins_list->active->instruction.addr2;
 
+    //hladanie zdroja a ciela
     if (dest->arg_type == STACK_EBP) {
         dest = stack_ebp_relative_ptr(glob_stack, dest->data.i);
     } else {
@@ -496,6 +510,7 @@ void store() {
         }
     }
 
+    //kontrola inicializacie zdroja
     if (src->arg_type == INTEGER_UNINIT ||
         src->arg_type == DOUBLE_UNINIT ||
         src->arg_type == STRING_UNINIT
@@ -503,7 +518,7 @@ void store() {
         error_and_die(RUNTIME_UNINITIALIZED, "Uninicialized variable error store");
     }
 
-    //ulozenie hodnoty do ciela
+    //ulozenie hodnoty do ciela podla typu
     if (dest->arg_type == STRING || dest->arg_type == STRING_UNINIT) {
         dest->arg_type = STRING;
         if (src->arg_type == STRING) {
@@ -525,7 +540,7 @@ void store() {
                 dest->data.d = src->data.i;
                 break;
             default:
-                error_and_die(RUNTIME_ERROR, "Co to kurwa je ? String do double ? Jebe ti?");
+                error_and_die(RUNTIME_ERROR, "STORE: error: string tou double");
                 break;
         }
         return;
@@ -718,9 +733,14 @@ void divisoin(){
     }
 }
 
+/*
+ * Kazda z funkcii expr berie dva operandy zo zasobnika pomocou funkcie pop, prevedie danu operaciu
+ * a nakoniec vysledok ulozi na zasobnik, tak ako hovori polska notacia.
+ */
 void expr_add(){
     argument_var_t dest, op1, op2;
 
+    //pop zo zasobnika
     op2 = stack_pop(glob_stack);
     op1 = stack_pop(glob_stack);
 
@@ -736,7 +756,7 @@ void expr_add(){
         error_and_die(RUNTIME_UNINITIALIZED, "Uninicialized variable error add");
     }
 
-
+    // a nejaka ta matematika
     if (op1.arg_type == INTEGER && op2.arg_type == INTEGER){
         dest.arg_type = INTEGER;
         dest.data.i = op1.data.i + op2.data.i;
@@ -759,6 +779,10 @@ void expr_add(){
     stack_push(&glob_stack,dest);
 }
 
+/*
+ * Kazda z funkcii expr berie dva operandy zo zasobnika pomocou funkcie pop, prevedie danu operaciu
+ * a nakoniec vysledok ulozi na zasobnik, tak ako hovori polska notacia.
+ */
 void expr_sub() {
     argument_var_t dest, op1, op2;
 
@@ -798,6 +822,10 @@ void expr_sub() {
     stack_push(&glob_stack, dest);
 }
 
+/*
+ * Kazda z funkcii expr berie dva operandy zo zasobnika pomocou funkcie pop, prevedie danu operaciu
+ * a nakoniec vysledok ulozi na zasobnik, tak ako hovori polska notacia.
+ */
 void expr_mul() {
     argument_var_t dest, op1, op2;
 
@@ -837,6 +865,10 @@ void expr_mul() {
     stack_push(&glob_stack, dest);
 }
 
+/*
+ * Kazda z funkcii expr berie dva operandy zo zasobnika pomocou funkcie pop, prevedie danu operaciu
+ * a nakoniec vysledok ulozi na zasobnik, tak ako hovori polska notacia.
+ */
 void expr_div() {
     argument_var_t dest, op1, op2;
 
@@ -887,6 +919,12 @@ void expr_div() {
     stack_push(&glob_stack, dest);
 }
 
+/*
+ * Kazda z funkcii expr berie dva operandy zo zasobnika pomocou funkcie pop, prevedie danu operaciu
+ * a nakoniec vysledok ulozi na zasobnik, tak ako hovori polska notacia.
+ *
+ * Je to vsetko v jednej funkcii kvoli mensej priehladnosti
+ */
 void compare(){
     argument_var_t op1, op2, dest;
 
@@ -906,6 +944,7 @@ void compare(){
         error_and_die(RUNTIME_UNINITIALIZED, "Uninicialized variable error");
     }
 
+    //podla typu porovnavania sa zvoli
     switch (glob_ins_list->active->instruction.type){
         case INST_EXPR_LOWER:
             if (op1.arg_type == INTEGER && op2.arg_type == INTEGER) {
@@ -1004,6 +1043,10 @@ void compare(){
     stack_push(&glob_stack,dest);
 }
 
+/*
+ * Kazda z funkcii expr berie dva operandy zo zasobnika pomocou funkcie pop, prevedie danu operaciu
+ * a nakoniec vysledok ulozi na zasobnik, tak ako hovori polska notacia.
+ */
 void expr_str_add(){
     argument_var_t dest, *op1, *op2;
     char str_op1[1024] = {0,};
@@ -1291,6 +1334,11 @@ void interpret_str_cmp() {
     arg1->data.i = str_cmp(arg2->data.s, arg3->data.s);
 }
 
+/*
+ * voanie funkcii ifj16
+ * dohodnuta volanie funkcii s tym ze sa pushuje na zasobnik
+ * predava sa iba pocet argumentov
+ */
 void call_print() {
     argument_var_t *num_of_str = glob_ins_list->active->instruction.addr1;
     argument_var_t str_to_print;
@@ -1320,6 +1368,11 @@ void call_print() {
     }
 }
 
+/*
+ * voanie funkcii ifj16
+ * dohodnuta volanie funkcii s tym ze sa pushuje na zasobnik
+ * predava sa ukazatel, kam zapisat vysledok
+ */
 void call_str_cmp() {
     argument_var_t *ret, str1, str2;
     str1 = stack_from_top(glob_stack, 1);
@@ -1340,6 +1393,11 @@ void call_str_cmp() {
     ret->arg_type = INTEGER;
 }
 
+/*
+ * voanie funkcii ifj16
+ * dohodnuta volanie funkcii s tym ze sa pushuje na zasobnik
+ * predava sa ukazatel, kam zapisat vysledok
+ */
 void call_str_find() {
     argument_var_t *ret, *str, *search;
     str = stack_from_top_ptr(glob_stack, 1);
@@ -1370,6 +1428,11 @@ void call_str_find() {
     ret->arg_type = INTEGER;
 }
 
+/*
+ * voanie funkcii ifj16
+ * dohodnuta volanie funkcii s tym ze sa pushuje na zasobnik
+ * predava sa ukazatel, kam zapisat vysledok
+ */
 void call_str_sort() {
     argument_var_t *source, *destination;
 
@@ -1389,6 +1452,11 @@ void call_str_sort() {
     destination->arg_type = STRING;
 }
 
+/*
+ * voanie funkcii ifj16
+ * dohodnuta volanie funkcii s tym ze sa pushuje na zasobnik
+ * predava sa ukazatel, kam zapisat vysledok
+ */
 void call_str_substr() {
     argument_var_t *ret, *str, *i,*n;
     str = stack_from_top_ptr(glob_stack, 2);
@@ -1435,6 +1503,8 @@ void call_str_len(){
     destination->arg_type = INTEGER;
 }
 
+//vycistenie stack od stringov v pripade erroru
+//tato funckia sa pouziva pri volani funkcie error_and_die
 void interpret_clean() {
     if (glob_stack) {
         stack_destroy(&glob_stack);
