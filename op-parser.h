@@ -33,6 +33,8 @@ enum
 #define BOOL    1000
 
 #ifdef OP_PARSER
+
+// operator precedence table
 const char op_table[][MAX_TERMINALS] =
 {   //        0     1    2    3   4    5     6    7    8    9   10   11   12   13
     //        ==   !=    <    >   <=   >=    +    -    *    /   ID    (    )    $
@@ -52,6 +54,7 @@ const char op_table[][MAX_TERMINALS] =
     /* $  */{'<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '_', '=' },
 };
 
+// grammar for the expressions
 const int rule_table[][MAX_RULES] =
 {
     {C, C, TOK_EQ, C, UNDEF},

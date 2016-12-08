@@ -131,17 +131,19 @@ data_t* token2symbol()
 	return res;
 }
 
+// check if input symbol for precedence table is valid
 static inline expr_t validate_ins(t_token s)
 {
     expr_t exp;
     exp.type = s.type;
-    // just for now to see where is end of input tokens string
    
+    // if it is logical expression, check for right closing parentheses
     if (s.type == TOK_RIGHT_PAR)
 	rightParentCount--;	
     if (s.type == TOK_LEFT_PAR) 
 	rightParentCount++;
 
+    // simulate end-of-input-sequence in case of ';' (assign expression) or ')' (logival expression)
     if ((is_it_assign && exp.type == TOK_DELIM)
 	|| (!is_it_assign && exp.type == TOK_RIGHT_PAR && rightParentCount == -1))
     {
@@ -151,6 +153,7 @@ static inline expr_t validate_ins(t_token s)
     }
 
 
+    // EOF is end-of-input-sequence as well
     int op = 0;
     if (exp.type == TOK_EOF)
     {
@@ -164,14 +167,16 @@ static inline expr_t validate_ins(t_token s)
         case TOK_LITERAL:
         case TOK_CONST:
         case TOK_DOUBLECONST: 
+                // BOTTOM equals to TOK_SPECIAL_ID (integer value), added '$' in order to distinsguish
 		if (op != '$') 
 			exp.type = TOK_ID;
     }
 
+    // input symbol is invalid, terminate
     if (!(((int)exp.type >= TOK_EQ && exp.type <= BOTTOM) || exp.type == C))
-    // TODO: validate input symbol and print its string....how? scanner is not capable of doing that
         error_and_die(SYNTAX_ERROR, "Expression: invalid input symbol %i", exp.type);
 
+    
     if(shouldGenerate)
 	exp.symbol = token2symbol();
     return exp;
@@ -201,7 +206,6 @@ static void generate_syntax_error(expr_t topt, expr_t inst)
 
 #define IS_OPERATOR(op)    (op == TOK_NOTEQ || op == TOK_LESS || op == TOK_GREATER || op == TOK_LE || op == TOK_GE || op == TOK_PLUS || op == TOK_MINUS || op == TOK_MUL || op == TOK_DIV)    
 
-
 static void generate_reduction_error(expr_t topt, expr_t inst)
 {
     //topt = validate_ins(topt);
@@ -216,9 +220,9 @@ static void generate_reduction_error(expr_t topt, expr_t inst)
         error_and_die(SYNTAX_ERROR, "Expression: missing left operand");
 }
 
+// get operator precedence table value
 static char compare_token(int pda_symbol, int input_symbol)
 {
-    
     return op_table[pda_symbol][input_symbol];
 }
 
@@ -269,11 +273,15 @@ int parse_expression(bool should_generate, bool is_condition)
     // HACK HACK: BOTTOM equals to TOK_SPECIAL_ID, adding dollar to find out BOTTOM
     expr_t     bottom = {.type = BOTTOM, NULL};
 
+    // push pushdown automaton (pda) bottom
     dstack_push(&pda, bottom);
+
     do
     {
+        // get topmost terminal of the pushdown automaton
         top_terminal = get_top_terminal(&pda);
 
+        // end-of-input-sequence is ')' in case of logical expression
         if (is_it_condition && !end_of_expr && ins.type == TOK_RIGHT_PAR)
         {
             ins.type = BOTTOM;
@@ -284,10 +292,12 @@ int parse_expression(bool should_generate, bool is_condition)
         if (is_it_condition && ins.type == TOK_LEFT_PAR)
             end_of_expr = true;
 
+        // get operation type from op-table (shift, reduce or error)
         int result = compare_token(top_terminal.type, ins.type);     
 
         switch(result)
         {
+                // shift
                 case '=':
 
                         if (is_it_condition) 
@@ -310,6 +320,7 @@ int parse_expression(bool should_generate, bool is_condition)
                         ins = get_next_token();
 
                         break;
+                // shift
                 case '<':
                         // replacement of top terminal with top terminal and '<' (beginning of handle)
                         dstack_add_handle_symbol(&pda, top_terminal.type);
@@ -321,14 +332,17 @@ int parse_expression(bool should_generate, bool is_condition)
                         ins = get_next_token();
 
                         break;
+                // reduce
                 case '>':
                         handle = dstack_clear(&handle);
                         handle = get_reduce_symbols(&pda, &handle);
 
                         if (!dstack_empty(&handle))
                         {
+                            // find right side of the rule in expression grammar
                             int res = find_right_side(&handle);
 
+                            // rule exists
                             if (res != -1)
                             {
                                 const int *left_side = get_rule(res);
@@ -343,7 +357,6 @@ int parse_expression(bool should_generate, bool is_condition)
 
 				// set new type
 				pda.elem[pda.top].symbol = op_type;
-
 
 				expr_t top = get_top_terminal(&pda);
                                 if (expr_data_type == BOOL && top.type != BOTTOM)
@@ -373,6 +386,8 @@ int parse_expression(bool should_generate, bool is_condition)
 				// if code generation is switched off, then continue
                                 if(!shouldGenerate)
 					break;
+
+                                // generate postfix notation of the expression
                                 switch (res)
                                 {
                                     // logical operators if one operand is int and second double, int is converted to double
@@ -501,6 +516,7 @@ static inline bool is_dstack_bottom(const dstack_t *const stack)
     return true;
 }
 
+// get handle 
 dstack_t get_reduce_symbols(const dstack_t *const stack, dstack_t *const handle)
 {
     dstack_t string = *handle; 
@@ -508,6 +524,7 @@ dstack_t get_reduce_symbols(const dstack_t *const stack, dstack_t *const handle)
     if (stack == NULL )
         return string;
 
+    // store handle inside stack 'string', push symbols from the top until '<' is found
     for (long end = stack->top; !is_dstack_bottom(stack); end--)
     {
         if (stack->elem[end].type != '<')
@@ -519,6 +536,7 @@ dstack_t get_reduce_symbols(const dstack_t *const stack, dstack_t *const handle)
             long str_end = string.top;
             long str_start = 0;
 
+            // revers the order of symbols inside stack 'string'
             for (; str_start < str_end; str_end--, str_start++)
             {
                 expr_t tmp = string.elem[str_start];
@@ -532,6 +550,7 @@ dstack_t get_reduce_symbols(const dstack_t *const stack, dstack_t *const handle)
     return string;
 }
 
+// replace handle (right hand side of the rule) with its corresponding left side
 void dstack_reduce_rule(dstack_t *const stack, int left_side)
 {
     if (stack == NULL)
@@ -594,6 +613,7 @@ int find_right_side(const dstack_t *const handle)
     return -1;
 }
 
+// return left side rule
 const int *get_rule(int rule_idx)
 {
     if (rule_idx < 0 || rule_idx >= MAX_RULES)
