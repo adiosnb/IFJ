@@ -781,7 +781,7 @@ int jump_statement()
 
 }
 
-//<iteration-statement>          -> while ( expression ) <compound-statement>
+//<iteration-statement>          -> while ( expression ) <statement>
 
 int iteration_statement()
 {
@@ -827,7 +827,7 @@ int iteration_statement()
 	return SYN_OK;
 }
 
-//<selection-statement>          -> if ( expression ) <compound-statement> else <compound-statement>
+//<selection-statement>          -> if ( expression ) <statement>  __else <statement__ 
 int selection_statement()
 {
 	instruction_item_t* selection = NULL;
