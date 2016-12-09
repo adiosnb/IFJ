@@ -53,7 +53,7 @@ int	isIdentifier()
 int	isTokenTypeSpecifier()
 {
 	return (getLastToken() == TOK_KEYWORD && (
-		getTokInt() == KW_VOID ||
+		//TODO: getTokInt() == KW_VOID ||
 		getTokInt() == KW_INT ||
 		getTokInt() == KW_DOUBLE||
 		getTokInt() == KW_STRING));
@@ -465,9 +465,9 @@ int type_specifier(int* out_type)
 		case KW_DOUBLE:
 			*out_type = DOUBLE;
 			break;
-		case KW_VOID:
-			*out_type = VOID;
-			break;
+		//case KW_VOID:
+		//	*out_type = VOID;
+		//	break;
 		case KW_STRING:
 			*out_type = STRING;
 			break;
@@ -561,7 +561,6 @@ int more_next(data_t* var)
 		int type = parse_expression(isSecondPass, false);
 
 		GEN("Verify if result of expr can be assigned. If do, generate assign");
-		//TODO var->type compare 
 		if(isSecondPass)
 		{
 			if(implicitConversion(type,var->type) == 0)
@@ -881,7 +880,7 @@ int selection_statement()
 	return SYN_ERR;
 }
 
-//<assign-statement>             -> identifier <next> ;
+//<assign-statement>             -> <identifier> <next> ;
 int assign_statement()
 {
 	getToken();
@@ -923,25 +922,6 @@ int compound_statement()
 	return SYN_OK;
 }
 
-
-//<block-item>                   -> <definition>
-//<block-item>                   -> <statement>
-int block_item()
-{
-	getToken();
-	if(isTokenKeyword(KW_STATIC) || isTokenTypeSpecifier())
-	{	
-		ungetToken(); 
-		return definition();
-	} else {
-		ungetToken();
-		int res = statement();
-		return res;
-			
-	}
-	return SYN_ERR;
-}
-
 //<block-items-list>             -> <block-item> <block-items-list>
 //<block-items-list>             -> eps
 int block_items_list()
@@ -956,7 +936,7 @@ int block_items_list()
 	}
 	ungetToken();
 	
-	if(block_item() == SYN_ERR)	
+	if(statement() == SYN_ERR)	
 		return SYN_ERR;
 
 	return block_items_list();
@@ -1066,7 +1046,7 @@ int argument_definition(data_t** fun)
 	return SYN_OK;
 }
 //<more-function-arguments>     -> eps
-//<more-function-arguments>     -> , <argument-declaration> <more-function-arguments> 
+//<more-function-arguments>     -> , <argument-definition> <more-function-arguments> 
 
 int more_function_arguments(data_t** fun)
 {
@@ -1284,7 +1264,49 @@ int function_body()
 }
 
 
-//<more-definition>             -> ( <function-parameters-list> ) { <function-body> }
+
+//<function-definition>         -> ( <function-parameters-list> ) { <function-body> }
+int function_definition(data_t * sym)
+{
+	if(getToken() != TOK_LEFT_PAR)
+		error_and_die(SYNTAX_ERROR,"Expected (");
+	// semantic hack
+	localVariablesCount = 0;
+	if(!isSecondPass)
+		fillFunctionData(sym,sym->type);
+
+	if(function_parameters_list(sym) == SYN_ERR)
+		return SYN_ERR;
+	if(!isSecondPass)
+	{
+		util_correctParamList(sym);
+	}
+	if(getToken() != TOK_RIGHT_PAR)
+		error_and_die(SYNTAX_ERROR,"Expected ')'");		
+		
+	if(getToken() != TOK_LEFT_BRACE)
+		error_and_die(SYNTAX_ERROR,"Expected '{'");		
+	if(isSecondPass)
+	{
+		GEN("Generate and save function label in instruction list.");
+		sym->data.data.instruction = create_and_add_instruction(insProgram, INST_LABEL,0,0,0);
+	}
+	if(function_body() == SYN_ERR)
+		return SYN_ERR;
+	if(getToken() != TOK_RIGHT_BRACE)
+		error_and_die(SYNTAX_ERROR,"Expected '}'");		
+	
+	GEN("Verify if RETURN was generated somewhere and clear LOCAL VARS");
+	if(isSecondPass)
+	{
+		create_and_add_instruction(insProgram, INST_RET, 0,0,0);	
+	}
+	return SYN_OK;
+
+}
+
+
+//<more-definition>             -> <function-definition> 
 //<more-definition>             -> ;
 //<more-definition>             -> = <expr> ;
 
@@ -1293,39 +1315,9 @@ int more_definition(data_t* sym)
 	switch(getToken())
 	{
 		case TOK_LEFT_PAR:
-			// semantic hack
-			localVariablesCount = 0;
-			if(!isSecondPass)
-				fillFunctionData(sym,sym->type);
-
-			if(function_parameters_list(sym) == SYN_ERR)
-				return SYN_ERR;
-			if(!isSecondPass)
-			{
-				util_correctParamList(sym);
-			}
-			if(getToken() != TOK_RIGHT_PAR)
-				error_and_die(SYNTAX_ERROR,"Expected ')'");		
-				
-			if(getToken() != TOK_LEFT_BRACE)
-				error_and_die(SYNTAX_ERROR,"Expected '{'");		
-			if(isSecondPass)
-			{
-				GEN("Generate and save function label in instruction list.");
-				sym->data.data.instruction = create_and_add_instruction(insProgram, INST_LABEL,0,0,0);
-			}
-			if(function_body() == SYN_ERR)
-				return SYN_ERR;
-			if(getToken() != TOK_RIGHT_BRACE)
-				error_and_die(SYNTAX_ERROR,"Expected '}'");		
-			
-			GEN("Verify if RETURN was generated somewhere and clear LOCAL VARS");
-			if(isSecondPass)
-			{
-				create_and_add_instruction(insProgram, INST_RET, 0,0,0);	
-			}
-			return SYN_OK;
-		break;
+			ungetToken();
+			return function_definition(sym);
+			break;
 		case TOK_ASSIGN:
 			parser_fun = NULL;
 			if(!isSecondPass)
@@ -1360,20 +1352,9 @@ int more_definition(data_t* sym)
 	
 }
 
-
-
-
-//<definition>                  -> static <type-specifier> simple-identifier <more-definition>
-
-int definition()
+// definition invariant
+data_t*  util_parseIdentifier(int symbolType)
 {
-	getToken();
-	if(!isTokenKeyword(KW_STATIC))
-		error_and_die(SYNTAX_ERROR,"Expected keyword 'static'");
-	int type;	
-	if(type_specifier(&type) == SYN_ERR)
-		error_and_die(SYNTAX_ERROR,"Expected type-specifier (int,double,String) or void\n");
-
 	if(getToken() != TOK_ID)
 		error_and_die(SYNTAX_ERROR,"Expected simple-id");
 
@@ -1383,19 +1364,46 @@ int definition()
 		if(stable_search_variadic(staticSym, 2,parser_class,getTokString()))
 			error_and_die(SEMANTIC_ERROR,"Static symbol %s.%s already declared",
 				parser_class, getTokString());
-		GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(type));
+		GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(symbolType));
 		data_t data;
-		fillStaticVarData(&data,type);
+		fillStaticVarData(&data,symbolType);
 		pData = stable_add_variadic(staticSym,data,2,parser_class, getTokString());
 	} else {
 		pData = stable_search_variadic(staticSym,2,parser_class,getTokString());		
 	}
 	parser_fun = getTokString();
-	return more_definition(pData);
+	return pData;
+}
+
+//<definition>                  -> void simple-identifier <function-definition>
+
+int definition_void()
+{
+	int type = VOID;
+	data_t* staticSymbol = util_parseIdentifier(type);
+	return function_definition(staticSymbol);
+}
+
+
+//<definition>                  -> static <type-specifier> simple-identifier <more-definition>
+
+int definition()
+{
+	getToken();
+	if(isTokenKeyword(KW_VOID))
+		return definition_void();
+
+	ungetToken();
+	int type;
+	if(type_specifier(&type) == SYN_ERR)
+		error_and_die(SYNTAX_ERROR,"Expected type-specifier (int,double,String) or void\n");
+
+	data_t* staticSymbol = util_parseIdentifier(type);
+	return more_definition(staticSymbol);
 }
 
 //<class-body>                  -> epsilon
-//<class-body>                  -> <definition> <class-body> 
+//<class-body>                  -> static <definition> <class-body> 
 int class_body()
 {
 	if(getToken() == TOK_RIGHT_BRACE)
@@ -1403,7 +1411,8 @@ int class_body()
 		ungetToken();
 		return SYN_OK;
 	}
-	ungetToken();
+	if(!isTokenKeyword(KW_STATIC))
+		error_and_die(SYNTAX_ERROR,"Expected keyword 'static' in class body.");
 	if(definition() == SYN_ERR || class_body() == SYN_ERR)
 		return SYN_ERR;
 

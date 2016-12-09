@@ -16,12 +16,15 @@
 <class-definition>            -> class simple-identifier { <class-body> }
 
 <class-body>                  -> epsilon
-<class-body>                  -> <definition> <class-body> 
+<class-body>                  -> static <definition> <class-body> 
 
-<definition>                  -> static <type-specifier> simple-identifier <more-definition>
-<more-definition>             -> ( <function-parameters-list> ) { <function-body> }
+<definition>                  -> <type-specifier> simple-identifier <more-definition>
+<definition>                  -> void simple-identifier <function-definition>
+<more-definition>             -> <function-definition>
 <more-definition>             -> ;
 <more-definition>             -> = <expr> ;
+
+<function-definition>         -> ( <function-parameters-list> ) { <function-body> }
 
 <function-body>               -> <statement> <function-body>
 <function-body>               -> <local-definition> <function-body>
@@ -78,10 +81,9 @@
 <term>                   -> decimal-constant
 <term>                   -> floating-point-constant
 
-<type-specifier>               -> void
 <type-specifier>               -> double
 <type-specifier>               -> int
 <type-specifier>               -> String
 
-<expr>                         -> epsilon
 <expr>                         -> expression
+<expr>			-> expression
