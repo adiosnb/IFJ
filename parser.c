@@ -910,25 +910,6 @@ int compound_statement()
 	return SYN_OK;
 }
 
-
-//<block-item>                   -> <definition>
-//<block-item>                   -> <statement>
-int block_item()
-{
-	getToken();
-	if(isTokenKeyword(KW_STATIC) || isTokenTypeSpecifier())
-	{	
-		ungetToken(); 
-		return definition();
-	} else {
-		ungetToken();
-		int res = statement();
-		return res;
-			
-	}
-	return SYN_ERR;
-}
-
 //<block-items-list>             -> <block-item> <block-items-list>
 //<block-items-list>             -> eps
 int block_items_list()
@@ -943,7 +924,7 @@ int block_items_list()
 	}
 	ungetToken();
 	
-	if(block_item() == SYN_ERR)	
+	if(statement() == SYN_ERR)	
 		return SYN_ERR;
 
 	return block_items_list();
@@ -1053,7 +1034,7 @@ int argument_definition(data_t** fun)
 	return SYN_OK;
 }
 //<more-function-arguments>     -> eps
-//<more-function-arguments>     -> , <argument-declaration> <more-function-arguments> 
+//<more-function-arguments>     -> , <argument-definition> <more-function-arguments> 
 
 int more_function_arguments(data_t** fun)
 {
