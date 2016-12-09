@@ -20,22 +20,23 @@
 #include "str.h"
 
 
+// dynamic strings used for scanning long entities (identifier names, numbers)
 extern string_t first, second, literal;
 
-// As different classes require different data, tokens carry an union
-// allowing all neccessary kinds of data
+// Defines possible types of attributes, carried by a token
 typedef union	{
 	char*	string;		// for ID/keywords
 	double	real;		// for constant
 	int	integer;	// for constant
-	char	op;		// for operator
 } t_tokenData;
 
+// Structed, used to carry lexical unit together with its attribute (data)
 typedef struct {
-	// the lexical type of token (identifier, keyword, etc)	
 	unsigned int 	type;
 	t_tokenData	data;	
+	// line specifies token position in source code
 	int		line;
+	// character specifies token position in source code
 	int		character;
 } t_token;
 
@@ -46,7 +47,7 @@ extern t_token	g_lastToken;
 /*---------------------------------------------------------------------------*/
 //	Scanner enums	
 /*---------------------------------------------------------------------------*/
-// Types of TOK_KEYWORD
+// Attributes(subtypes) of TOK_KEYWORD
 enum keywords {
 	KW_BOOL,	// boolean
 	KW_BREAK,	// break
@@ -96,9 +97,9 @@ enum	tokenTypes {
 	TOK_LEFT_BRACE,		// {
 	TOK_RIGHT_BRACE,	// } 
 	TOK_ASSIGN,		// =
-	TOK_EOF,
-	TOK_ERROR
-	};		// end-of-file
+	TOK_EOF, 		// EOF
+	TOK_ERROR		// pseudo-token to detect multiple EOFs
+	};		
 
 
 /*---------------------------------------------------------------------------*/
