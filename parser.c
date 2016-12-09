@@ -25,23 +25,53 @@
 #include "op-parser.h"
 
 
+// global instance of Table of symbols
 stab_t	*staticSym = NULL;
+// instruction tape carrying user's program
 instruction_list_t* insProgram	= NULL;
+// instruction tape used to inicialize static vars
 instruction_list_t* insInit	= NULL;
 
+// global flag to detect the order of pass
 int isSecondPass = 0;
 
+// global name of class we are wrapped in
 char*	parser_class = NULL;
+// global name of function we are parsing in
 char*	parser_fun = NULL;
+
+// global counter used to compare lexical order of parsing symbol
 unsigned int current_rank = 0;
 
+// global counter to determine the count of local variables
+// and is neccessary to set correct stack offset of local variables
 int	localVariablesCount = 0;
+
+/******************************************************************************
+ 			HEADERS
+******************************************************************************/
+
+int implicitConversion(int src, int dest);
+int class_definition_list();
+int type_specifier(int* type);
+int iteration_statement();
+int jump_statement();
+int definition();
+int block_items_list();
+int compound_statement();
+int function_parameters_list(data_t*);
+int statement();
+int parameter_definition();
+int function_arguments_list(data_t**);
+int builtin_print();
+void generateStore(data_t* dest, data_t* src);
+
 /******************************************************************************
  			SYNTACTIC UTILS
 ******************************************************************************/
-int	isTokenKeyword(int kw)
+int	isTokenKeyword(int desiredKeyword)
 {
-	return (getLastToken() == TOK_KEYWORD && getTokInt() == kw);
+	return (getLastToken() == TOK_KEYWORD && getTokInt() == desiredKeyword);
 }
 
 int	isIdentifier()
@@ -53,7 +83,6 @@ int	isIdentifier()
 int	isTokenTypeSpecifier()
 {
 	return (getLastToken() == TOK_KEYWORD && (
-		//TODO: getTokInt() == KW_VOID ||
 		getTokInt() == KW_INT ||
 		getTokInt() == KW_DOUBLE||
 		getTokInt() == KW_STRING));
@@ -96,9 +125,11 @@ int parse_static_expr(data_t* sym, bool generate)
 /******************************************************************************
  			SEMANTIC UTILS
 ******************************************************************************/
+// Hack to ensure detection of uninicialized static symbols
+// -> change the type of all uninicialized symbols (required by intepreter)
 void fixStaticVars()
 {
-	stab_element_t *current, *next;
+	stab_element_t *current;
 	if (staticSym!= NULL)
 	{
 		for (unsigned i = 0; i < staticSym->stab_size; i++) {
@@ -127,10 +158,11 @@ void fixStaticVars()
         }
 }
 
-// 0 = fail
+// Verify if types are compatible
 // Allowed conversions:
 // type -> same type
 // int -> double
+// 0 = fail
 int implicitConversion(int src, int dest)
 {
 	if(src == dest)
@@ -142,9 +174,10 @@ int implicitConversion(int src, int dest)
 	return 0;
 }
 
-// Create and return 
+// Return ON_TOP symbol, used in interpret codes to access the top of stack
 argument_var_t* getStackTop()
 {
+	// create the symbol just once and return its handle anytime afterwards
 	static argument_var_t* top = NULL;
 	if(top)
 		return top;
@@ -159,7 +192,8 @@ argument_var_t* getStackTop()
 	return top;
 }
 
-// Generates a move operation.
+// Generates a STORE operation (assign)
+// assign SRC to DEST
 // src = if src is NULL, the top of stack is taken into account and POP is generated
 void generateStore(data_t* dest, data_t* src)
 {
@@ -170,6 +204,7 @@ void generateStore(data_t* dest, data_t* src)
 		create_and_add_instruction(insProgram, INST_POP,0,0,0);
 }
 
+// Generates a code which will call Main.run
 void generateIntro()
 {
 	data_t* run = stable_search_variadic(staticSym, 1, "Main.run");
@@ -180,6 +215,7 @@ void generateIntro()
 		(argument_var_t*) 0x6);
 	create_and_add_instruction(insProgram, INST_HALT, 0,0,0);
 }
+
 int isSymbolFunction(data_t* sym)
 {
 	if(sym != NULL)
@@ -187,15 +223,22 @@ int isSymbolFunction(data_t* sym)
 			return 1;
 	return 0;
 }
+
+// Generates a sequence of code which will call either user function
+// or built-in one, and clean the stack afterwards
 void generateFunctionCall(data_t* func,data_t* retSym)
 {
 	// memory address to receive the return value
 	argument_var_t* retVal = (retSym != NULL)?(&retSym->data):NULL;
 	argument_var_t* callType = NULL; 
+	
+	// if VOID function is specified, then throw the return value away after return
 	if(func->type == VOID)
 		callType = (argument_var_t*) VOID;
 	if(!func)
 		return;
+
+	// get the type of called function
 	switch(func->data.data.i)
 	{
 		case BUILTIN_READ:
@@ -231,16 +274,17 @@ void generateFunctionCall(data_t* func,data_t* retSym)
 		default:
 			create_and_add_instruction(insProgram, INST_CALL, &func->data,retVal,callType);
 	}
-	// generate stack POPs
+	// now generates the stack clean up
 	data_t* ptrParam = func->next_param;
 	while(ptrParam)
 	{
+		// for each formal parameter in function definition, generate a pop
 		create_and_add_instruction(insProgram, INST_POP, 0,0,0);
 		ptrParam = ptrParam->next_param;
 	}
 }
 
-
+// Sets up a default class symbol data
 void fillClassData(data_t* data)
 {
 	data->is_inicialized = 1;
@@ -249,6 +293,7 @@ void fillClassData(data_t* data)
 	data->data.data.i = PLACEHOLDER_CLASS;
 }
 
+// Sets up a default function symbol data
 void fillFunctionData(data_t* data,int type)
 {
 	data->is_inicialized = 1;
@@ -257,6 +302,8 @@ void fillFunctionData(data_t* data,int type)
 	data->data.data.instruction = NULL; 
 	data->next_param = NULL;
 }
+
+// Sets up a default static  symbol data
 void fillStaticVarData(data_t* data,int type)
 {
 	data->type = type;
@@ -266,6 +313,7 @@ void fillStaticVarData(data_t* data,int type)
 	data->next_param = NULL;
 }
 
+// Initialize symbol's data if necessary
 void inicializeData(data_t* data)
 {
 	if(data->type == STRING)
@@ -274,6 +322,7 @@ void inicializeData(data_t* data)
 	}
 }
 
+// Sets up a default local variable with position 'stackPos' at the stack
 void fillLocalVarData(data_t* data,int type, int stackPos)
 {
 	data->is_inicialized = 1;
@@ -283,10 +332,12 @@ void fillLocalVarData(data_t* data,int type, int stackPos)
 	data->next_param = NULL;
 }
 
+// This utility function creates an unique constat in Table of symbols
 data_t* createConstant(int type, int iVal, double dVal, char* cVal)
 {
 	static int constNum = 0;
 	char buffer[255];
+	// create a new unique symbol name for constant
 	snprintf(buffer,254,"%d",constNum++);
 
 	data_t const_data;
@@ -310,6 +361,8 @@ data_t* createConstant(int type, int iVal, double dVal, char* cVal)
 	return stable_add_variadic(staticSym, const_data,2, "ifj16.const", buffer);
 }
 
+// Generates an unique label in table of symbols, append it into instruction tape 
+// and returns a handle
 data_t* generateLabel(instruction_list_t* list)
 {
 	static int labelCounter = 0;
@@ -324,6 +377,9 @@ data_t* generateLabel(instruction_list_t* list)
 	snprintf(buff,99,"%u", labelCounter++);
 	return stable_add_variadic(staticSym,dataLbl, 3, "ifj16", "labels", buff);
 }
+
+// Fill the Table of symbols with signatures of builtin functions and with
+// reserved class 'ifj16'
 void addBuiltInToTable(stab_t* table)
 {
 	data_t data, *ptr;
@@ -402,7 +458,7 @@ void addBuiltInToTable(stab_t* table)
 
 
 }
-
+// A debug utility used to print data type
 char* type2str(int type)
 {
 	static char* str[] = {"INTEGER","DOUBLE","STRING",NULL,NULL,NULL,"VOID"};
@@ -410,6 +466,9 @@ char* type2str(int type)
 }
 
 // Set correct stack positions for function formal parameters
+// Note: Pascal-like calling convention is utilized in our project. Thus, 
+// in order to set correct position, one must wait untill all params are
+// parsed and then set correct stack offsets to all parameters
 void util_correctParamList(data_t* func)
 {
 	data_t* ptr = func->next_param;
@@ -431,17 +490,9 @@ void util_correctParamList(data_t* func)
 	}
 }
 
-int class_definition_list();
-int type_specifier(int* type);
-int iteration_statement();
-int jump_statement();
-int definition();
-int block_items_list();
-int compound_statement();
-int function_parameters_list(data_t*);
-int statement();
-int parameter_definition();
-int function_arguments_list(data_t**);
+///////////////////////////////////////////////////////////////////////////////
+// Parsing functions 
+///////////////////////////////////////////////////////////////////////////////
 
 /*<expr>                         -> expression
 <expr>                         -> eps
@@ -465,9 +516,6 @@ int type_specifier(int* out_type)
 		case KW_DOUBLE:
 			*out_type = DOUBLE;
 			break;
-		//case KW_VOID:
-		//	*out_type = VOID;
-		//	break;
 		case KW_STRING:
 			*out_type = STRING;
 			break;
@@ -475,32 +523,6 @@ int type_specifier(int* out_type)
 	return SYN_OK;	
 }
 
-/*
-<identifier>                   -> floating-point-constant
-<identifier>                   -> decimal-constant
-<identifier>                   -> fully-qualified-identifier
-<identifier>                   -> simple-identifier
-*/
-
-int expression()
-{
-	while(1)
-	{
-		int state = getToken();
-		switch(state)
-		{
-			case TOK_DELIM:
-			case TOK_RIGHT_PAR:
-				ungetToken();
-				return SYN_OK;
-			default:
-				break;
-		}
-	}
-	return SYN_OK;
-}
-
-int builtin_print();
 
 //<more-next>                    -> expression 
 //<more-next>                    -> <identifier> ( <function-parameters-list> ) 
@@ -518,7 +540,7 @@ int more_next(data_t* var)
 		{
 			getToken();
 			builtin_print();
-			// NOTE: it's a semantic error in any case, just check syntax
+			// NOTE: it's a semantic error in any case, just check out the syntax
 			error_and_die(RUNTIME_UNINITIALIZED,"Assigned void function to variable.");
 		} else 
 		{
@@ -560,7 +582,7 @@ int more_next(data_t* var)
 		ungetToken();
 		int type = parse_expression(isSecondPass, false);
 
-		GEN("Verify if result of expr can be assigned. If do, generate assign");
+		//GEN("Verify if result of expr can be assigned. If do, generate assign");
 		if(isSecondPass)
 		{
 			if(implicitConversion(type,var->type) == 0)
@@ -673,7 +695,7 @@ int next(data_t* symbol,char* id)
 			{
 				return builtin_print();
 			} else {
-				GEN("Check if symbol '%s' is defined", getTokString());
+				//GEN("Check if symbol '%s' is defined", getTokString());
 			
 				if(isSecondPass)
 				{
@@ -688,7 +710,7 @@ int next(data_t* symbol,char* id)
 					return SYN_ERR;	
 				if(dt != NULL)
 					error_and_die(SEMANTIC_TYPE_ERROR,"Too few arguments in funciton call [%s]",id);
-				GEN("Generate a function call INSTR");
+				//GEN("Generate a function call INSTR");
 				if(getToken() != TOK_RIGHT_PAR)
 					error_and_die(SYNTAX_ERROR,"Expected )");
 				if(getToken() != TOK_DELIM)
@@ -753,7 +775,7 @@ int jump_statement()
 	if(getToken() != TOK_DELIM)
 		error_and_die(SYNTAX_ERROR,"Expected ; at the end of return statement.");
 
-	GEN("Generate RETURN instruction and expression");
+	//GEN("Generate RETURN instruction and expression");
 
 	return SYN_OK;
 
@@ -770,7 +792,7 @@ int iteration_statement()
 	if(!isTokenKeyword(KW_WHILE))
 		error_and_die(SYNTAX_ERROR,"Expected return");
 
-	GEN("Generate WHILE.test label"); 
+	//GEN("Generate WHILE.test label"); 
 	if(isSecondPass)
 	{
 		lblTest= generateLabel(insProgram);
@@ -778,7 +800,7 @@ int iteration_statement()
 	if(getToken() != TOK_LEFT_PAR)
 		error_and_die(SYNTAX_ERROR,"Expected (");
 
-	int type = parse_expression(isSecondPass, true);
+	parse_expression(isSecondPass, true);
 
 	if(getToken() != TOK_RIGHT_PAR)
 		error_and_die(SYNTAX_ERROR,"Expected )");
@@ -787,13 +809,13 @@ int iteration_statement()
 	{
 		skipJump = create_and_add_instruction(insProgram, INST_JZ,0,getStackTop(),0);
         create_and_add_instruction(insProgram, INST_POP,0,0,0);
-		GEN("Generate COMPARE and JUMP test"); 
+		//GEN("Generate COMPARE and JUMP test"); 
 	}
 	if(statement() == SYN_ERR)
 		return SYN_ERR;
 	if(isSecondPass)
 	{
-		GEN("Generate WHILE_SKIP label and altern CMP jmp addres");
+		//GEN("Generate WHILE_SKIP label and altern CMP jmp addres");
 		create_and_add_instruction(insProgram, INST_JMP, &lblTest->data,0,0);
 		data_t* lblSkip = generateLabel(insProgram);
         create_and_add_instruction(insProgram, INST_POP,0,0,0);
@@ -819,11 +841,11 @@ int selection_statement()
 		if(getToken() != TOK_LEFT_PAR)
 			error_and_die(SYNTAX_ERROR,"Expected (");
 		
-		int type = parse_expression(isSecondPass, true);
+		parse_expression(isSecondPass, true);
 
 		if(isSecondPass)
 		{
-			GEN("Generate a CMP and JUMP.");
+			//GEN("Generate a CMP and JUMP.");
 			selection = create_and_add_instruction(insProgram, INST_JZ, 0,getStackTop(),0);
             create_and_add_instruction(insProgram, INST_POP,0,0,0);
         }
@@ -836,10 +858,10 @@ int selection_statement()
 
 		if(isSecondPass)
 		{
-			GEN("Generate a JMP.");
+			//GEN("Generate a JMP.");
 			// jump to the end of IF-ELSE
 			endJmp = create_and_add_instruction(insProgram, INST_JMP, 0,0,0);
-			GEN("Generate a IF_ELSE label and altern JMP");
+			//GEN("Generate a IF_ELSE label and altern JMP");
 			lblElse = generateLabel(insProgram);
 			// altern the jmp after condition to jmp to ELSE branch
 			selection->instruction.addr1 = &lblElse->data;
@@ -868,7 +890,7 @@ int selection_statement()
 		
 		if(isSecondPass)
 		{
-			GEN("Generate a IF_SKIP label and altern JMP.");
+			//GEN("Generate a IF_SKIP label and altern JMP.");
 			lblSkip = generateLabel(insProgram);
 			// altern JMP after first compound to jmp to the end
 			endJmp->instruction.addr1 = &lblSkip->data;
@@ -888,7 +910,7 @@ int assign_statement()
 	{	
 		char* assign_id = getTokString();
 		data_t* symbol = NULL;
-		GEN("Check if variable '%s'  is defined", getTokString());
+		//GEN("Check if variable '%s'  is defined", getTokString());
 
 		if(isSecondPass)
 		{
@@ -1147,7 +1169,7 @@ int parameter_definition()
 	{
 		if(stable_search_variadic(staticSym, 3, parser_class, parser_fun, getTokString()))
 			error_and_die(SEMANTIC_ERROR,"Formal parameter '%s' already declared.", getTokString());
-		GEN(">>> Add parameter '%s':'%s'",getTokString(),type2str(type));
+		//GEN(">>> Add parameter '%s':'%s'",getTokString(),type2str(type));
 		// create a new symbol	
 		data_t data;
 		fillLocalVarData(&data,type, ++param_count);
@@ -1232,7 +1254,7 @@ int local_definition()
 		error_and_die(SYNTAX_ERROR,"Expected ; in local definition");
 
 	
-	GEN("Local variable '%s' with type: %s",var,type2str(type));
+	//GEN("Local variable '%s' with type: %s",var,type2str(type));
 	return SYN_OK;
 }
 
@@ -1288,7 +1310,7 @@ int function_definition(data_t * sym)
 		error_and_die(SYNTAX_ERROR,"Expected '{'");		
 	if(isSecondPass)
 	{
-		GEN("Generate and save function label in instruction list.");
+		//GEN("Generate and save function label in instruction list.");
 		sym->data.data.instruction = create_and_add_instruction(insProgram, INST_LABEL,0,0,0);
 	}
 	if(function_body() == SYN_ERR)
@@ -1296,7 +1318,7 @@ int function_definition(data_t * sym)
 	if(getToken() != TOK_RIGHT_BRACE)
 		error_and_die(SYNTAX_ERROR,"Expected '}'");		
 	
-	GEN("Verify if RETURN was generated somewhere and clear LOCAL VARS");
+	//GEN("Verify if RETURN was generated somewhere and clear LOCAL VARS");
 	if(isSecondPass)
 	{
 		create_and_add_instruction(insProgram, INST_RET, 0,0,0);	
@@ -1327,10 +1349,10 @@ int more_definition(data_t* sym)
 					error_and_die(SYNTAX_ERROR,"Void variable definition");
 			}
 			
-			GEN("Assign value");
+			//GEN("Assign value");
 
 			// rank is used to detect the lexical order of static variables
-			int type = parse_static_expr(sym,isSecondPass);
+			 parse_static_expr(sym,isSecondPass);
 
 			
 			if(getToken() != TOK_DELIM)
@@ -1364,7 +1386,7 @@ data_t*  util_parseIdentifier(int symbolType)
 		if(stable_search_variadic(staticSym, 2,parser_class,getTokString()))
 			error_and_die(SEMANTIC_ERROR,"Static symbol %s.%s already declared",
 				parser_class, getTokString());
-		GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(symbolType));
+		//GEN("Create a new static symbol '%s' and set its type to '%s'",getTokString(),type2str(symbolType));
 		data_t data;
 		fillStaticVarData(&data,symbolType);
 		pData = stable_add_variadic(staticSym,data,2,parser_class, getTokString());
@@ -1434,12 +1456,13 @@ int class_definition()
 	// if it's the first pass
 	if(!isSecondPass)
 	{
-		GEN("Verify if class '%s' was not declared before. If not, add a new symbol into table", getTokString());
+		//GEN("Verify if class '%s' was not declared before. If not, add a new symbol into table", getTokString());
 		if(stable_get_var(staticSym, getTokString()) != NULL)
 		{
 			// semantic error, class redefinition	
 			error_and_die(SEMANTIC_ERROR,"Class redefinition");
 		} else {
+			// append new symbol 'class_name' to Table of Symbols
 			data_t data;
 			fillClassData(&data);
 			stable_add_var(staticSym, getTokString(),data);
@@ -1463,6 +1486,7 @@ int class_definition_list()
 	int result = getToken();
 	if(result == TOK_EOF || result == TOK_ERROR)
 	{
+		// apply epsilon
 		ungetToken();
 		return SYN_OK;
 	}
@@ -1484,47 +1508,6 @@ int source_program()
 	return res;
 }
 
-
-int main(int argc, char ** argv)
-{
-	// if no INPUT file has been specified
-	if(argc < 2)
-	{
-		error_and_die(INTERNAL_ERROR,"USAGE: filename");
-	}
-	if(scanner_openFile(argv[1]))
-	{
-		parser_init();
-		// first pass of syntactic analyzer
-		source_program();
-		scanner_rewind();
-		GEN("--------------- SECOND PASS ---------------");
-		// second pass
-		generateIntro();
-		source_program();
-
-		data_t* run = stable_search_variadic(staticSym,1, "Main.run");
-		if(!isSymbolFunction(run))
-			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
-		if(run->type != VOID || run->next_param != NULL)
-			error_and_die(SEMANTIC_ERROR, "Main.run must be void-type");
-
-		// HACK: fix static vars
-		fixStaticVars();
-#ifndef NOINTERPRET
-		// run initialization
-		interpret(insInit, staticSym);
-		// run it
-		interpret(insProgram, staticSym);
-#endif
-		error_and_die(SUCCESS_ERROR, "OK");
-		return 0;
-	}
-	error_and_die(INTERNAL_ERROR,"Failed to open %s",argv[1]);
-	return 1;
-}
-
-
 void parser_init()
 {
 	// inicialize & fill default data
@@ -1533,21 +1516,62 @@ void parser_init()
 	staticSym = stable_init(1024);
 	addBuiltInToTable(staticSym);
 
-
 }
+
+
 void parser_clean()
 {
 #ifdef DEBUG
-	if(staticSym)
+	if (staticSym)
 		stable_print(staticSym);
-	if(insProgram)
+	if (insProgram)
 		inst_list_print(insProgram);
-#endif			
-	
-	if(insProgram)
-		dest_inst_list(&insProgram);	
-	if(insInit)
-		dest_inst_list(&insInit);	
-	if(staticSym)
+#endif
+
+	if (insProgram)
+		dest_inst_list(&insProgram);
+	if (insInit)
+		dest_inst_list(&insInit);
+	if (staticSym)
 		stable_destroy(&staticSym);
+}
+
+int main(int argc, char **argv)
+{
+	// if no INPUT file has been specified
+	if (argc < 2) {
+		error_and_die(INTERNAL_ERROR, "USAGE: filename");
+	}
+	if (scanner_openFile(argv[1])) {
+		parser_init();
+		// the first pass which gathers static symbols
+		source_program();
+		// generate instructions for calling main
+		generateIntro();
+		// process the code second time and this time generate code
+		scanner_rewind();
+		source_program();
+
+		// check if Main.run is over there
+		data_t *run = stable_search_variadic(staticSym, 1, "Main.run");
+		if (!isSymbolFunction(run))
+			error_and_die(SEMANTIC_ERROR, "Missing 'Main.run'");
+		if (run->type != VOID || run->next_param != NULL)
+			error_and_die(SEMANTIC_ERROR,
+				      "Main.run must be void-type");
+
+		// HACK: set all uninitialized static vars to correct type to 
+		// ensure detection in interpret
+		fixStaticVars();
+#ifndef NOINTERPRET
+		// run initialization of static symbols
+		interpret(insInit, staticSym);
+		// run the user program 
+		interpret(insProgram, staticSym);
+#endif
+		error_and_die(SUCCESS_ERROR, "OK");
+		return 0;
+	}
+	error_and_die(INTERNAL_ERROR, "Failed to open %s", argv[1]);
+	return 1;
 }

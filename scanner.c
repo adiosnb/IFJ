@@ -20,6 +20,9 @@
 #include "str.h"
 #include "error.h"
 
+// One of ASCII characters to be ignored
+#define CARRIAGE_RETURN 0xD
+
 FILE*	fHandle = NULL;
 string_t first, second, literal;
 
@@ -32,7 +35,7 @@ typedef struct listTokenElement
 } t_tokenElem;
 
 
-// single linked list of tokens
+// single linked-list used to store processed tokens
 t_tokenElem* tokenList = NULL;
 
 // pointer to current token
@@ -45,7 +48,9 @@ t_token	g_lastToken;
 int lines = 0, chars = -1;
 
 
+///////////////////////////////////////////////////////////////////////////////
 // Utility func
+///////////////////////////////////////////////////////////////////////////////
 
 void freeToken(t_token* tok)
 {
@@ -58,7 +63,7 @@ void freeToken(t_token* tok)
 	}
 }
 
-// scanner get char
+// Wrapped sgetc which enhances original getc to support file position
 int sgetc(FILE* f)
 {
 	int result = fgetc(f);
@@ -71,7 +76,7 @@ int sgetc(FILE* f)
 	return result;	
 }
 
-// scanner sungetc
+// Wrapped sungetc which enhances original ungetc to support file position
 int sungetc(int c, FILE* f)
 {
 	ungetc(c,f);
@@ -79,10 +84,13 @@ int sungetc(int c, FILE* f)
 	return 0;
 }
 
-/* Public functions */
+///////////////////////////////////////////////////////////////////////////////
+// Utility func
+///////////////////////////////////////////////////////////////////////////////
 
 int	scanner_openFile(char* fileName)
 {
+	// try to open source file and store its handle to global-var
 	fHandle = fopen(fileName,"r");	
 	if(fHandle)
 		return 1;
@@ -96,13 +104,13 @@ int	scanner_closeFile()
 	str_destroy(&second);
 	str_destroy(&literal);
 
-	// if file is opened
+	// if source file is still opened
 	if(fHandle)
 	{
 		fclose(fHandle);
 		fHandle = NULL;
 	}	
-	// clean single linked list
+	// dispose single linked list
 	t_tokenElem *ptr = tokenList,*helpptr = tokenList;
 	while(ptr)
 	{
@@ -124,6 +132,7 @@ int	scanner_rewind()
 	return 0;
 }
 
+// set token pointer to the previous one if possible or report error
 int	ungetToken()
 {
 	if(currentToken)
@@ -196,6 +205,7 @@ char*	createString(const char* str)
 	return NULL;
 }
 
+// Utility function for fully-specified identifiers
 char*	createString2(const char* str, const char* second)
 {
 	char* nstr = malloc(strlen(str)+strlen(second)+2);
@@ -211,7 +221,7 @@ char*	createString2(const char* str, const char* second)
 // processes text literals such as "text" or "tex\t"
 int	process_literal()
 {
-    str_reinit(&literal);
+	str_reinit(&literal);
 	sgetc(fHandle);
 	// a normal state is used when awaiting regular ASCII input
 	// SPECIAL state is reached after receiving '\' 
@@ -253,15 +263,15 @@ int	process_literal()
 						break;
 					case '\\':
 					case '\"':
-                        ADD_CHAR(literal,c);
+                        			ADD_CHAR(literal,c);
 						state = NORMAL;
 						break;
 					case 'n':
-                        ADD_CHAR(literal,'\n');
+                        			ADD_CHAR(literal,'\n');
 						state = NORMAL;
 						break;
 					case 't':
-                        ADD_CHAR(literal,'\t');
+                        			ADD_CHAR(literal,'\t');
 						state = NORMAL;
 						break;
 					default:
@@ -312,9 +322,6 @@ int	process_literal()
 }
 
 // Utility function
-// TODO: implement a faster way of searching for strings (tree)
-//
-
 // Returns 1 if ID is an keyword (type of keyword is returned in 2nd param)
 // Returns 0 otherwise
 int	isKeyword(const char* str,int* typeOfKeyword)
@@ -339,9 +346,6 @@ int	process_identifier()
 	str_reinit(&second);
 
 	int c;
-	// nonAlpha is toggled to 1 if at least one character is non-alphanumerical
-	// -> useful for skipping keyword comparing 
-	int isNonAlpha = 0;
 
 	enum states {FIRST,SECOND};
 	int state = FIRST;
@@ -352,14 +356,11 @@ int	process_identifier()
 		// if character fullfills ID requirements 
 		if(res || c == '$' || c == '_')
 		{
-			isNonAlpha |= (res == 0);
 		
 			// store the incoming char into either first or second part of ID
 			if(state == FIRST) {
-				//ADD_CHAR(first, c);
 				str_add_char(&first,c);
 			}else {
-				//ADD_CHAR(second,c);}
 				str_add_char(&second, c);
 			}
 		} else {
@@ -386,8 +387,10 @@ int	process_identifier()
 	}
 
 	if (first.len) {
+		// if we ended up in state FIRST, it can be a simple ID or keyword
 		if (state == FIRST){
 			int typeOfKeyword;
+			// if it is a real keyword
 			if(isKeyword(first.str,&typeOfKeyword))
 			{
 				g_lastToken.type = TOK_KEYWORD;
@@ -424,7 +427,6 @@ int	process_identifier()
 
 int	process_number()
 {
-	//TODO: a question: is overflow/underflow taken as a scanner error ?
 	str_reinit(&first);
 	int c; 
 
@@ -437,13 +439,14 @@ int	process_number()
 			case INT:
 				if(isdigit(c) || tolower(c) == 'e' || c == '.')
 				{
-					//buff[i++] = c;
 					ADD_CHAR(first,c);
+					// on '.', move to REAL lexem
 					if(c == '.')
 						state = DOT;
 					else if(tolower(c) == 'e')
 						state = EXP;
 				} else {
+					// on anything else, it's an integer
 					sungetc(c,fHandle);
 					g_lastToken.type = TOK_CONST;
 					g_lastToken.data.integer = atoi(first.str);
@@ -453,7 +456,6 @@ int	process_number()
 			case DOT:
 				if(isdigit(c))
 				{
-					//buff[i++] = c;
 					ADD_CHAR(first,c);
 					state = DOUBLE;
 				} else {
@@ -472,7 +474,6 @@ int	process_number()
 					g_lastToken.data.real= atof(first.str);
 					return TOK_DOUBLECONST;
 				} else {
-					//buff[i++] = c;
 					ADD_CHAR(first,c);
 					if(tolower(c) == 'e')
 						state = EXP;
@@ -481,12 +482,10 @@ int	process_number()
 			case EXP:
 				if(c == '+' || c == '-')
 				{
-					//buff[i++] = c;
 					ADD_CHAR(first,c);
 					state = EXP_SIGN;
 				} else if(isdigit(c))
 				{
-					//buff[i++] = c;
 					ADD_CHAR(first,c);
 					state = EXP_RADIX;
 				} else {
@@ -498,7 +497,6 @@ int	process_number()
 			case EXP_SIGN:
 				if(isdigit(c))
 				{
-					//buff[i++] = c;
 					ADD_CHAR(first,c);
 					state = EXP_RADIX;
 				} else {
@@ -513,7 +511,6 @@ int	process_number()
 					ADD_CHAR(first,c);
 				} else 
 				{
-					//new float
 					sungetc(c,fHandle);
 					g_lastToken.type = TOK_DOUBLECONST;
 					g_lastToken.data.real= atof(first.str);
@@ -524,6 +521,8 @@ int	process_number()
 		}
 	}
 
+	// when  EOF has occured during the process
+	
 	if (first.len) {
 		switch (state){
 			case INT:
@@ -569,14 +568,12 @@ int	process_operator(char op)
 			errorLeave(LEXICAL_ERROR);
 			return TOK_ERROR;
 	}
-	g_lastToken.data.op= op;
 	return g_lastToken.type;
 }
 
 int	process_relation(char c)
 {
 	int nextc = sgetc(fHandle);
-	// TODO: what exactly should we do upon receiving an EOF ?
 	if(nextc != EOF)
 	{
 		switch(c)
@@ -627,7 +624,7 @@ int	process_relation(char c)
 	errorLeave(LEXICAL_ERROR);
 	return TOK_ERROR;
 }
-// maps ASCII symbols to token types
+// Utility: maps ASCII symbols to token types
 int	process_symbol(char op)
 {
 	int type = 0;
@@ -660,7 +657,7 @@ int	process_symbol(char op)
 	return g_lastToken.type;
 }
 
-// isBlock 	if func should process block comment
+// parameter isBlock -> if func should process block comment
 int	process_comments(int isBlock)
 {
 	// These states are used while waiting for a sequence to terminate
@@ -705,6 +702,8 @@ int	process_comments(int isBlock)
 	return TOK_ERROR;	
 }
 
+// This function implements FSM as described in documentation. 
+// In case the new token is processed correctly, g_lastToken structure is updated
 int	intern_getToken()
 {
 	// let's get a character from source code's stream
@@ -717,6 +716,7 @@ int	intern_getToken()
 		// or report error (multiple EOF tokens reached)
 		if(c == EOF)
 			break;
+		// decide which type of lexem starts with 'c'
 		switch(c)
 		{
 			// literals start with "
@@ -728,15 +728,16 @@ int	intern_getToken()
 			case ' ':
 			case '\t': 
 			case '\n':
-			case 0xD:
+			case CARRIAGE_RETURN:
 				break;
-			// start of commentaries or / operator
+			// start of commentaries or '/' operator
 			case '/':
 				c = sgetc(fHandle);
 				switch(c)
 				{
 					case EOF:
 						break;
+					// // or /* leads to commentary
 					case '/':
 					case '*':
 						process_comments(c == '*');
@@ -752,6 +753,7 @@ int	intern_getToken()
 			case '-':
 			case '*':
 				return process_operator(c);	
+			// separators, delimeters, etc.
 			case '{':
 			case '}':
 			case '(':
@@ -759,6 +761,7 @@ int	intern_getToken()
 			case ';':
 			case ',':
 				return process_symbol(c);
+			// <=, <, >, >=, ==, != 
 			case '<':
 			case '>':
 			case '=':
@@ -790,7 +793,8 @@ int	intern_getToken()
 	return TOK_EOF;
 }
 
-
+// getToken returns another token from single-linked if any remained 
+// or cause the processing of another one from source code
 int getToken()
 {
 	// special case -> avoid TOK_EOF multiplication
@@ -806,7 +810,7 @@ int getToken()
 	// if we don't have any token remaining in our linked list
 	if(currentToken == NULL || currentToken->next == NULL)
 	{
-		// then process new from file
+		// then process from file
 		int ret = intern_getToken();	
 		// get results and store them in double-linked-list
 		t_tokenElem* newel = malloc(sizeof(t_tokenElem));
@@ -823,7 +827,6 @@ int getToken()
 			return ret;
 		}
 		// malloc error
-		// TODO: global error module
 		fprintf(stderr,"Internal eror - malloc failure \n");
 		errorLeave(INTERNAL_ERROR);
 		

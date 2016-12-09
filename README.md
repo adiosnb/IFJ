@@ -5,7 +5,7 @@ IFJ16 is a four-to-five-members school project, assigned in __Formal languages a
 an interpreter for fictive language IFJ16, whose grammar can be gound in __doc/LL-grammar.txt__. 
 
 The implementation has been split up into several modules:
-* scanner = lexical analysis
+* scanner = lexical analysis 
 * parser = syntactic & semantic analysis & code generation
 * op-parser = a sub-parser for parsing expressions
 * interpreter = a module handling the execution of compiled program
@@ -14,9 +14,14 @@ The implementation has been split up into several modules:
 ## How to compile
 
 ### How to run the parser
->`gcc str.c ial.c stable.c scanner.c parser.c error.c -std=c99 -o p`
+>`make`
 
->`./p FILE`
+>`./run PATH_TO_FILE`
+
+### How to test the project
+A bunch of regressive tests has been put together in order to detect any violations against previous work and assignment at the same time. Tests can be started using following command:
+
+>`make tests`
 
 ## Authors
 	xbarna02 - Barna Kristian
