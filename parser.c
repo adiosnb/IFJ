@@ -876,7 +876,7 @@ int selection_statement()
 			// its OK, no ELSE
 			if(isSecondPass)
 			{
-				GEN("Generate a IF_SKIP label and altern JMP.");
+				//GEN("Generate a IF_SKIP label and altern JMP.");
 				lblSkip = generateLabel(insProgram);
 				// altern JMP after first compound to jmp to the end
 				endJmp->instruction.addr1 = &lblSkip->data;
