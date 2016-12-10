@@ -6,6 +6,8 @@
 //							*Roman
 /******************************************************************************
 
+//UPDATE: 3/12/2016 - another collision in LL1 in IF-ELSE, solved as proposed by authors of IFJ16 (page)
+
 <source-program>              -> <class-definition-list>
 
 <class-definition-list>       -> <class-definition> <class-definition-list>
@@ -55,8 +57,11 @@
 
 <compound-statement>           -> { <block-items-list> }
 <assign-statement>             -> <identifier> <next> ;
-<selection-statement>          -> if ( <expr> ) <compound-statement> else <compound-statement>
-<iteration-statement>          -> while ( <expr> ) <compound-statement>
+<selection-statement>          -> if ( <expr> ) <statement> <selection-else>
+<selection-else>               -> else <statement>
+<selection-else>               -> epsilon
+
+<iteration-statement>          -> while ( <expr> ) <statement>
 <jump-statement>               -> return <expr> ;
 
 <next>                         -> ( <function-arguments-list> ) 
