@@ -21,7 +21,7 @@ The implementation has been split up into several modules:
 ### How to test the project
 A bunch of regressive tests has been put together in order to detect any violations against previous work and assignment at the same time. Tests can be started using following command:
 
->`make tests`
+>`make test`
 
 ## Authors
 	xbarna02 - Barna Kristian

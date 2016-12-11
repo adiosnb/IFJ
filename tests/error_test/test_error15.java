@@ -1,4 +1,5 @@
-//test trying to math with builtin function call #4
+//test trying to math with builtin function call #3
+//wis.fit.vutbr.cz/FIT/st/phorum-msg-show.php?id=46264&mode=mthr
 class Main{
     static void run(){
         int a;

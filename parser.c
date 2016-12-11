@@ -635,7 +635,7 @@ int builtin_print()
 			if(!var)
 				error_and_die(INTERNAL_ERROR,"Failed to create constant");
 			if(var->data.arg_type == INSTRUCTION)
-				error_and_die(SEMANTIC_TYPE_ERROR, "Expected variable, got function symbol");
+				error_and_die(SEMANTIC_ERROR, "Expected variable, got function symbol");
 
 			// now generate PUSH
 			create_and_add_instruction(insProgram, INST_PUSH, &var->data,0,0);
@@ -700,7 +700,7 @@ int next(data_t* symbol,char* id)
 				if(isSecondPass)
 				{
 					if(!isSymbolFunction(symbol))
-						error_and_die(SEMANTIC_TYPE_ERROR, "Expected a function symbol.");
+						error_and_die(SEMANTIC_ERROR, "Expected a function symbol.");
 				}
 				
 				data_t*	dt = NULL;
@@ -1021,14 +1021,14 @@ int argument_definition(data_t** fun)
 				if(!var)
 					error_and_die(SEMANTIC_ERROR," '%s' is missing.", getTokString());
 				if(var->data.arg_type == INSTRUCTION)
-					error_and_die(SEMANTIC_TYPE_ERROR, "Expected variable, got function symbol");
+					error_and_die(SEMANTIC_ERROR, "Expected variable, got function symbol");
 				break;
 			case TOK_SPECIAL_ID:
 				var = stable_search_variadic(staticSym, 2, parser_class ,getTokString());
 				if(!var)
 					error_and_die(SEMANTIC_ERROR,"'%s' is an undefined symbol.", getTokString());
 				if(var->data.arg_type == INSTRUCTION)
-					error_and_die(SEMANTIC_TYPE_ERROR, "Expected variable, got function symbol");
+					error_and_die(SEMANTIC_ERROR, "Expected variable, got function symbol");
 				break;
 			case TOK_LITERAL:
 				var = createConstant(STRING, 0,0, getTokString());
