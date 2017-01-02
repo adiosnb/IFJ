@@ -11,11 +11,14 @@ The implementation has been split up into several modules:
 * interpreter = a module handling the execution of compiled program
 * stable = table of symbols
 
+## How it did at tests
+
+Our project has fulfilled **97 percents** upon submit and received **20+4** points. For a complex analysis see __hodnoceni__ file. 
+
 ## How to compile
 
 ### How to run the parser
 >`make`
-
 >`./run PATH_TO_FILE`
 
 ### How to test the project
